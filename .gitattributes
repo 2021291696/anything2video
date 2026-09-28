@@ -1,0 +1,11 @@
+# 脚本类必须保持 LF（CRLF 会让 bash 直接跑不动）
+* text=auto
+*.sh text eol=lf
+*.mjs text eol=lf
+*.py text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.ttf binary
+*.mp4 binary
+*.gif binary
+*.jpg binary

@@ -1,0 +1,22 @@
+# Node
+node_modules/
+*.tsbuildinfo
+
+# 渲染与运行期产物（本仓只放长期资产；项目工程在 A2V_DATA_ROOT）
+renders/
+fin_frames/
+stills/
+build*/
+out/
+audio/cache/
+
+# Python
+__pycache__/
+*.pyc
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+*.log
+*.mimosa/
+.mimosa/
