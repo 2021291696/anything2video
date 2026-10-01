@@ -8,6 +8,14 @@ export const EXPLAINER: Recipe = {
   id: 'explainer',
   name: '讲解片（a2e 视觉）',
   overlaySet: 'explainer',
+  // 发现 10：合法主色集合 = 模板正本 + styles/ 各 SPEC 声明的主色抄录（各风格正本工程都跑 explainer 配方，主色随 SPEC 换）。
+  accentFrom: [
+    '#6630F8', // 模板正本：标准胶囊紫 (102,48,248)
+    '#e63329', // styles/swiss-print SPEC：red（唯一强调）
+    '#33ff66', // styles/crt-terminal SPEC：phosphor
+    '#ffd23f', // styles/blueprint SPEC：accent（唯一强调）
+    '#a06a28', // styles/sand SPEC：amber（唯一点缀色）
+  ],
   palette: {
     // ---- 主色系：紫 = 当前重点 / 激活 / 品牌 ----
     accent: '#6630F8', // 标准胶囊紫 (102,48,248)
@@ -45,5 +53,6 @@ export const EXPLAINER: Recipe = {
     textGlow: '0 0 12px rgba(255,255,255,.55), 0 0 4px rgba(255,255,255,.35)',
     pillShadow: 'drop-shadow(0 0 2px rgba(200,180,255,.6))',
     pillTextOnAccent: '#FFFFFF', // 紫底胶囊文字 = 白（explainer 一贯做法）
+    textShadowOnSolid: '0 1px 0 rgba(0,0,0,.5), 0 -1px 0 rgba(0,0,0,.5), 0 0 10px rgba(102,45,248,.45)', // 紫系（accentGlowRgb 102,45,248 同源）
   },
 };

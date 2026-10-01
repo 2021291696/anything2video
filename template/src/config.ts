@@ -1,3 +1,5 @@
+import type {ReactNode} from 'react';
+
 /**
  * 片子级配置（唯一需要按主题改的文件之一；另一个是 script/narration.txt）。
  * 句 id（S01…）来自 scripts/tts_build.py 生成的 timeline.ts；章节数与标题来自 narration.txt 的 `# CHAPTER n 标题` 行。
@@ -42,4 +44,28 @@ export const VIDEO = {
   rails: [] as RailSpec[],
   /** 片头帧数（tts_build 的 LEAD+CHAPTER_GAP 决定，通常 85）与片尾压黑（仅 explainer：promo 无片尾压黑，本项不生效） */
   endingFade: 30,
+  /**
+   * 片尾收束卡结论句（可选，黑尾预案·val-pixel 验证片回灌）：设置后片尾在压黑上淡入收束卡（片名 title.big/rest + 这一行结论），
+   * 消除「纯黑仅进度条」的收束尾段；缺省 undefined = OV-EndingCard 完全不挂载、DOM 零增量、渲染逐帧不变。
+   */
+  conclusionLine: undefined as string | undefined,
+  /**
+   * promo 品牌三件套（explainer 不读）。brand 同时喂 BrandCap 与 BrandBar（单一事实源，占位值 YOUR-BRAND 上片前必须换）；
+   * brandHookUntil=品牌帽入场帧（钩子镜结束帧，按分镜表传）；brandCtaFrom=品牌帽退场帧（CtaEnd f0，按分镜表传）。
+   * ⚠ 换配音/重排时间轴时这两个帧号必须重锚（lessons 09-29④），当前 176/1030 是模板演示值。
+   */
+  brand: 'YOUR-BRAND',
+  brandHookUntil: 176,
+  brandCtaFrom: 1030,
+  /** promo 品牌条 slogan（可空串=不显示） */
+  brandSlogan: '',
+  /**
+   * 色彩弧线（审美锚之首，空数组=全片恒定主色、与现状像素级等价）：按句 id 锚定的主色/辅色序列，
+   * 相邻锚点间 30 帧完成过渡；ui.tsx 的 arcAccent(N)/arcSecondary(N) 按 CHAPTER_STARTS 插值取值。
+   */
+  colorArc: [] as Array<{atS: string; accent: string; secondary: string}>,
+  /** 全局收尾层（缺省 undefined=三项全关、DOM 零增量），见 common/FrameGrade.tsx：暗角/静态噪点/可选色偏 */
+  grade: undefined as {vignette?: boolean; grain?: boolean; tint?: string; tintAlpha?: number} | undefined,
+  /** 贯穿元素槽位（缺省 undefined=不挂载、DOM 零增量），见 common/Throughline.tsx：形态全片不变的独有记号 */
+  throughline: undefined as {glyph: ReactNode; keyframes: Array<{from: number; x: number; y: number; s?: number; a?: number}>} | undefined,
 };

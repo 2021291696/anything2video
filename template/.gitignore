@@ -5,3 +5,9 @@ fin_frames/
 stills/
 public/assets/*/audio.wav
 audio/cache/
+__pycache__/
+scripts/.probe-tmp/
+.probe-tmp/
+.verify2_bundle/
+.baseline_stills/
+.after3_stills/

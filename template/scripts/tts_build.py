@@ -394,8 +394,8 @@ async def main(narr):
           'speech_sec': round(speech_sec, 2)}
     unit, cnt = ('字', total_chars) if lang == 'zh' else ('词', total_words)
     os.makedirs(f'{ROOT}/script', exist_ok=True)
-    json.dump(tl, open(f'{ROOT}/script/timeline.json', 'w'), ensure_ascii=False, indent=1)
-    with open(f'{ROOT}/script/timeline.md', 'w') as f:
+    json.dump(tl, open(f'{ROOT}/script/timeline.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    with open(f'{ROOT}/script/timeline.md', 'w', encoding='utf-8') as f:
         f.write(f"# 时间轴（{ENGINE} · {tl['voice']} {tl['rate']}，共 {total} 帧 = {total/FPS:.1f}s，{cnt} {unit}，语速 {cnt/max(1e-6,speech_sec):.2f} {unit}/s）\n\n")
         f.write('| 句 | 章 | 帧 from–to | 时长 | 文本（| 为字幕切分） |\n|---|---|---|---|---|\n')
         ci = {c['from']: c for c in chapters}
@@ -411,14 +411,14 @@ async def main(narr):
     # （手工拼引号会被解说词里的 \ ' ` ${} 破坏语法，甚至把文本写成代码）
     def lit(s):
         return json.dumps(s, ensure_ascii=False)
-    with open(f'{REM}/src/common/subs.ts', 'w') as f:
+    with open(f'{REM}/src/common/subs.ts', 'w', encoding='utf-8') as f:
         f.write('// 自动生成：scripts/tts_build.py（词边界 / 逐块合成 → 字幕块）。手改请改 script/narration.txt 后重跑。\n')
         f.write("export type SubEntry = {from: number; to: number; text: string; en?: string; cn?: string};\nexport const SUBS: SubEntry[] = [\n")
         for sb in all_subs:
             alt = ''.join(f", {k}: {lit(sb[k])}" for k in ('en', 'cn') if sb.get(k))
             f.write(f"  {{from: {sb['from']}, to: {sb['to']}, text: {lit(sb['text'])}{alt}}},\n")
         f.write('];\n')
-    with open(f'{REM}/src/common/timeline.ts', 'w') as f:
+    with open(f'{REM}/src/common/timeline.ts', 'w', encoding='utf-8') as f:
         f.write('// 自动生成：scripts/tts_build.py。帧号 1 起含端点。\n')
         f.write(f'export const TOTAL_FRAMES = {total};\n')
         f.write('export const CHAPTER_STARTS: Array<{n: number; title: string; from: number}> = [\n')

@@ -13,7 +13,8 @@ import type {BgSpec} from './types';
  */
 const DW = 960, DH = 540;
 export const DOT_STEP = 36, DOT_X0 = 24, DOT_Y0 = 18; // 设计坐标网格（frame_metrics.py 用同一组常量还原屏幕坐标）
-const GRAIN_URL =
+/** 静态噪点 data-URI（feTurbulence 160×160 平铺）。共享常量：common/FrameGrade.tsx 复用同一份，不复制第二份。 */
+export const GRAIN_URL =
   "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .5 0'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>\")";
 
 const drawDots = (ctx: CanvasRenderingContext2D, t: number) => {

@@ -3,8 +3,13 @@
 逐镜头构图/光/运动量化（配 reference/composition-and-light.md §6 与 agent-qc-rules.md）。
 用法：
   python3 scripts/frame_metrics.py [--frames fin_frames] [--storyboard 分镜表.md] [--shots SC11:1627-1806,SC12:1852-1965] [--step 4] [--out qc/frame_metrics_vN.md]
+  [--nominal SC11=220,SC12=180] [--exempt SC06:breath,SC09:typo,SC03:grid]
 默认从 分镜表.md 解析 `| SCxx … | a–b |` 行得到镜头区间；帧目录默认 fin_frames/f_%04d.jpg。
 每镜头输出：主体尺度（最大物体高度，宽物体按 min(w,4h)/2.5 折算；一行大字按整行计）中位数/最小值、空场最长连续帧数（无 ≥110 主体且无大面积光活动）、柔光面积（主角区 / 全区）中位数、紫色碎片数中位数、最长静止帧数、标记。
+主角尺寸对账：--nominal 提供分镜标称值的镜头按标称 70% 红线判（已有 ≥70% 判据保留），未提供的镜头沿用 170px 绝对阈值。
+豁免档 --exempt（标注而非缺陷，不进标记合计）：dark=深色半透明主体（亮度型空场/尺寸/主角无光判据不适用）、
+typo=排版型主角（大字即主体，标注「文本型主角，尺寸判据不适用」）、breath=整幅微呼吸镜头（按主角区逐帧 bbox 抽查复核后标注）、
+grid=点阵/网格幕底误报族（背景碎屑/紫色碎片计数按幕底豁免，BPGrid 整齐点阵先例）。
 依赖：numpy pillow scipy。亮度统计用 int32。
 """
 import argparse, os, re, sys
@@ -19,8 +24,33 @@ ap.add_argument('--shots', default='')
 ap.add_argument('--step', type=int, default=4)
 ap.add_argument('--out', default='')
 ap.add_argument('--rail-top', type=int, default=100, help='内容区上界（有流程轨的镜头可传 175）')
-ap.add_argument('--bg', default='auto', help="幕底方案 stars|dots|auto（auto 读 src/config.ts 的 bg）。dots 时按 DotFieldBg 的网格坐标把点阵抠掉再统计，否则波前亮点会被数成背景碎屑")
+ap.add_argument('--bg', default='auto', help='幕底方案 stars|dots|auto（auto 读 src/config.ts 的 bg）。dots 时按 DotFieldBg 的网格坐标把点阵抠掉再统计，否则波前亮点会被数成背景碎屑')
+ap.add_argument('--nominal', default='', help='分镜标称主角尺寸 px：镜头=px 逗号分隔（如 SC11=220,SC12=180）；提供后该镜主角尺寸按标称 70%% 红线对账（替代 170px 绝对阈值）')
+ap.add_argument('--exempt', default='', help='豁免档标注（标注而非缺陷，不进合计）：镜头:标签 逗号分隔；标签 dark=深色半透明主体、typo=排版型主角（大字即主体）、breath=整幅微呼吸、grid=点阵/网格幕底误报族；可混用如 SC06:breath,SC09:typo')
 a = ap.parse_args()
+
+def parse_pairs(s, cast):
+    """解析 SC=值 / SC:值 的逗号分隔键值表（豁免档两分隔符都收）。"""
+    out = {}
+    for tok in s.split(','):
+        tok = tok.strip()
+        if not tok:
+            continue
+        for d in ('=', ':'):
+            if d in tok:
+                k, v = tok.split(d, 1)
+                out[k.strip()] = cast(v.strip())
+                break
+        else:
+            sys.exit(f'参数段无法解析（缺 = 或 :）：{tok}')
+    return out
+
+EXEMPT = parse_pairs(a.exempt, str) if a.exempt else {}
+NOMINAL = parse_pairs(a.nominal, int) if a.nominal else {}
+_VALID_TAGS = {'dark', 'typo', 'breath', 'grid'}
+_bad = set(EXEMPT.values()) - _VALID_TAGS
+if _bad:
+    sys.exit(f'--exempt 未知标签: {sorted(_bad)}（可用: dark|typo|breath|grid）')
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 def cfg_bg():
@@ -91,9 +121,11 @@ def analyze(i):
             if s is None or ink[k] < 30: continue
             h = s[0].stop - s[0].start; w = s[1].stop - s[1].start
             if h < 60 and w < 60: small += 1
-            # 主体尺度：高度，或"宽度折算"——宽而不细的物体（一行大字、宽卡）按 min(w, 4h)/2.5 计，细线（h 很小）几乎不加分
+            # 主体尺度：高度，或「宽度折算」——宽而不细的物体（一行大字、宽卡）按 min(w, 4h)/2.5 计，细线（h 很小）几乎不加分
             size = max(h, min(w, 4 * h) / 2.5)
             if size > hero_h: hero_h = size; hero_box = s
+    hb_h = (hero_box[0].stop - hero_box[0].start) if hero_box is not None else 0
+    hb_w = (hero_box[1].stop - hero_box[1].start) if hero_box is not None else 0
     soft = (sat[Z] > 0.25) & (lum[Z] > SOFT_LO) & (lum[Z] < 110) & ~DOT_MASK[Z]
     glow_total = int(soft.sum())  # 全内容区柔光面积：扫光 / 光线 / 光环阶段很大 → 这类帧不算空场
     glow_hero = 0
@@ -108,7 +140,14 @@ def analyze(i):
     purple = (b[Z] > r[Z]) & (r[Z] > g[Z]) & (sat[Z] > 0.45) & (lum[Z] > 45)
     lab3, n3 = ndi.label(ndi.binary_dilation(purple, structure=np.ones((7, 25), bool)))  # 把一行字的逐字硬投影并成一块
     npurple = int((np.bincount(lab3.ravel())[1:] >= 80).sum()) if n3 else 0
-    return hero_h, glow_hero, npurple, small, int(bright.sum()), glow_total
+    return hero_h, hb_w, hb_h, glow_hero, npurple, small, int(bright.sum()), glow_total
+
+def breath_check(lo, hi, cap=80):
+    """整幅微呼吸镜头的主角区逐帧 bbox 抽查复核：步长加密到 ≤cap 帧，返回（帧数, bbox 高 min/中位/max）。"""
+    n = hi - lo + 1
+    st = max(1, -(-n // cap))
+    hs = sorted(analyze(i)[2] for i in range(lo, hi + 1, st))
+    return len(hs), hs[0], hs[len(hs) // 2], hs[-1]
 
 def diff_series(lo, hi):
     prev = None; out = []
@@ -125,7 +164,7 @@ flags_total = {'高': 0, '中': 0, '低': 0}
 for sid, lo, hi in shots:
     hh = []; gl = []; pp = []; sm = []; gt = []
     for i in range(lo, hi + 1, a.step):
-        h, g, p, s, br, g_all = analyze(i)
+        h, hb_w, hb_h, g, p, s, br, g_all = analyze(i)
         if br < 200: h = 0
         hh.append(h); gl.append(g); pp.append(p); sm.append(s); gt.append(g_all)
     hh = np.array(hh); gt = np.array(gt); run = 0; best = 0
@@ -137,22 +176,53 @@ for sid, lo, hi in shots:
     for v in d[1:]:
         srun = srun + 1 if v < 0.15 else 0; sbest = max(sbest, srun)
     flags = []
-    # 主体尺度中位数只统计"非光效帧且有内容"的帧：高光时刻的扫光 / 光线阶段不算主角缺席
+    notes = []  # 豁免档标注：只标注不计缺陷（不进 flags_total）
+    ex = EXEMPT.get(sid, ())
+    nom = NOMINAL.get(sid)
+    # 主体尺度中位数只统计「非光效帧且有内容」的帧：高光时刻的扫光 / 光线阶段不算主角缺席
     solid = hh[(hh > 0) & ~((hh < 110) & (gt >= 10000))]
     med_h = float(np.median(solid)) if len(solid) else 0.0; min_h = int(hh.min())
     if low_run > 45:
-        low_vals = hh[(hh < 110) & (hh > 0)]
-        flags.append('高:空场(主体<80px>45帧)' if len(low_vals) and np.median(low_vals) < 80 else '中:空场(主体<110px>45帧)')
-    elif med_h < 170:
-        flags.append('低:主角<170px')
-    if float(np.median(gl)) < 800: flags.append('低:主角无光')
-    if float(np.median(pp)) >= 8: flags.append('低:紫色碎片≥8')
-    if float(np.median(sm)) >= 10: flags.append('中:背景碎屑≥10')
+        if 'dark' in ex:
+            notes.append('深色半透明主体：亮度型空场判据不适用（豁免档标注）')
+        else:
+            low_vals = hh[(hh < 110) & (hh > 0)]
+            flags.append('高:空场(主体<80px>45帧)' if len(low_vals) and np.median(low_vals) < 80 else '中:空场(主体<110px>45帧)')
+    elif med_h < (0.7 * nom if nom else 170):
+        # 主角尺寸对账：--nominal 给了分镜标称值的镜头按标称 70% 红线（≥70% 判据保留），否则沿用 170px 绝对阈值
+        if 'typo' in ex:
+            notes.append('文本型主角，尺寸判据不适用（豁免档标注）')
+        elif 'breath' in ex:
+            nb, b0, b1, b2 = breath_check(lo, hi)
+            notes.append(f'整幅微呼吸镜头：按主角区逐帧 bbox 抽查复核（{nb} 帧 bbox 高 min/中位/max={b0}/{b1}/{b2}px，豁免档标注，尺寸判据不适用）')
+        elif 'dark' in ex:
+            notes.append('深色半透明主体，亮度型主角判据不适用（豁免档标注）')
+        else:
+            flags.append(f'低:主角<70%标称(标称{nom}px,红线{0.7 * nom:.0f}px)' if nom else '低:主角<170px')
+    if float(np.median(gl)) < 800:
+        if 'dark' in ex:
+            notes.append('深色半透明主体，主角无光判据不适用（豁免档标注）')
+        else:
+            flags.append('低:主角无光')
+    if float(np.median(pp)) >= 8:
+        if 'grid' in ex:
+            notes.append('点阵/网格幕底：紫色碎片计数按幕底豁免（豁免档标注）')
+        else:
+            flags.append('低:紫色碎片≥8')
+    if float(np.median(sm)) >= 10:
+        if 'grid' in ex:
+            notes.append('点阵/网格幕底：背景碎屑计数按幕底豁免（豁免档标注）')
+        else:
+            flags.append('中:背景碎屑≥10')
     if sbest > 45: flags.append(f'低:静止{sbest}帧')
     for f in flags:
         flags_total[f[0]] += 1
-    lines.append(f'| {sid} | {lo}–{hi} | {med_h:.0f} / {min_h} | {low_run} | {np.median(gl):.0f} / {np.median(gt):.0f} | {np.median(pp):.0f} | {sbest} | {"；".join(flags) or "OK"} |')
-head = f'# 构图/光/运动量化（{a.frames}，步长 {a.step}，幕底 {BG}）\n\n标记合计：高 {flags_total["高"]} / 中 {flags_total["中"]} / 低 {flags_total["低"]}。判据见 reference/composition-and-light.md §6。\n\n'
+    lines.append(f'| {sid} | {lo}–{hi} | {med_h:.0f} / {min_h} | {low_run} | {np.median(gl):.0f} / {np.median(gt):.0f} | {np.median(pp):.0f} | {sbest} | {"；".join(flags + notes) or "OK"} |')
+_extra = []
+if NOMINAL: _extra.append('主角尺寸按 --nominal 标称 70% 对账')
+if EXEMPT: _extra.append('--exempt 豁免档仅标注不计缺陷')
+_head_tail = ('；' + '；'.join(_extra) + '。判据见 reference/composition-and-light.md §6。') if _extra else '。判据见 reference/composition-and-light.md §6。'
+head = f'# 构图/光/运动量化（{a.frames}，步长 {a.step}，幕底 {BG}）\n\n标记合计：高 {flags_total["高"]} / 中 {flags_total["中"]} / 低 {flags_total["低"]}{_head_tail}\n\n'
 txt = head + '\n'.join(lines) + '\n'
 if a.out:
     os.makedirs(os.path.dirname(a.out) or '.', exist_ok=True); open(a.out, 'w', encoding='utf-8').write(txt); print(a.out)

@@ -9,5 +9,8 @@ export * from './DotFieldBg';
 export type {ShotDef, BgSpec} from './types';
 export * from './ProgressBar';
 export {SubtitleLine, SUB_STYLE, strokeShadow, Subtitles} from './Subtitle';
+export * from './SceneWipe';
+export * from './Throughline';
+export * from './FrameGrade';
 export * from './timeline';
 export * from './Footage';

@@ -42,6 +42,10 @@ export type RecipePalette = {
   textGlow: string; // 白字辉光
   pillShadow: string; // 胶囊描边光
   pillTextOnAccent: string; // 主色实底胶囊上的文字色（随主色联动；explainer=白，promo=主色深端）
+  textShadowOnSolid: string; // 白字压实底兜底阴影（U15 配方级写法：上下 1px 暗边 + 与本配方 accent 同源的微光；explainer=紫系 / promo=青系。必填——新配方漏配会被 tsc 拦下）
 };
-/** 配方：同一引擎的一种视频类型。overlaySet 决定 Main 挂哪族覆盖层。 */
-export type Recipe = {id: RecipeId; name: string; palette: RecipePalette; overlaySet: OverlaySet};
+/** 配方：同一引擎的一种视频类型。overlaySet 决定 Main 挂哪族覆盖层。
+ *  accentFrom（发现 10）：合法主色集合断言——palette.accent 必须落在本集合内（getActiveRecipe 渲染前校验，
+ *  不在则 console.error + 抛错，不允许静默渲出）。集合 = 模板正本色 + styles/ 各 SPEC 声明的主色抄录；
+ *  accentFromBrand 换主色时必须同步把新色登记进集合（reference/brand-assets.md §3）。 */
+export type Recipe = {id: RecipeId; name: string; palette: RecipePalette; overlaySet: OverlaySet; accentFrom?: string[]};

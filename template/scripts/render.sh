@@ -4,6 +4,8 @@
 #   SKIP_BUNDLE=1 强制复用；SKIP_BUNDLE=0 强制重打；默认 auto（按新鲜度）。build_full 默认保留（KEEP_BUNDLE=0 删），
 #   复用后下一轮渲染省一次 bundle（≈1 分钟）。
 # 并发：默认 CPU 核数、上限 12（720p×N 个标签页，更高会吃爆内存）；CONC=8 可覆盖。
+# 探针提示：渲前跑探针（probe_av_sync 等）时先 rm -rf scripts/.probe-tmp 防旧 bundle 假红
+#   ——probe_blank 误报根源是复用旧 bundle，宁重打勿误报（lessons 批 4）。
 set -e
 ROOT=$(cd "$(dirname "$0")/.." && pwd); cd "$ROOT"
 # python 解释器：Windows/Git Bash 下 command -v python3 能解析到 python3.bat 却无法直接执行，

@@ -8,13 +8,14 @@
  *  - 8 帧完全一致（所有 MAD = 0）→ 报「静态帧」。
  * 任一命中 → 退出码 1；否则 0。
  *
- * 用法：node probe_liveness.mjs [--shot beat3] [--comp PromoDemo] [--rebundle]
+ * 用法：node probe_liveness.mjs [--shot beat3] [--comp Video] [--rebundle]
+ *   无 --comp 默认 Video（正片镜头）；模板冒烟显式传 --comp PromoDemo。
  *   无 --shot = 遍历该合成全部镜头（一条命令跑全片）。
  * 退出码：0=通过｜1=发现疑似死动画｜2=用法/环境错误。
  */
 import {withRenderer, listShots, argValue, die, decodePng, toLuma, madLuma} from './probe_lib.mjs';
 
-const compId = argValue('--comp') ?? 'PromoDemo';
+const compId = argValue('--comp') ?? 'Video';
 const shotFilter = argValue('--shot');
 
 const all = listShots().filter((s) => s.comp === compId);

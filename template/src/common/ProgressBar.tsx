@@ -4,6 +4,7 @@ import {FONT_HEAVY} from './lib';
 import {kf} from './easing';
 import {fitSize} from './textfit';
 import {TOTAL_FRAMES, CHAPTER_STARTS} from './timeline';
+import {arcAccent} from '../ui';
 
 /**
  * 底部章节进度条（半透明条体 y687–720、填充右缘 x=1280·N/TOTAL、n−1 根分隔线、章节名粗黑斜体 24px），来源于一条 MG 科普原片的实测模型（半透明条体 y687–720、填充右缘 x=1280·N/TOTAL、3 根分隔线、4 个章节名粗黑斜体 24px），
@@ -40,15 +41,21 @@ export const ProgressBar: React.FC<{dimKf?: Array<[number, number]>; frame?: num
   const fillW = (1280 * N) / TOTAL_FRAMES;
   const dim = dimKf.length ? kf(N, dimKf) : 1;
   const ch = currentChapter(N);
+  // U10 当前章焦点色：走 U1 色彩弧线（无 colorArc 配置时恒等于 PAL.accent = #6630F8）。
+  // arcAccent 约定返回 6 位 hex，66/80 为 8 位 alpha 后缀。
+  const acc = arcAccent(N);
   return (
     <div style={{position: 'absolute', left: 0, top: BAR_TOP, width: 1280, height: BAR_H, pointerEvents: 'none'}}>
       <div style={{position: 'absolute', left: 0, top: 0, width: 1280, height: BAR_H, transform: 'translateY(0.25px)'}}>
         <div style={{position: 'absolute', left: fillW, top: 0, width: 1280 - fillW, height: BAR_H, background: TRACK_RGBA}} />
         <div style={{position: 'absolute', left: 0, top: 0, width: fillW, height: BAR_H, background: FILL_RGBA}} />
+        {/* U10：填充层顶部 2px accent 发丝线（+66 辉光），让「已播进度」的右缘可读 */}
+        <div style={{position: 'absolute', left: 0, top: 0, width: fillW, height: 2, background: acc, boxShadow: `0 0 8px 1px ${acc}66`}} />
         {dim < 0.999 ? <div style={{position: 'absolute', left: 0, top: 0, width: 1280, height: BAR_H, background: '#000', opacity: 1 - dim}} /> : null}
       </div>
       {DIVIDERS.map((x) => (
-        <div key={x} style={{position: 'absolute', left: x - DIVIDER_W / 2, top: 693 - BAR_TOP, width: DIVIDER_W, height: 22, background: 'rgba(255,255,255,0.9)'}} />
+        // U10：分隔线 0.9 → 0.55，不再与当前章高亮争夺注意力
+        <div key={x} style={{position: 'absolute', left: x - DIVIDER_W / 2, top: 693 - BAR_TOP, width: DIVIDER_W, height: 22, background: 'rgba(255,255,255,0.55)'}} />
       ))}
       {CHAPTERS.map((c, i) => (
         <div
@@ -57,7 +64,9 @@ export const ProgressBar: React.FC<{dimKf?: Array<[number, number]>; frame?: num
             position: 'absolute', left: c.cx, top: LABEL_TOP - BAR_TOP,
             transform: `translateX(-50%) skewX(${LABEL_SKEW}deg) scaleY(${LABEL_SCALE_Y})`, transformOrigin: '50% 50%',
             whiteSpace: 'nowrap', fontFamily: FONT_HEAVY, fontWeight: 900, fontSize: fitSize(c.text, LABEL_SLOT_W, LABEL_SIZE, 17), lineHeight: 1,
-            color: i === ch ? 'rgba(255,255,255,1)' : `rgba(255,255,255,${LABEL_DIM_ALPHA})`,
+            // U10：当前章 白 → 色彩弧线主色 + 10px 辉光；非当前章维持 0.55 不变
+            color: i === ch ? acc : `rgba(255,255,255,${LABEL_DIM_ALPHA})`,
+            textShadow: i === ch ? `0 0 10px ${acc}80` : undefined,
           }}
         >
           {c.text}

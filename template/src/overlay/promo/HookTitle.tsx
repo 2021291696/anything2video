@@ -1,5 +1,5 @@
 import React from 'react';
-import {GlitchIn, SQUEEZE, easeInOutPow, fitSize, kf} from '../../common';
+import {GlitchIn, SQUEEZE, easeInOutPow, fitSize, kf, SAFE} from '../../common';
 import {CText, Pill, SoftIn} from '../../ui';
 import {PROMO} from '../../recipes';
 
@@ -12,7 +12,7 @@ const PAL = PROMO.palette;
  */
 export const HookTitle: React.FC<{
   N: number; f0: number; text: string; kicker?: string; cx?: number; cy?: number; size?: number; glitch?: boolean; opacity?: number;
-}> = ({N, f0, text, kicker, cx = 640, cy = 330, size = 96, glitch = true, opacity = 1}) => {
+}> = ({N, f0, text, kicker, cx = SAFE.full.cx, cy = SAFE.full.cy, size = 96, glitch = true, opacity = 1}) => { // 锚点走 SAFE.full（640,330，方案 §U13）——与历史硬编码逐值相同
   const n = N - f0;
   if (n < 0) return null;
   const lineW = kf(n, [[0, 0], [20, 240]], easeInOutPow(2.5));

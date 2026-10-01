@@ -7,18 +7,30 @@ export const W = 1280;
 export const H = 720;
 export const FPS = 30;
 
+// ---- 构图锚点（方案 §U13：promo-style-guide §1.2 安全区与锚点的代码化，explainer 同画布 1280×720 通用）----
+export const SAFE = {
+  content: {x: 60, y: 110, w: 1160, h: 550}, // 内容区 x60–1220 / y110–660：所有大字、小注、演示图形只放这里
+  full: {cx: 640, cy: 330}, // 全屏锚：钩子 / 独立卖点屏 / CTA 端板的主标中心
+  coexist: {cx: 640, cy: 545}, // 共存锚：演示主体占上 2/3 时的主标中心
+  subBand: {top: 637, h: 53}, // 字幕带（与 common/Subtitle.tsx 的 SUB_STYLE.top 现值对齐）
+  railY: 118, // 流程轨 y（overlay/Overlay 的 Rail）
+  topCapsule: {y: 28, h: 51}, // 顶部 HUD 胶囊（ui.tsx 的 TopCapsule 现值）
+} as const;
+
 export const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 export const lerp = (t: number, t0: number, t1: number, v0: number, v1: number) => {
   if (t1 === t0) return v1;
   return v0 + (v1 - v0) * clamp((t - t0) / (t1 - t0), 0, 1);
 };
-/** 分段线性关键帧 [frame, value][]。⚠ 首值陷阱：t < 首关键帧返回首值（不是 0）。 */
+/** 分段线性关键帧 [frame, value][]。⚠ 首值陷阱：t < 首关键帧返回首值（不是 0）。空数组返回 0（与 easing.ts 同防护）。 */
 export const keyframes = (t: number, kf: Array<[number, number]>) => {
+  if (kf.length === 0) return 0;
   if (t <= kf[0][0]) return kf[0][1];
   for (let i = 1; i < kf.length; i++) if (t <= kf[i][0]) return lerp(t, kf[i - 1][0], kf[i][0], kf[i - 1][1], kf[i][1]);
   return kf[kf.length - 1][1];
 };
 export const stepHold = (t: number, kf: Array<[number, number]>) => {
+  if (kf.length === 0) return 0;
   if (t < kf[0][0]) return 0;
   for (let i = kf.length - 1; i >= 0; i--) if (t >= kf[i][0]) return kf[i][1];
   return 0;
@@ -45,6 +57,27 @@ export const DirBlur: React.FC<{bx: number; by: number; style?: React.CSSPropert
       <AbsoluteFill style={{filter: active ? `url(#${id})` : undefined}}>{children}</AbsoluteFill>
     </AbsoluteFill>
   );
+};
+
+// ---- SVG filter 实例预算（方案 §U9：单帧 ≤6 红线的自查闸门。既有 filter 实例靠 fx.tsx 的 haloSeq / blurSeq 这类模块级序号隔离 id，
+//      这里用同一模式给分镜阶段一个全局计数器：挂 filter 的组件在挂载处 take() 登记，镜头开工时 reset() 归零自查。）----
+let filterCount = 0;
+export const filterBudget = {
+  max: 6,
+  /** 当前已登记的 SVG filter 实例数。 */
+  used: () => filterCount,
+  /** 登记一个 filter 实例（tag 仅用于告警定位）；超过 max 时开发态（NODE_ENV !== production）console.warn。 */
+  take: (tag?: string) => {
+    filterCount += 1;
+    if (process.env.NODE_ENV !== 'production' && filterCount > filterBudget.max) {
+      console.warn(`[filterBudget] SVG filter 实例 ${filterCount} 超过单帧上限 ${filterBudget.max}${tag ? `：${tag}` : ''}（性能红线 ≤6，须删减或合并 bloom/blur）`);
+    }
+    return filterCount;
+  },
+  /** 帧边界 / 镜头开工时归零。 */
+  reset: () => {
+    filterCount = 0;
+  },
 };
 
 // ---- 字体（全部随模板附带，OFL 许可；Noto Sans SC 含完整拉丁字形，英文片同样用它做正文/字幕）----

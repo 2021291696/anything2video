@@ -13,6 +13,11 @@ export const PROMO: Recipe = {
   id: 'promo',
   name: '宣传片（promo）',
   overlaySet: 'promo',
+  // 发现 10：合法主色集合 = 内置正本电光青；accentFromBrand 换主色时必须同步把品牌色登记进本集合
+  // （reference/brand-assets.md §3），否则 getActiveRecipe 渲染前 fail-fast——防换色只换 accent 没同步随主色 token 的静默错配。
+  accentFrom: [
+    '#21E6C1', // 内置正本：电光青 (33,230,193)
+  ],
   palette: {
     // ---- 主色系：电光青 = 当前重点 / 品牌 ----
     accent: '#21E6C1', // 电光青 (33,230,193) —— accentFromBrand：品牌色可整体替换此主色
@@ -50,5 +55,6 @@ export const PROMO: Recipe = {
     textGlow: '0 0 12px rgba(255,255,255,.55), 0 0 4px rgba(255,255,255,.35)',
     pillShadow: 'drop-shadow(0 0 2px rgba(180,240,230,.6))', // 胶囊描边光（青白端）
     pillTextOnAccent: '#06231D', // 青底胶囊文字 = 深青（accentFromBrand 时随主色一起换）
+    textShadowOnSolid: '0 1px 0 rgba(0,0,0,.5), 0 -1px 0 rgba(0,0,0,.5), 0 0 10px rgba(33,230,193,.45)', // 青系（accent 33,230,193 同源）
   },
 };
