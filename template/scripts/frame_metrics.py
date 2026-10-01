@@ -225,5 +225,5 @@ _head_tail = ('；' + '；'.join(_extra) + '。判据见 reference/composition-a
 head = f'# 构图/光/运动量化（{a.frames}，步长 {a.step}，幕底 {BG}）\n\n标记合计：高 {flags_total["高"]} / 中 {flags_total["中"]} / 低 {flags_total["低"]}{_head_tail}\n\n'
 txt = head + '\n'.join(lines) + '\n'
 if a.out:
-    os.makedirs(os.path.dirname(a.out) or '.', exist_ok=True); open(a.out, 'w', encoding='utf-8').write(txt); print(a.out)
+    os.makedirs(os.path.dirname(a.out) or '.', exist_ok=True); open(os.path.normpath(a.out), 'w', encoding='utf-8').write(txt); print(a.out)
 print(txt)
