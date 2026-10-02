@@ -19,6 +19,7 @@
 - **常驻覆盖层**：顶部品牌帽（y28–72）、底部品牌条（y687–720，**替代章节进度条**——本配方无进度条、无章节卡）；CTA 端板由覆盖层图元 `src/overlay/promo/CtaEnd` 接管全屏 ≥60 帧（镜头按分镜 import；图元库源码由主脚本维护）。
 - **图元**：复用 `template/src/ui.tsx` / `fx.tsx`；证明拍数字一律 `BigNumber`/`Counter`（计数 14–26 帧 + 落定白闪）。
 - 动效词汇与预算：`reference/promo-style-guide.md` §转场词汇（词汇表出处 a2e `reference/motion-vocabulary.md`）。
+- 运动与光效纪律（完整运动链/错相阶梯/物理效果/主光统一/拍点卡点）：`reference/motion-language.md`，与本配方冲突时本配方优先。
 
 ### 2.5 镜头卡抽卡（可选增强，2026-09-28 增）
 
@@ -56,7 +57,7 @@
 - 禁止：任何现有视频的帧或片段、有版权风险的截图、AI 生成图冒充实拍或数据截图。
 
 ## 6. 音频策略
-- 旁白：**默认云端 TTS 装配路线（见 `reference/workflow-orchestration.md` §7）**，edge-tts 为回退——回退跑 `template/scripts/tts_build.py`（默认中文 `zh-CN-YunxiNeural` +8%、英文 kokoro-82m `am_liam`）生成 `audio.wav` + `timeline.ts`，**promo 片 tts_build 前先设环境变量 `LEAD=34 CHAPTER_GAP=10`**（tts_build 的时间轴参数走环境变量、无命令行 flag；默认 40+45 使首句 from=85，此组实测首句 from=45——达标判据 1（首句起点 ≤帧 45）的实测参数，lessons 09-28；云端路线按 §7 装配后同样受判据 1 约束）。语速在打样时确认，文案定稿后不改词。**重跑 tts_build（时间轴参数变化）后，混音前必须删除旧的 `audio_narration.wav`**（lessons 2026-09-28：陈旧旁白备份会让重混音把 v1 时间轴混回去）。
+- 旁白：**默认云端 TTS 装配路线（见 `reference/workflow-orchestration.md` §7）**，edge-tts 为回退——回退跑 `template/scripts/tts_build.py`（默认中文 `zh-CN-YunyangNeural` +8%、英文 kokoro-82m `am_liam`）生成 `audio.wav` + `timeline.ts`，**promo 片 tts_build 前先设环境变量 `LEAD=34 CHAPTER_GAP=10`**（tts_build 的时间轴参数走环境变量、无命令行 flag；默认 40+45 使首句 from=85，此组实测首句 from=45——达标判据 1（首句起点 ≤帧 45）的实测参数，lessons 09-28；云端路线按 §7 装配后同样受判据 1 约束）。语速在打样时确认，文案定稿后不改词。**重跑 tts_build（时间轴参数变化）后，混音前必须删除旧的 `audio_narration.wav`**（lessons 2026-09-28：陈旧旁白备份会让重混音把 v1 时间轴混回去）。
 - BGM：必配，**三级来源按序选**：①用户指定曲 ②免版权曲库（Mixkit / Pixabay Music，选无主旋律突变的循环段，登记出处）③**程序化原创编曲** `template/scripts/score_gen.py`——段落按镜头/句边界排、BPM 与调式按主体气质选、乐谱源码随项目交付（借 guizang 手法，实现自有）；合成稿经试听/波形验收后才进混音。**旁白段自动压低**——由主脚本在渲染前按 `reference/workflow-orchestration.md` §6 的 BGM 混音模板命令混入（目标电平：旁白段 duck 到 ×0.25、句间与端板回到 ×0.6），混完 `audio.wav` 即成片配音轨；CTA 端板最后 1.5s BGM 淡出 ≥20 帧，**淡出锚点=成片总秒数−1.5**（不要锚在旁白尾）。
 - 音效（可选标准轨，默认不做、启用时按本条全做）：UI 类动作音（点击/弹出/切换/计数完成/whoosh）全片 ≤6 处、不与 GlitchIn 同帧；流程=分镜表声明音效事件表（镜头/动作帧/音效类别）→ `make_sfx.py` 生成原创音效或免许可素材（登记出处）→ `sfx_landmarks.py` 实测每条 onset/peak → `cue.at = 动作帧÷30 − onset`（短音钉 onset、whoosh 钉 peak）→ 事件按时间戳预拼成 `sfx_track.wav` 作为混音第三路输入，**音效出现时音乐让位**（侧链同旁白）。
 

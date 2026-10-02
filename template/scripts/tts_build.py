@@ -14,7 +14,7 @@
 逐句（或逐字幕块）缓存于 audio/cache/，改一句只重合成一句。
 
 TTS 引擎（`TTS_ENGINE`，默认 `auto` = 按解说词语言选；**跑之前先问用户有没有偏好的 TTS**——按 SKILL.md 基准确认点 3 叠加所选配方 §确认点差异执行，如 promo 已删除独立确认点、并入确认点 ① 一句话带过，用户在 ① 给过偏好就照办）：
-  edge     中文默认。edge-tts 云端合成，有词级边界 → 字幕节拍最准。VOICE=zh-CN-YunxiNeural RATE=+8%
+  edge     中文默认。edge-tts 云端合成，有词级边界 → 字幕节拍最准。VOICE=zh-CN-YunyangNeural RATE=+8%
            英文降级路径：kokoro 不可用时 auto 自动切到 edge + en-US-ChristopherNeural（EDGE_EN_VOICE 可换音色）
   kokoro   英文默认（本地推理，`pip install kokoro soundfile` + espeak-ng）。**注意：2026-09 起 PyPI 的
            kokoro 0.7.16 钉死 numpy==1.26.4（py3.12+ 无 wheel）且要求不存在的 misaki>=0.7.16，装不上是常态**；
@@ -36,7 +36,7 @@ CFG_LANG = _m.group(1) if _m else 'zh'
 FPS = 30
 SR = 48000
 ENGINE = os.environ.get('TTS_ENGINE', 'auto')
-VOICE = os.environ.get('VOICE', 'zh-CN-YunxiNeural')
+VOICE = os.environ.get('VOICE', 'zh-CN-YunyangNeural')
 RATE = os.environ.get('RATE', '+8%')
 # edge-tts 云端限流（连续请求会被拒、返回空音频）：重试次数 / 退避基数秒 / 句间隔秒
 EDGE_RETRIES = int(os.environ.get('EDGE_RETRIES', 4))
