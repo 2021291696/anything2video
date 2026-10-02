@@ -7,7 +7,7 @@
 - 音效：章节起点「铺沙/转场」+ 章节终点「扫掠」由 SCENES/合成器定义（numpy 程序合成，无第三方版权）
 - 依赖：numpy scipy（低通/带通滤波）；ffmpeg 解码音频
 """
-import json, os, re, shutil, subprocess
+import json, os, re, shutil, subprocess, sys
 import numpy as np
 from scipy.io import wavfile
 from scipy.signal import butter, lfilter
@@ -21,7 +21,11 @@ A_DIR = f'{ROOT}/public/assets/{SLUG}'
 RAW = f'{A_DIR}/audio_narration.wav'   # 与 SKILL.md / promo.md / orchestration §6 统一口径（旧名 narration_raw.wav 已废）
 MIX = f'{A_DIR}/audio.wav'
 SR = 48000
-TARGET_BGM_RMS = 0.055   # BGM 响度床：约为旁白 RMS 的一半（可闻但不压旁白）
+# 响度床双档（按片况选）：0.08 标准=音乐可闻、有存在感、不压旁白（默认）；0.055 保守=旁白密集/信息优先。用法：--bed 0.055
+BED = 0.08
+if '--bed' in sys.argv:
+    BED = float(sys.argv[sys.argv.index('--bed') + 1])
+TARGET_BGM_RMS = BED
 BGM_SCALE_CAP = 8.0
 SFX_GAIN = {'pour': 0.15, 'wipe': 0.10}
 
