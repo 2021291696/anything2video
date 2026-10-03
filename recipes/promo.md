@@ -23,12 +23,25 @@
 
 ### 2.5 镜头卡抽卡（可选增强，2026-09-28 增）
 
-动效词汇不够用时，允许从 **video-shotcraft 镜头卡库**点名抽卡（外部 skill，可选增强；卡库含 157+ 张镜头卡，按 opening/camera/data/effects/interaction/outro/rhythm/transition/typography/ui-entrance 分类。本仓未随附该卡库——环境里装了就用，没装则跳过抽卡，动效词汇走 `reference/promo-style-guide.md` §转场词汇）。
+动效词汇不够用时，允许从 **video-shotcraft 镜头卡库**点名抽卡（本机已装：`C:\Users\20212\.agents\skills\video-shotcraft\references\shots\`，157+ 张，按 opening/camera/data/effects/interaction/outro/rhythm/transition/typography/ui-entrance 分类）。
 
 - **卡的结构**：每张卡 = 一句话/适用/时长/能量 + 意图 + 动效核心 + 参数表（含调节手感）+ 声音 + 已知坑 + 参考实现（demo 源码在 `demos/<类>/<卡名>/<Comp>.tsx`，全部为从零重写的中性实现，无原片素材）。
 - **抽卡规则**：分镜阶段（阶段 3）按拍的任务与能量选卡，一卡一镜头；卡名 + 卡文件绝对路径 + demo 绝对路径写进分镜表该镜头条目，卡的「已知坑/参数表」一并并入该镜头的约束；不合适就不用，默认骨架优先，不硬塞。
 - **移植纪律**：demo 是独立工程写法，移植进本工程必须换契约——`N = useCurrentFrame() + F0`、随机只用 `rnd`、调色板改用本片 palette token（**品牌色纪律仍然全权管辖，卡内示例色一律不抄**）、图元优先从 `ui.tsx`/`fx.tsx` 导入；卡内「声音」条目按 §6 执行（首版默认不做音效）。
 - **lottie 外挂（2026-09-28 验证轮结论：**暂缓**）**：@remotion/lottie 嵌入链路可编译可渲染，但 agent 手写 Lottie JSON 的 transform 关键帧插值在 lottie-web 双版本双渲染器下一律 NaN（形体巨大化/层隐藏），1D 属性与静态形体正常——无产出价值，不进本配方。描画/缩放类动效继续走 Remotion 原生（`ui.tsx`/`fx.tsx` 图元 + SVG strokeDashoffset 勾线画入）；待引入经验证的 JSON 发射器再重启验证。坑单全文见 `reference/lessons.md` 2026-09-28 条。
+
+### 2.6 每屏材质底档位（反空心门，2026-10-04 增）
+
+中段「视觉谷底」是 promo 最高频缺陷（2026-10-03 a2v-skill-promo 实锤：核心卖点屏 = 两个空线框面板，文案吹「电影级」，独立视觉评审判「合格的信息片、不合格的电影级宣传片」）。分镜表每屏必须声明**材质底档位**，QC 按档验收：
+
+| 档位 | 构成 | 适用 |
+|---|---|---|
+| T0 空底 | 纯色/单渐变底 + 文字 | 只允许钩子首屏与 CTA 端板（每片 ≤3 屏） |
+| T1 程序纹理 | `DotFieldBg` / `ShaderPost`（grain+暗角）/ `TempGrade` / grain 至少其一 | 常态卖点屏的下限 |
+| T2 多层材质 | T1 + 主体质感层（光效/粒子/Canvas 绘制/景深层）≥3 视觉层 | 高光时刻与证明屏必达 |
+
+- 连续两屏 T0 = QC 记中；卖点演示屏给 T0 = QC 记高（「单层面板+文字」即空心判定）。
+- 材质词汇借用 `reference/materials.md` 的材质词典选语言（岩面/纸纹/雨夜/织机…），但 **promo 不是 AI 帧例外配方**——材质全部代码绘制，禁 AI 图。
 
 ## 3. 时长档
 

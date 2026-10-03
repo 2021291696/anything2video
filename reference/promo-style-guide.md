@@ -1,6 +1,6 @@
 # 宣传视觉规范（promo 配方专用）
 
-一句话：a2e 的 MG 底子不变（黑底、白描边 2–3px 黑填充图形、超粗黑体、紫色系光效），把「讲解节奏」换成「广告节奏」——**更大字、更快切、更少文字、品牌色纪律**。动效词汇与公式不重复造：**词汇表以 a2e `reference/explainer/motion-vocabulary.md` 为准**，本文只给 promo 的选择规则与数值；与该文档冲突时以它为准。
+一句话：a2e 的 MG 底子不变（黑底、白描边 2–3px 黑填充图形、超粗黑体、紫色系光效），把「讲解节奏」换成「广告节奏」——**更大字、更快切、更少文字、品牌色纪律**。动效词汇与公式不重复造：**词汇表以 a2e `C:/Users/20212/.agents/skills/anything2explainer/reference/motion-vocabulary.md` 为准**，本文只给 promo 的选择规则与数值；与该文档冲突时以它为准。
 
 ## 1. 排版
 
@@ -50,7 +50,7 @@
 
 ## 3. 转场词汇（出处声明）
 
-词汇、公式与帧数**一律以 a2e `reference/explainer/motion-vocabulary.md` 为准**（其入场/强调/光效/离场/镜头运动/节拍/衔接/闪烁白名单各节全部适用）。本节只写 promo 的**选择规则**：
+词汇、公式与帧数**一律以 a2e `C:/Users/20212/.agents/skills/anything2explainer/reference/motion-vocabulary.md` 为准**（其入场/强调/光效/离场/镜头运动/节拍/衔接/闪烁白名单各节全部适用）。本节只写 promo 的**选择规则**：
 
 | promo 场景 | 用哪个词汇（a2e 名） | 要点 |
 |---|---|---|

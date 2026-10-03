@@ -106,6 +106,9 @@ export const Fonts: React.FC = () => {
       new FontFace('Exo 2', `url(${staticFile('fonts/Exo2-Italic.ttf')})`, {weight: '100 900', style: 'italic'} as FontFaceDescriptors).load(),
       new FontFace('Audiowide', `url(${staticFile('fonts/Audiowide-Regular.ttf')})`).load(),
       new FontFace('Orbitron', `url(${staticFile('fonts/Orbitron[wght].ttf')})`, {weight: '400 900'} as FontFaceDescriptors).load(),
+      // epic 配方两款衬线（OFL 许可随 fonts/ 目录分发；Fraunces 斜体为浏览器合成斜——Rite.tsx 先例过验）
+      new FontFace('Noto Serif SC', `url(${staticFile('fonts/NotoSerifSC[wght].ttf')})`, {weight: '100 900'} as FontFaceDescriptors).load(),
+      new FontFace('Fraunces', `url(${staticFile('fonts/Fraunces[SOFT,WONK,opsz,wght].ttf')})`, {weight: '100 900'} as FontFaceDescriptors).load(),
     ])
       .then((fs) => {
         fs.forEach((f) => (document.fonts as unknown as {add: (f: FontFace) => void}).add(f));

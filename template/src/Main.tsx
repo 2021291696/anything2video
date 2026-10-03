@@ -6,6 +6,7 @@ import {VIDEO} from './config';
 import {getActiveRecipe} from './recipes';
 import {SHOTS_OVERLAY, SHOTS_OVERLAY_TOP, BG_OVERLAY} from './overlay';
 import {BrandBar, BrandCap} from './overlay/promo';
+import {EpochBadge, EpicSubtitles, EPIC_END_SHOTS} from './overlay/epic';
 import {SHOTS_G1, BG_G1, FOOTAGE_G1} from './shots/G1';
 import {SHOTS_G2, BG_G2, FOOTAGE_G2} from './shots/G2';
 import {SHOTS_G3, BG_G3, FOOTAGE_G3} from './shots/G3';
@@ -22,9 +23,10 @@ import {SHOTS_G8, BG_G8, FOOTAGE_G8} from './shots/G8';
 // promo 走 overlay/promo 组件族（钩子/卖点/证明/CTA 由镜头按拍取用），常驻底条换 BrandBar 品牌条、
 // 无字幕带（关键词大字由镜头绘制）、无片尾压黑，画布底/雾底取配方 token（PAL.bg / PAL.bgFog）。
 const PROMO = VIDEO.recipe === 'promo';
+const EPIC = VIDEO.recipe === 'epic';
 const PAL = getActiveRecipe().palette;
-const OVERLAY_SHOTS: ShotDef[] = PROMO ? [] : SHOTS_OVERLAY;
-const OVERLAY_TOP_SHOTS: ShotDef[] = PROMO ? [] : SHOTS_OVERLAY_TOP;
+const OVERLAY_SHOTS: ShotDef[] = PROMO || EPIC ? [] : SHOTS_OVERLAY;
+const OVERLAY_TOP_SHOTS: ShotDef[] = PROMO || EPIC ? [] : SHOTS_OVERLAY_TOP;
 export const Stage: React.FC<{shots: ShotDef[]; bg: BgSpec[]; footage?: FootageSpec[]; audio?: boolean}> = ({shots, bg, footage = [], audio = false}) => (
   <AbsoluteFill style={{background: PAL.bg}}>
     <Fonts />
@@ -42,6 +44,12 @@ export const Stage: React.FC<{shots: ShotDef[]; bg: BgSpec[]; footage?: FootageS
         <BrandCap brand={VIDEO.brand} hookUntil={VIDEO.brandHookUntil} ctaFrom={VIDEO.brandCtaFrom} />
         <BrandBar brand={VIDEO.brand} slogan={VIDEO.brandSlogan} />
       </>
+    ) : EPIC ? (
+      /* epic 常驻层：年代角标（信息层，位于内容之上、与 promo 帽同区）+ 诗行字幕（最顶层，同 explainer 字幕带层级）——无进度条无品牌条 */
+      <>
+        <EpochBadge />
+        <EpicSubtitles />
+      </>
     ) : <ProgressBar />}
     {shots.filter((s) => s.layer === 'aboveBar').map((s) => (
       <Sequence key={s.id} from={s.from - 1} durationInFrames={s.to - s.from + 1}>
@@ -53,13 +61,13 @@ export const Stage: React.FC<{shots: ShotDef[]; bg: BgSpec[]; footage?: FootageS
     {/* U12 全局收尾层：与 Throughline 同区（aboveBar 之上、字幕之下）——暗角/噪点/色偏作用于全部内容层，字幕带保持原亮度优先可读；
         缺省 undefined = 暗角/噪点/色偏三项全关、DOM 零增量 */}
     {VIDEO.grade ? <FrameGrade {...VIDEO.grade} /> : null}
-    {(VIDEO.subs ?? (PROMO ? 'none' : 'cn')) !== 'none' && (
+    {(VIDEO.subs ?? (PROMO || EPIC ? 'none' : 'cn')) !== 'none' && (
       <Subtitles bilingual={VIDEO.subs === 'bilingual'} />
     )}
   </AbsoluteFill>
 );
 
-const SHOTS = [...OVERLAY_SHOTS, ...SHOTS_G1, ...SHOTS_G2, ...SHOTS_G3, ...SHOTS_G4, ...SHOTS_G5, ...SHOTS_G6, ...SHOTS_G7, ...SHOTS_G8, ...OVERLAY_TOP_SHOTS];
+const SHOTS = [...OVERLAY_SHOTS, ...SHOTS_G1, ...SHOTS_G2, ...SHOTS_G3, ...SHOTS_G4, ...SHOTS_G5, ...SHOTS_G6, ...SHOTS_G7, ...SHOTS_G8, ...OVERLAY_TOP_SHOTS, ...(EPIC ? EPIC_END_SHOTS : [])];
 const BG = [...BG_OVERLAY, ...BG_G1, ...BG_G2, ...BG_G3, ...BG_G4, ...BG_G5, ...BG_G6, ...BG_G7, ...BG_G8];
 const FOOTAGE = [...FOOTAGE_G1, ...FOOTAGE_G2, ...FOOTAGE_G3, ...FOOTAGE_G4, ...FOOTAGE_G5, ...FOOTAGE_G6, ...FOOTAGE_G7, ...FOOTAGE_G8];
 export const Video: React.FC = () => <Stage shots={SHOTS} bg={BG} footage={FOOTAGE} audio />;

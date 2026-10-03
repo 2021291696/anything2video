@@ -19,17 +19,23 @@ TTS 引擎（`TTS_ENGINE`，默认 `auto` = 按解说词语言选；**跑之前�
   kokoro   英文默认（本地推理，`pip install kokoro soundfile` + espeak-ng）。**注意：2026-09 起 PyPI 的
            kokoro 0.7.16 钉死 numpy==1.26.4（py3.12+ 无 wheel）且要求不存在的 misaki>=0.7.16，装不上是常态**；
            auto 会自动降级到 edge 英文，无需手动处理。
-           KOKORO_VOICE=am_liam（Liam，男声，与中文云希同定位）KOKORO_LANG=a KOKORO_SPEED=1.0
+           KOKORO_VOICE=am_liam（Liam，男声，与中文云详同定位）KOKORO_LANG=a KOKORO_SPEED=1.0
   kokoro 没有词边界 → 改为「逐字幕块分别合成再拼接」，块起始帧因此也是精确的（CHUNK_PAD 调块间静音）。
   用户有别的 TTS 偏好时不走本脚本：让他给成品配音 wav，按逐句/逐块时间轴手填 timeline.ts 与 subs.ts。
 其它环境变量：GAP/CHAPTER_GAP/LEAD/TAIL（帧）。
 """
 import asyncio, hashlib, json, os, re, subprocess, sys
 import numpy as np
+from pathlib import Path
+
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8')
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REM = ROOT
-_cfg = open(f'{ROOT}/src/config.ts', encoding='utf-8').read()
+_cfg = Path(ROOT, 'src', 'config.ts').read_text(encoding='utf-8')
 SLUG = re.search(r"slug:\s*'([^']+)'", _cfg).group(1)
 _m = re.search(r"lang:\s*'(zh|en)'", _cfg)
 CFG_LANG = _m.group(1) if _m else 'zh'
@@ -62,7 +68,7 @@ def parse(path):
     chap = 0
     chap_title = ''
     pending_gap = 0
-    for raw in open(path, encoding='utf-8'):
+    for raw in Path(path).read_text(encoding='utf-8').splitlines():
         line = raw.strip()
         if not line:
             continue
@@ -297,6 +303,8 @@ async def synth_sentence(chunks, sep=''):
 async def main(narr):
     global ENGINE, VOICE, RATE
     items = parse(narr)
+    if not any(item['type'] == 'sent' for item in items):
+        raise SystemExit('narration.txt 没有可朗读句子，拒绝生成静音交付。')
     lang = detect_lang(items)
     if ENGINE == 'auto':
         if lang == 'zh':
@@ -367,6 +375,10 @@ async def main(narr):
     os.makedirs(f'{REM}/public/assets/{SLUG}', exist_ok=True)
     wav = f'{REM}/public/assets/{SLUG}/audio.wav'
     write_wav(wav, np.stack([y, y], 1), SR)
+    # 混音只读此正本；不再通过 audio.wav 的修改时间猜测来源。
+    import shutil
+    shutil.copyfile(wav, f'{REM}/public/assets/{SLUG}/audio_narration.wav')
+    Path(wav).with_suffix('.mix.json').unlink(missing_ok=True)
     # 修正字幕：相邻句字幕不重叠；同句块间连续
     all_subs = []
     for s in sentences:
@@ -393,9 +405,9 @@ async def main(narr):
           'lang': lang, 'chapters': chapters, 'sentences': sentences, 'chars': total_chars, 'words': total_words,
           'speech_sec': round(speech_sec, 2)}
     unit, cnt = ('字', total_chars) if lang == 'zh' else ('词', total_words)
-    os.makedirs(os.path.join(ROOT, 'script'), exist_ok=True)
-    json.dump(tl, open(os.path.join(ROOT, 'script', 'timeline.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
-    with open(os.path.join(ROOT, 'script', 'timeline.md'), 'w', encoding='utf-8') as f:
+    os.makedirs(f'{ROOT}/script', exist_ok=True)
+    Path(ROOT, 'script', 'timeline.json').write_text(json.dumps(tl, ensure_ascii=False, indent=1), encoding='utf-8')
+    with open(f'{ROOT}/script/timeline.md', 'w', encoding='utf-8') as f:
         f.write(f"# 时间轴（{ENGINE} · {tl['voice']} {tl['rate']}，共 {total} 帧 = {total/FPS:.1f}s，{cnt} {unit}，语速 {cnt/max(1e-6,speech_sec):.2f} {unit}/s）\n\n")
         f.write('| 句 | 章 | 帧 from–to | 时长 | 文本（| 为字幕切分） |\n|---|---|---|---|---|\n')
         ci = {c['from']: c for c in chapters}
@@ -411,14 +423,14 @@ async def main(narr):
     # （手工拼引号会被解说词里的 \ ' ` ${} 破坏语法，甚至把文本写成代码）
     def lit(s):
         return json.dumps(s, ensure_ascii=False)
-    with open(os.path.join(REM, 'src', 'common', 'subs.ts'), 'w', encoding='utf-8') as f:
+    with open(f'{REM}/src/common/subs.ts', 'w', encoding='utf-8') as f:
         f.write('// 自动生成：scripts/tts_build.py（词边界 / 逐块合成 → 字幕块）。手改请改 script/narration.txt 后重跑。\n')
-        f.write("export type SubEntry = {from: number; to: number; text: string; en?: string; cn?: string};\nexport const SUBS: SubEntry[] = [\n")
+        f.write("export type SubEntry = {from: number; to: number; text: string; en?: string; cn?: string; emphasis?: boolean};\nexport const SUBS: SubEntry[] = [\n")
         for sb in all_subs:
             alt = ''.join(f", {k}: {lit(sb[k])}" for k in ('en', 'cn') if sb.get(k))
             f.write(f"  {{from: {sb['from']}, to: {sb['to']}, text: {lit(sb['text'])}{alt}}},\n")
         f.write('];\n')
-    with open(os.path.join(REM, 'src', 'common', 'timeline.ts'), 'w', encoding='utf-8') as f:
+    with open(f'{REM}/src/common/timeline.ts', 'w', encoding='utf-8') as f:
         f.write('// 自动生成：scripts/tts_build.py。帧号 1 起含端点。\n')
         f.write(f'export const TOTAL_FRAMES = {total};\n')
         f.write('export const CHAPTER_STARTS: Array<{n: number; title: string; from: number}> = [\n')
@@ -437,4 +449,4 @@ async def main(narr):
         print(f"  chapter {c['n']} {c['title']} from f{c['from']}")
 
 if __name__ == '__main__':
-    asyncio.run(main(sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, 'script', 'narration.txt')))
+    asyncio.run(main(sys.argv[1] if len(sys.argv) > 1 else f'{ROOT}/script/narration.txt'))

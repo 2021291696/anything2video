@@ -23,8 +23,8 @@ const SCRIPTS_DIR = path.dirname(fileURLToPath(import.meta.url));
 const TEMPLATE_ROOT = path.resolve(SCRIPTS_DIR, '..');
 const SKILL_ROOT = path.resolve(TEMPLATE_ROOT, '..');
 const STYLES_DIR = path.join(SKILL_ROOT, 'styles');
-// 正本工程对照根（usa250-sand/blueprint-bridge 等）：设 A2V_REF_ROOT 启用 icons 逐字节对拍；未设则该族检查显式 SKIP
-const REF_ROOT = process.env.A2V_REF_ROOT ?? '';
+// 正本工程对照根：可用 A2V_REF_ROOT 环境变量覆写（公开仓/换机场景），缺省为本机数据根
+const REF_ROOT = process.env.A2V_REF_ROOT ?? 'D:/MyAIWorkspace/科普视频';
 
 const SKUS = ['sand', 'chalk', 'blueprint', 'neon', 'pixel-arcade', 'paper-collage', 'swiss-print', 'crt-terminal'];
 const EXTRA_ASSETS = {

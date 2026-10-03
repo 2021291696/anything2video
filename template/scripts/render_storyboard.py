@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import os
 """把 script/storyboard_src.md 中的时间令牌替换成 script/timeline.json 里的帧号，输出 项目根/分镜表.md。
 令牌：{S12.from} {S12.to} {S12.c3}（第 3 个字幕块起始帧）{C2}（第 2 章起始帧）{TOTAL}；均可带 ±整数：{S12.from-8}"""
 import json, re, sys, os
@@ -20,6 +19,6 @@ def sub(m):
     return str(v + off)
 src = open(f'{here}/script/storyboard_src.md', encoding='utf-8').read()
 out = re.sub(r'\{(S\d\d|C\d|TOTAL)(?:\.(from|to|c\d+))?([+-]\d+)?\}', sub, src)
-open(os.path.join(here, '分镜表.md'), 'w', encoding='utf-8').write(out)
+open(f'{here}/分镜表.md', 'w', encoding='utf-8').write(out)
 left = re.findall(r'\{S\d\d[^}]*\}', out)
 print('written 分镜表.md; unresolved:', left[:5])

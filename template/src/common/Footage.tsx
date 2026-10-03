@@ -1,15 +1,18 @@
 import React from 'react';
-import {AbsoluteFill, OffthreadVideo, Sequence, staticFile, useCurrentFrame} from 'remotion';
+import {AbsoluteFill, Img, OffthreadVideo, Sequence, staticFile, useCurrentFrame} from 'remotion';
 import {W, H, keyframes, DirBlur} from './lib';
 
 /**
- * 实拍/B-roll 层（可选）。素材只能来自 public/assets/<slug>/ 或 public/assets/broll/（免版权来源如 Mixkit，登记 MANIFEST.md：sha256 / 来源 URL / 许可 / 用途）。
+ * 实拍/B-roll/AI 世界帧层（可选）。素材只能来自 public/assets/<slug>/ 或 public/assets/broll/（免版权来源如 Mixkit，登记 MANIFEST.md：sha256 / 来源 URL / 许可 / 用途）。
  * spec.from/to 为成片帧号；zoom/pan/blur/opacity 关键帧 t 为成片帧号。
+ * kind:'still'（epic 配方 AI 世界帧默认形态，2026-10-03）：src 指向单张静帧（png/jpg），Ken Burns 复用 zoomKf/panKf/panYKf——
+ * 单章缓推 ≤1.12× 全章匀速或 easeInOutSine（禁往复变焦，纪律见 recipes/epic.md §5）；srcFrom 对 still 无效（忽略）。
  */
 export type FootageSpec = {
   from: number; to: number;
   src: string; // 相对 public/
-  srcFrom: number; // 素材起始帧（30fps，0 起）
+  srcFrom?: number; // 素材起始帧（30fps，0 起；kind:'still' 时忽略）
+  kind?: 'video' | 'still'; // 缺省 'video' 与旧行为逐值等价
   zoomKf?: Array<[number, number]>; panKf?: Array<[number, number]>; panYKf?: Array<[number, number]>;
   blurKf?: Array<[number, number]>; focusKf?: Array<[number, number]>; opacityKf?: Array<[number, number]>;
   originX?: number; originY?: number; flipX?: boolean;
@@ -35,7 +38,11 @@ export const FootageClip: React.FC<{spec: FootageSpec}> = ({spec}) => {
     <AbsoluteFill style={{overflow: 'hidden', opacity, background: '#0b0908'}}>
       <DirBlur bx={blur + focus} by={blur * 0.15 + focus}>
         <AbsoluteFill style={{transform: `translate(${pan}px, ${panY}px) scale(${scale})${spec.flipX ? ' scaleX(-1)' : ''}`, transformOrigin: `${spec.originX ?? 640}px ${spec.originY ?? 360}px`}}>
-          <OffthreadVideo src={staticFile(spec.src)} trimBefore={spec.srcFrom} muted style={{width: W, height: H, objectFit: 'cover', filter: spec.filter ?? 'saturate(0.95) contrast(1.05) brightness(0.9)'}} />
+          {spec.kind === 'still' ? (
+            <Img src={staticFile(spec.src)} style={{width: W, height: H, objectFit: 'cover', filter: spec.filter ?? 'saturate(0.95) contrast(1.05) brightness(0.9)'}} />
+          ) : (
+            <OffthreadVideo src={staticFile(spec.src)} trimBefore={spec.srcFrom ?? 0} muted style={{width: W, height: H, objectFit: 'cover', filter: spec.filter ?? 'saturate(0.95) contrast(1.05) brightness(0.9)'}} />
+          )}
         </AbsoluteFill>
       </DirBlur>
       {(spec.grade ?? 'dark') === 'dark' ? <DarkGrade /> : null}

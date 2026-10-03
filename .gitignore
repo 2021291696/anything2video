@@ -18,5 +18,13 @@ __pycache__/
 .DS_Store
 Thumbs.db
 *.log
+.venv/
+.render-bundle/
+.after*_stills/
+.baseline_stills/
+.verify*_bundle/
+.probe-tmp/
+dist/
 *.mimosa/
 .mimosa/
+.Codex/
