@@ -10,11 +10,12 @@ export const VIDEO = {
   slug: 'demo', // 素材目录 public/assets/<slug>/（配音 audio.wav 由 tts_build.py 写到这里）
   /**
    * 配方：'explainer' 讲解片（默认，即 a2e 现有视觉：紫调 + HUD/章节卡/流程轨 + 章节进度条）｜
-   * 'promo' 宣传片（深空黑底 #0B0B12 + 电光青，overlay/promo 组件族 + BrandBar 品牌条）。
+   * 'promo' 宣传片（深空黑底 #0B0B12 + 电光青，overlay/promo 组件族 + BrandBar 品牌条）｜
+   * 'epic' 史诗品牌片（暖纸白信息层 + 印章红/描金，overlay/epic 组件族——EpochBadge 年代角标 + PoemSubtitle 诗行字幕；无进度条无旁白字幕带）。
    * 切换的是调色板/光效（src/ui.tsx、src/fx.tsx 经 recipes/getActiveRecipe() 派生）、覆盖层集合与底条（src/Main.tsx）；镜头代码零改动。
-   * 两配方差异与选型详见 skill 的 recipes/ 文档。
+   * 各配方差异与选型详见 skill 的 recipes/ 文档。
    */
-  recipe: 'explainer' as 'explainer' | 'promo',
+  recipe: 'explainer' as 'explainer' | 'promo' | 'epic',
   /**
    * 片子语言：'zh' 中文（默认）｜'en' 英文。
    * 影响 → 配音引擎（tts_build.py 的 TTS_ENGINE=auto 也会自己按解说词判语言）、标题/章节卡是否压窄（拉丁不压）、
@@ -68,4 +69,15 @@ export const VIDEO = {
   grade: undefined as {vignette?: boolean; grain?: boolean; tint?: string; tintAlpha?: number} | undefined,
   /** 贯穿元素槽位（缺省 undefined=不挂载、DOM 零增量），见 common/Throughline.tsx：形态全片不变的独有记号 */
   throughline: undefined as {glyph: ReactNode; keyframes: Array<{from: number; x: number; y: number; s?: number; a?: number}>} | undefined,
+  /**
+   * epic 年代角标章表（仅 recipe:'epic' 读；其余配方置空=DOM 零增量）。每章一条：from/to 成片帧号（1 起含端点）、
+   * era 年代行（衬线粗体，如 "C. 40,000 BCE"）、place 地点·主题行（如 "旧石器时代 · 洞穴岩壁"）。
+   * 数据由章表定稿（recipes/epic.md §确认点②）手工填入，挂 overlay/epic 的 EpochBadge。
+   */
+  epicChapters: [] as Array<{from: number; to: number; era: string; place: string}>,
+  /**
+   * epic 收口端板数据（仅 recipe:'epic' 且收口用 EpicEndCard 时填；缺省 undefined=组件不渲染）。
+   * zh 主文 ≤12 字 / en 英文副标 / date 日期行（Fraunces 16px）。
+   */
+  epicEnd: undefined as {from: number; to: number; zh: string; en?: string; date?: string} | undefined,
 };

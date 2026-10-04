@@ -8,6 +8,8 @@
   },
   "dependencies": {
     "@remotion/cli": "4.0.507",
+    "@remotion/bundler": "4.0.507",
+    "@remotion/renderer": "4.0.507",
     "@remotion/media": "4.0.507",
     "perfect-freehand": "^1.2.3",
     "react": "19.2.8",

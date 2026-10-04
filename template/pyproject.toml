@@ -1,0 +1,8 @@
+[project]
+name = "anything2video-tools"
+version = "2.0.0"
+requires-python = ">=3.11,<3.15"
+dependencies = ["numpy>=2.2", "scipy>=1.15", "pillow>=11", "edge-tts>=7.2", "soundfile>=0.13"]
+
+[tool.uv]
+package = false

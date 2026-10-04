@@ -2,8 +2,8 @@
  * 配方体系共享类型。同一引擎支持多种视频类型：每种配方 = 一套调色板 + 一族覆盖层。
  * token 的取值锚点（explainer 逐值等于 a2e 原实测常量）见 recipes/explainer.ts；promo 规范见 recipes/promo.ts。
  */
-export type RecipeId = 'explainer' | 'promo';
-export type OverlaySet = 'explainer' | 'promo';
+export type RecipeId = 'explainer' | 'promo' | 'epic';
+export type OverlaySet = 'explainer' | 'promo' | 'epic';
 /** 配方调色板：主色系 + 语义色 + 背景系 + 光效系（光效字符串与 a2e 原值同构，只换基色）。 */
 export type RecipePalette = {
   // ---- 主色系：当前重点 / 激活 / 品牌 ----

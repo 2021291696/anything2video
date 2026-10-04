@@ -1,10 +1,14 @@
 import {VIDEO} from '../config';
 import {EXPLAINER} from './explainer';
 import {PROMO} from './promo';
+import {EPIC} from './epic';
 import type {Recipe, RecipeId} from './types';
 
 /** promo 配方直出：promo 专属组件/演示合成恒定用它，不随 config.recipe 漂移。 */
 export {PROMO} from './promo';
+
+/** epic 配方直出：epic 专属组件恒定用它，不随 config.recipe 漂移。 */
+export {EPIC} from './epic';
 
 /** 配方体系入口：ui.tsx / fx.tsx 的调色板与光效常量经 getActiveRecipe() 从这里派生；镜头代码零改动。 */
 export type {Recipe, RecipePalette, RecipeId, OverlaySet} from './types';
@@ -15,7 +19,7 @@ export const rgbOf = (hex: string): string => {
   return `${parseInt(v.slice(0, 2), 16)},${parseInt(v.slice(2, 4), 16)},${parseInt(v.slice(4, 6), 16)}`;
 };
 
-export const RECIPES: Record<RecipeId, Recipe> = {explainer: EXPLAINER, promo: PROMO};
+export const RECIPES: Record<RecipeId, Recipe> = {explainer: EXPLAINER, promo: PROMO, epic: EPIC};
 
 /** 当前生效配方（config.VIDEO.recipe 切换；explainer 为默认，取值与 a2e 原常量逐值相等）。
  *  发现 10（accentFrom 断言）：palette.accent 必须落在配方声明的合法主色集合内（ui.tsx/fx.tsx 在模块加载期

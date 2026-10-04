@@ -31,4 +31,4 @@ vendored 文档内部沿用了 a2e 原生的相对路径，在本仓中按下表
 | `examples/contrast/` | `reference/explainer/contrast-frames/` |
 | `reference/X.md` | `reference/explainer/X.md`（同目录） |
 | `template/…` | 本仓 `template/…`（与 a2e 模板同构） |
-| tmux pane 口径 | 不采用——本仓一律走 ZCode workflow 派单，见 `../workflow-orchestration.md` |
+| tmux pane / ZCode workflow 口径 | 仅在宿主实际支持时使用；否则顺序完成全部工序，见 `../production-contract.md` |

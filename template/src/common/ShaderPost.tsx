@@ -1,14 +1,15 @@
 import React, {useLayoutEffect, useRef} from 'react';
 import {useCurrentFrame, useVideoConfig} from 'remotion';
 
-// WebGL 全局质感层（shader-val 验证轮通过后入库）：胶片颗粒 + 扫描线 + 暗角，一层出三种质感。
-// 验证口径：像素 = f(uv, u_seed=frame) 纯函数——同帧两次渲染逐字节一致（确定性 PASS）；
-// 逐帧成本 +0–30ms（远低于 500ms 塌方线）；深底场景已验、浅底未验。
+// WebGL 全局质感层（2026-10-02 shader-val 验证轮通过后入库）：胶片颗粒 + 扫描线 + 暗角，一层出三种质感。
+// 验证数据与边界见 科普视频/shader-val/验证结论.md（确定性逐字节 PASS、逐帧成本 +0–30ms、深底已验/浅底未验）。
+//
 // 用法契约：
-// - 挂在内容之上、字幕/常驻文字层之下（质感不压文字）；
-// - useLayoutEffect 同步绘制（截图前完成）+ preserveDrawingBuffer（截图时 canvas 不被清）；
+// - 挂在内容之上、字幕/常驻层之下（质感不压文字）；
+// - 像素 = f(uv, u_seed=frame) 纯函数：无随机数源，逐帧确定性（同帧两跑逐字节一致）；
+// - useLayoutEffect 同步绘制 + preserveDrawingBuffer（截图时 canvas 不被清）；
 // - CSS mixBlendMode:'overlay'：0.5 中性，色相零位移；深底已验，浅底配方启用前先渲 2 帧小样目检；
-// - 失败即抛：WebGL 上下文拿不到直接报错，不静默降级——渲染机 GL 环境必须验证过（换渲染机重跑验证）。
+// - 失败即抛：WebGL 上下文拿不到直接报错，不静默降级——渲染机 GL 环境必须验证过（换渲染机重跑 shader-val 验证）。
 
 const VERT = `
 attribute vec2 a_pos;
@@ -72,7 +73,7 @@ export const ShaderPost: React.FC<{
     if (!cv) return;
     if (!glRef.current) {
       const gl = cv.getContext('webgl', {preserveDrawingBuffer: true, antialias: false, depth: false});
-      if (!gl) throw new Error('ShaderPost: WebGL 上下文创建失败（渲染机 GL 不可用，勿静默降级）');
+      if (!gl) throw new Error('ShaderPost: WebGL 上下文创建失败（渲染机 GL 不可用，见 shader-val 验证结论）');
       const compile = (type: number, src: string) => {
         const sh = gl.createShader(type)!;
         gl.shaderSource(sh, src);

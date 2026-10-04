@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<!--
+  BGM Bake-off 试听页模板（anything2video / reference/bgm-bakeoff.md）
+  用法：拷进 <项目根>/bgm_bakeoff/，mp3 与本文件同目录；每组一个 <h2> 方向块；
+  每曲复制一张「卡片」块，六件填全（曲名/tag/时长/作者·ID/听感画像/落点预判+风险/lic）。
+  tag 三种：<span class="tag local">本机现成</span> / <span class="tag">新下</span>（默认无 tag 即新下）/ 现曲对照用 class="tag current"。
+-->
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{片名}} BGM Bake-off</title>
+<style>
+  :root { --bg:#0B0B12; --panel:#14141f; --line:#26263a; --gold:#C9A86A; --txt:#e8e6f0; --dim:#8a87a0; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--txt); font-family:"Segoe UI","Microsoft YaHei",sans-serif; padding:48px 20px 80px; max-width:880px; margin:0 auto; }
+  h1 { font-size:26px; font-weight:600; letter-spacing:.5px; }
+  h1 .gold { color:var(--gold); }
+  .sub { color:var(--dim); font-size:14px; margin:10px 0 8px; line-height:1.7; }
+  .tip { border:1px solid var(--line); border-left:3px solid var(--gold); background:var(--panel); padding:12px 16px; font-size:13px; color:var(--dim); line-height:1.8; margin:18px 0 36px; }
+  .tip b { color:var(--txt); font-weight:600; }
+  h2 { font-size:15px; font-weight:600; color:var(--gold); letter-spacing:2px; margin:44px 0 6px; text-transform:uppercase; }
+  .h2sub { color:var(--dim); font-size:13px; margin-bottom:14px; }
+  .card { border:1px solid var(--line); background:var(--panel); padding:18px 20px; margin-bottom:14px; }
+  .card:hover { border-color:#3a3a55; }
+  .row1 { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+  .t { font-size:17px; font-weight:600; }
+  .tag { font-size:11px; padding:2px 8px; border:1px solid var(--gold); color:var(--gold); letter-spacing:1px; }
+  .tag.local { border-color:#5a7a5a; color:#8fc98f; }
+  .tag.current { border-color:#8a4a4a; color:#d98a8a; }
+  .dur { color:var(--dim); font-size:12px; margin-left:auto; }
+  .who { color:var(--dim); font-size:12px; margin-top:2px; }
+  .desc { font-size:13px; line-height:1.8; color:#c5c2d6; margin:10px 0 4px; }
+  .fit { font-size:12px; color:var(--dim); line-height:1.7; }
+  .fit b { color:var(--txt); font-weight:600; }
+  audio { width:100%; margin-top:12px; height:36px; }
+  .lic { font-size:11px; color:#6b6884; margin-top:6px; }
+</style>
+</head>
+<body>
+<h1>{{片名}} <span class="gold">BGM Bake-off</span></h1>
+<p class="sub">{{一句目标气质：暗/亮、克制/外放、温度——从片子视觉与叙事推导}}</p>
+<div class="tip"><b>怎么听：</b>重点听两段——① 前 20 秒（片头钩子段：低频稳不稳、欢不欢）；② 最后 10 秒（CTA/收尾段：收得干不干净）。同时间只放一首，点下一首会自动停上一首。圈中 2–3 首告诉我，我出贴片版定稿。</div>
+
+<h2>方向 A · {{方向名}}</h2>
+<p class="h2sub">{{一句方向定义}}</p>
+
+<!-- 卡片：每曲复制此块 -->
+<div class="card">
+  <div class="row1"><span class="t">{{曲名}}</span><span class="dur">{{m:ss}}</span></div>
+  <div class="who">{{作者}} · {{来源}} #{{ID}}</div>
+  <div class="desc">{{听感画像一句}}</div>
+  <div class="fit"><b>预期：</b>{{落点预判}}；<b>风险：</b>{{风险一句}}</div>
+  <audio controls preload="none" src="{{文件名}}.mp3"></audio>
+  <div class="lic">{{许可证行：Mixkit Free License 可商用免署名 / CC-BY 4.0 发布需署名}}</div>
+</div>
+
+<script>
+document.addEventListener('play', e => {
+  document.querySelectorAll('audio').forEach(a => { if (a !== e.target) a.pause(); });
+}, true);
+</script>
+</body>
+</html>

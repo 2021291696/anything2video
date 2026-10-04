@@ -1,36 +1,30 @@
 # 配方：explainer（讲解片）
 
-**定位一句话**：给一个技术/知识主题，产出黑底 MG、配音字幕、章节进度条的科普讲解视频——**本配方就是 a2e（anything2explainer）的现有体系**，本文档不复制其任何规范，只声明指向与接线；要讲产品/服务请用 `promo`。
+面向知识主题制作带旁白、字幕和因果演示的教学视频。默认沿用 anything2explainer 的 MG 体系；画幅、宿主、授权、素材与音频规则以本包 `SKILL.md` 和 `reference/production-contract.md` 为准。
 
-## 1. 权威与指向
+## 随包规范
 
-执行 explainer 配方时，规范与流程的**唯一权威是 a2e**，按其 `SKILL.md` 的「硬性原则 / 四个确认点 / 流程」三节照做：
+规范快照在 `reference/explainer/`，无需另装外部skill。上游署名见该目录README。依次阅读以下文件（均相对此目录）：
 
-- a2e 正本（随本仓 vendored）：`reference/explainer/`——下表中的 `SKILL.md` 与 `reference/X.md` 分别对应 `reference/explainer/SKILL.md` 与 `reference/explainer/X.md`（本仓另带 a2e 自身的 `lessons.md` 与样张 `sample-rag/`、`contrast-frames/`）。
-- 质量标尺：先看 `reference/explainer/sample-rag/frames/` 的参考帧与 overview sheet，再开工（a2e SKILL.md 的要求，这里原样生效）。
+- `style-guide.md`：调色板、字体、图元与版式。
+- `motion-vocabulary.md`：入场、强调、离场、运镜与衔接。
+- `composition-and-light.md`：主体、光照、纵深与QC。
+- `narration-storyboard.md`：稿件、配音、字幕与分镜。
+- 调研时读 `research-brief.md`；派单时按需读 `agent-build-rules.md`、`agent-qc-rules.md` 和 `prompts.md`。
+- `lessons.md` 按风险查阅。质量参考在 `sample-rag/` 和 `contrast-frames/`。
 
-### a2e reference 引用表（何时读哪份）
+历史快照中的tmux、本机路径、独立确认点与画幅不覆盖统一契约。竖屏教学需要重新构图。
 
-| a2e 文档 | 作用 | 何时读 |
-|---|---|---|
-| `SKILL.md` | 硬性原则 6 条、四个确认点、阶段 0–8 流程、关键文件表、质量标尺 | 全程主纲领，开工前通读 |
-| `reference/style-guide.md` | 画布安全区、调色板、字体表、图元目录、版式规律 | 阶段 0/4；构建前必读 |
-| `reference/motion-vocabulary.md` | 入场/强调/光效/离场/运镜/节拍/衔接的公式与帧数，闪烁白名单规则 | 写分镜与镜头代码时 |
-| `reference/composition-and-light.md` | 主体尺寸三档、光跟主角、高光时刻编排、纵深、QC 量化判据 | style-guide 之后必读；QC 按 §6 |
-| `reference/narration-storyboard.md` | 解说词写法、配音参数、字幕切块、分镜令牌格式、镜头设计模式表 | 阶段 1–3 |
-| `reference/research-brief.md` | 研究员 prompt 模板与事实规则 | 阶段 1 派研究员时 |
-| `reference/agent-build-rules.md` / `agent-qc-rules.md` | 构建 / QC agent 的派单协议 | 派单时随单下发 |
-| `reference/prompts.md` | 研究/构建/QC/修复/复验/终检六种 prompt 模板 | 派单 |
-| `reference/lessons.md` | 踩坑与根因（磁盘、离场归零、穿字幕带、glitch 错峰…） | 派单前扫一遍；收尾把新教训写回它 |
+## 教学设计
 
-**不复制原则**：a2e 文档一概不拷进配方（正本已 vendored 于 `reference/explainer/` 单一出处，改动只发生在那里）。本配方与本文档只允许引用（上表路径），explainer 的一切判据以 a2e 原文为准。
+先定一个观众看完能完成的任务。每个镜头记录purpose与action，让请求、文件或对象发生能解释知识的变化；字幕、指示线与动作表达同一因果。术语列表、标题入场和装饰循环不能代替机制演示。
 
-## 2. 与本 skill 模板的接线（config.recipe）
+黑底MG是默认值，主题需要时可以使用明暗章节或审核过的材质底。精确文字、数字与图解由代码绘制。素材来源、完整提示词、许可、哈希与披露按统一契约登记。
 
-- `template/src/config.ts` 声明 `recipe` 字段，**`'explainer'` 是默认值**：主会话看到 `recipe: 'explainer'` → 打开本文档 → 按第 1 节引用表走 a2e 体系；本 skill 的 `reference/brand-assets.md` 与 `reference/promo-style-guide.md`（及 `recipes/promo.md`）在 explainer 配方下**不参与**——品牌帽/品牌条/端板都是 promo 配方的覆盖层，explainer 用的是 a2e 自带的 HUD/进度条/章节卡；但 **`reference/workflow-orchestration.md` 对所有配方生效**——本入口一律走 ZCode workflow 派单（a2e 原生的 tmux pane 口径不采用），explainer 也按它派单。
-- 本 skill 的 `template/` 与 a2e `template/` 同构：`src/config.ts` / `src/ui.tsx` / `src/fx.tsx` / `src/overlay/` / `src/shots/Gn/` / `scripts/`（tts_build.py、preview.sh、render.sh、still.sh、frame_metrics.py…）同名同职责，a2e `SKILL.md` §关键文件表对模板内路径同样成立。
-- 本配方对模板**零新增**：不需要改任何覆盖层；模板里 a2e 没有的部分（`recipe` 字段本身）只服务配方选择，不改变 explainer 的任何行为。
+## 模板接线
 
-## 3. 相对基准的差异声明
+`template/src/config.ts` 的 `recipe: 'explainer'` 选择对应覆盖层。模板图元与音频脚本可复用；须挂载真实镜头组件并核对覆盖。工程在skill外，Node初始化与渲染入口见主SKILL。结构化分镜1起含端点，Remotion0起，只转换一次。类型检查、分镜合同与实渲染分别验收。
 
-**无差异。** 四个确认点、八阶段流程、QC 判据全按 a2e 原文执行。本文档存在的意义只有两条：让 `config.recipe: 'explainer'` 有据可查；防止未来新配方把 explainer 的规则散抄进自己（要引用，走第 1 节的表）。
+## 审定与交付
+
+按主SKILL走完整流程。用户已授权主控决定的稿件、音色和样片，由主控审定并记录；有子代理才并行，无子代理顺序完成。先验开场、复杂中段与结尾，再完成工程、教学、反向三轮审片。交付成片、工程、字幕、声音、封面、素材与事实来源及实测规格。镜头是否解释清楚必须通过实际片段判断。
