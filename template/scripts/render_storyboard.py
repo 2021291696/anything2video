@@ -20,6 +20,6 @@ def sub(m):
     return str(v + off)
 src = open(f'{here}/script/storyboard_src.md', encoding='utf-8').read()
 out = re.sub(r'\{(S\d\d|C\d|TOTAL)(?:\.(from|to|c\d+))?([+-]\d+)?\}', sub, src)
-open(f'{here}/分镜表.md', 'w', encoding='utf-8').write(out)
+Path(here, '分镜表.md').write_text(out, encoding='utf-8')
 left = re.findall(r'\{S\d\d[^}]*\}', out)
 print('written 分镜表.md; unresolved:', left[:5])
