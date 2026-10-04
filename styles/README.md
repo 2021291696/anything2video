@@ -1,30 +1,38 @@
-# styles/ — 已验证风格库正本
+# styles/ 风格库正本
 
-每个子目录 = 一个**过验证的风格 SKU**：图元库正本 + SPEC.md 硬契约 + sample.jpg 回归样张（+ 纹理资产）。
-目标：**同风格第二部片从拷库开工，不重新发明**——用户选风格如同点菜单，出片可预期。
+每个子目录提供图元库、`SPEC.md` 风格约定、`sample.jpg` 静态回归样张和适用资产。目标是复用已有笔触、材质和组件，同时为本片重新解决内容、画幅、动作与声音。样张存在和风格组件可用，不等于新视频已通过完整验证。
 
 ## 当前 SKU
-| 目录 | 风格 | 正本源工程 | 纹理/字体 |
+
+| 目录 | 风格 | 历史源工程/样片 | 纹理或字体 |
 |---|---|---|---|
 | `sand/` | 灯箱沙画 | usa250-sand | grain.png |
 | `chalk/` | 粉笔黑板 | chalk-math | dust.png |
 | `blueprint/` | 工程蓝图 | blueprint-bridge | 无 |
 | `neon/` | 霓虹夜城 | neon-city | 无 |
-| `pixel-arcade/` | 像素街机 | style-samples（样片《午夜游戏厅》） | PressStart2P ttf（OFL） |
-| `paper-collage/` | 剪纸拼贴 | style-samples（样片《拼贴世界》） | 无 |
-| `swiss-print/` | 瑞士版式 | style-samples（样片《少即是多》） | 无（系统字体栈） |
-| `crt-terminal/` | CRT 终端 | style-samples（样片《终端唤醒》） | 无（系统字体栈） |
+| `pixel-arcade/` | 像素街机 | style-samples《午夜游戏厅》 | PressStart2P ttf |
+| `paper-collage/` | 剪纸拼贴 | style-samples《拼贴世界》 | 无 |
+| `swiss-print/` | 瑞士版式 | style-samples《少即是多》 | 系统字体栈 |
+| `crt-terminal/` | CRT终端 | style-samples《终端唤醒》 | 系统字体栈 |
 
-（`ink-tea` 水墨未过关，不入库；其工程保留作笔触引擎参考。后四风格以**用户确认的 12s 样片**为验证基准入库（2026-09-29）；其首部正片收线后如有正本修订，走升级纪律。）
+`ink-tea` 水墨在历史记录中未过关，不作为稳定SKU。后四风格历史上以用户确认的12秒小样入库；本包保留静态样张与组件，未附等价的完整运动/声音审查证据，不能称为当前版本整片认证。每种字体和纹理检查实际随附许可，缺少许可时补证据或换资产。
 
-## 同风格复用流程（第二部片起）
-1. 从 `styles/<风格>/` 拷图元库 + 纹理进新项目 `src/` 与 `public/assets/<slug>/`；
-2. 按 SPEC.md「复用适配点」改 `staticFile` 的 slug；
-3. **开工样张回归**：渲 2 帧与 `sample.jpg` 并排三查——色板 token / 笔触质感 / 版式锚点，漂移=缺陷（不比内容，只比风格语言）。首渲旁路：`new_project.sh` 已保留模板 node_modules（含 `.remotion/chrome-headless-shell`）；若从旧项目开工且首渲挂起——从任一已有项目拷 `node_modules/.remotion/chrome-headless-shell` 过去，或设 `BROWSER_EXECUTABLE` 指向本机 Chrome（lessons 09-27）；
-4. 建组任务书内嵌 SPEC 的锁死项（调色板/笔触参数/版式），QC 按该风格豁免档执行。
+## 同风格复用
 
-## 新风格入库流程（首部片）
-图纸先行（custom.md §1）→ 成片收线（frame_metrics 无高无中 + 用户确认样片）→ 拷图元库/纹理进 `styles/<新风格>/` → 写 SPEC.md（从库文件提取色 token 与参数，逐值如实）→ 选 1 张风格签名帧命名 `sample.jpg` → style-ledger.md 记行 → 收尾两步：跑 `template/scripts/styles_check.mjs` 必须 PASS（资产存在性 + icons 正本对拍）；许可登记——CC-BY 系图标必须登记作者名与作者链接，随交付 MANIFEST 披露。
+1. 用skill的 `scripts/init.mjs` 在包外建立空工程；进入工程执行 `npm install`、`uv sync`、`npx remotion browser ensure`。可显式设置 `BROWSER_EXECUTABLE` 使用可用浏览器。旧 `new_project.sh`、拷贝其他项目 `node_modules` 或浏览器缓存不作为依赖安装规范。
+2. 完整读所选 `SPEC.md`，选需用图元和资产复制到项目，修正导入与 `staticFile` 路径。登记纹理、字体、图标的来源、许可、完整sha256及用途。
+3. 按本项目width/height/fps重排，保留风格语言；固定横屏坐标、旧探针阈值和旧效果配额不能覆盖 `reference/production-contract.md`。中文、长命令和平台安全区单独核定。
+4. 先渲两张签名帧与sample并排检查色板、笔触和构图，再渲开场、复杂中段、结尾的实际运动片段。静态回归只证明已比对的静态项；连续动作、字幕和声音另外审查。
+5. 组任务书写所选图元API、需要保持的风格参数和允许变化。风格有意使用阶梯、扫描线或静止时，记录范围并选择适合的探针；豁免不自动等于通过。
 
-## 升级纪律
-图元库有改动（新图元/参数调整）= 正本升级：改 `styles/` 文件 + SPEC 同步 + 台账记行；项目内临时改动不回写，除非验证过。
+可在技能根运行 `node template/scripts/styles_check.mjs` 检查资产存在性和icons正本关系。这个检查不能证明字形许可、动画正确、教学可读或整片好看。
+
+## 新风格入库
+
+同一段内容先做有区别的视觉小样，选择能说明信息的方案并固定图元库。完成真实制作后保存源码、风格token、材质参数、依赖版本、许可和验证范围；选一张签名帧为sample，SPEC记录画幅适配方法、已知取舍及需要重验的项目。
+
+入库条件是可复用实现与可追溯证据，不是仅有一张好看的截图。记录检查媒体和源码哈希、实际工具/审片者及 `passed/failed/not_performed`；缺少完整审查时写明“试验风格”或“仅静态回归”，不夸大覆盖范围。CC-BY资产附作者与链接，随交付清单披露；MIT仓库许可不能替代字体、图标和纹理许可。
+
+## 升级
+
+风格库改动同步更新SPEC，保存同内容前后对比与验证范围，再写台账。项目内临时实验只有经过验证才回写长期库。更新token或图元时回归已有签名帧和相关运动片段，确认修复没有改变不相关风格特征；不要以“新片必须五项全变”为升级理由。

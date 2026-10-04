@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """把 fin_frames/f_%04d.jpg 每 step 帧抽一张，生成缩略图网格 HTML（QC 通读用）。用法：sheet.py <frames_dir> <out.html> [step=60] [cols=6]"""
 import sys, os, glob, json, html
+from pathlib import Path
 d, out = sys.argv[1], sys.argv[2]
 step = int(sys.argv[3]) if len(sys.argv) > 3 else 60
 cols = int(sys.argv[4]) if len(sys.argv) > 4 else 6

@@ -7,3 +7,7 @@ public/assets/*/audio.wav
 audio/cache/
 __pycache__/
 scripts/.probe-tmp/
+.venv/
+.render-bundle-*/
+*.render.lock
+.render-*

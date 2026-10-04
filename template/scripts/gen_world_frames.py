@@ -1,44 +1,35 @@
 #!/usr/bin/env python3
 """
-gen_world_frames.py —— epic 配方 AI 材质世界底：提示词规格 / 通道生成 / MANIFEST 登记
+Epic world-frame specifications, generation and provenance registration.
 
-用法（--project 缺省 = 当前目录）:
-  python scripts/gen_world_frames.py --list-materials
-  python scripts/gen_world_frames.py --generate-prompts            # timeline.json 章表 -> script/world_prompts.json
-  python scripts/gen_world_frames.py --generate [--only 0,3,5] [--take t1]
-                                                                   # 有图像通道时直出 PNG 并自动登记 MANIFEST
-  python scripts/gen_world_frames.py --register <file...> --chapter 0 --source "AI 生成 · model=xxx"
-                                                                   # 手工生成的产物补登记 MANIFEST
+--generate-prompts reads timeline chapters and project.json native aspect.
+--generate [--only 0,3] [--take t1] requires A2V_IMAGE_API_BASE, API_KEY,
+MODEL and optionally PROVIDER (openai/minimax), SIZE/ASPECT and ENDPOINT.
+OpenAI sizes follow supported orientation presets; MiniMax uses native aspect.
+--register FILE requires --source, --license, --model, --prompt (including
+negatives), --seed (or n/a), --disclosure. Files must be inside the project.
+--overwrite explicitly replaces specifications or same-take candidates.
 
-图像通道环境变量:
-  A2V_IMAGE_PROVIDER    openai（缺省，OpenAI 兼容 /images/generations）| minimax（原生 /image_generation + image_urls）
-  A2V_IMAGE_API_BASE   如 https://api.minimaxi.com/v1（必填才走 --generate）
-  A2V_IMAGE_API_KEY    密钥（必填）
-  A2V_IMAGE_MODEL      模型名（必填，如 gpt-image-2 / image-01）
-  A2V_IMAGE_SIZE       openai 尺寸，缺省 1920x1080；A2V_IMAGE_ASPECT minimax 画幅，缺省 16:9
-  A2V_IMAGE_ENDPOINT   缺省按 provider（/images/generations 或 /image_generation）
-
-纪律（对齐 reference/ai-frame-sop.md）:
-  - AI 只出世界底；信息层一律代码绘制；负向禁字句逐条保留。
-  - 无通道时 --generate 拒跑并明说（诚实降级），产出停留在 world_prompts.json 提示词规格。
-  - 每个生成文件自动写 MANIFEST.md 行（sha256/来源/许可/用途 + model/prompt/seed/take/qc）；
-    qc 登记为 pending，伪影三查（SOP §4）仍须人工过。
+MANIFEST.json keeps full SHA256 and the actual submitted prompt. Registration
+sets all AI QC checks to not_performed; it never certifies image quality.
 """
 
 import argparse
 import base64
 import hashlib
 import ipaddress
+import io
 import json
+import math
 import os
+import re
 import socket
 import ssl
 import sys
-import time
-import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
+from PIL import Image
 
 # 15 大材质世界注册表（与 reference/materials.md 矩阵逐条对齐；M 编号一致）
 MATERIAL_REGISTRY = {
@@ -134,7 +125,7 @@ MATERIAL_REGISTRY = {
     },
 }
 
-MANIFEST_HEADER = "# MANIFEST · 外部素材登记\n\n| 文件 | sha256（前 32 位） | 来源 URL | 许可 | 用途 |\n|---|---|---|---|---|\n"
+MANIFEST_HEADER = "# MANIFEST · 外部素材登记\n\n| 文件 | sha256 | 来源 | 许可 | 用途 |\n|---|---|---|---|---|\n"
 
 # Windows Python 3.14（OpenSSL 3.5+）默认 TLS1.3 ClientHello 携带 ML-KEM 后量子密钥交换，
 # 会被部分链路中间盒直接重置（SSL UNEXPECTED_EOF；curl 走 schannel 不受影响）。
@@ -143,8 +134,40 @@ _TLS_CTX = ssl.create_default_context()
 _TLS_CTX.maximum_version = ssl.TLSVersion.TLSv1_2
 
 
-def sha32(data: bytes) -> str:
-    return hashlib.sha256(data).hexdigest()[:32]
+def sha256(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def guard(root: Path, path: Path) -> Path:
+    root, target = root.resolve(), path.resolve()
+    if target != root and root not in target.parents:
+        raise ValueError(f'Path escapes the project: {target}')
+    return target
+
+
+def project_config(root: Path) -> dict:
+    config = json.loads(guard(root, root / 'project.json').read_text(encoding='utf-8'))
+    if not isinstance(config, dict) or not isinstance(config.get('slug'), str) or not re.fullmatch(r'[A-Za-z0-9_-]+', config['slug']):
+        raise ValueError('project.json requires a safe slug')
+    if any(isinstance(config.get(key), bool) or not isinstance(config.get(key), int) or config[key] <= 0 for key in ('width', 'height')):
+        raise ValueError('project.width/height must be positive integers')
+    return config
+
+
+def native_aspect(config: dict) -> str:
+    divisor = math.gcd(config['width'], config['height'])
+    return f"{config['width'] // divisor}:{config['height'] // divisor}"
+
+
+def native_prompt(prompt: str, aspect: str) -> str:
+    return re.sub(r'\b16\s*:\s*9\b,?\s*', '', prompt).strip() + f' Native {aspect} composition.'
+
+
+def safe_write(root: Path, path: Path, data: bytes, overwrite=False) -> None:
+    target = guard(root, path)
+    guard(root, target.parent).mkdir(parents=True, exist_ok=True)
+    with target.open('wb' if overwrite else 'xb') as output:
+        output.write(data)
 
 
 def norm(p: Path) -> str:
@@ -154,6 +177,8 @@ def norm(p: Path) -> str:
 def assert_safe_url(url: str) -> str:
     """通道地址边界校验：仅 http(s)、拒私网/环回/链路本地/保留地址（防 SSRF）。"""
     p = urllib.parse.urlparse(url)
+    if p.username or p.password:
+        raise ValueError('Credentials must not appear in a provider URL')
     if p.scheme not in ("http", "https"):
         sys.exit(f"拒绝非 http(s) 通道地址: {url}")
     host = p.hostname or ""
@@ -187,21 +212,34 @@ def post_json(url: str, payload: dict, key: str, timeout: int = 180) -> dict:
         return json.loads(resp.read().decode("utf-8"))
 
 
-def manifest_append(project_root: Path, row: str) -> None:
-    mf = project_root / "MANIFEST.md"
-    if not mf.exists():
-        mf.write_text(MANIFEST_HEADER, encoding="utf-8")
-    with mf.open("a", encoding="utf-8") as f:
-        f.write(row.rstrip("\n") + "\n")
+def manifest_append(root: Path, asset: dict) -> None:
+    json_path, markdown_path = guard(root, root / 'MANIFEST.json'), guard(root, root / 'MANIFEST.md')
+    data = json.loads(json_path.read_text(encoding='utf-8')) if json_path.exists() else {'schemaVersion': 1, 'assets': []}
+    if not isinstance(data, dict) or data.get('schemaVersion') != 1 or not isinstance(data.get('assets'), list) or any(not isinstance(entry, dict) for entry in data['assets']):
+        raise ValueError('MANIFEST.json must contain an assets array')
+    data['assets'] = [entry for entry in data['assets'] if entry.get('path') != asset['path']] + [asset]
+    json_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    def cell(value):
+        return str(value).replace('|', '\\|').replace('\n', ' ')
+    row = '| ' + ' | '.join(cell(asset[key]) for key in ('path', 'sha256', 'source', 'license', 'usage')) + ' |\n'
+    with markdown_path.open('a', encoding='utf-8') as output:
+        if markdown_path.stat().st_size == 0:
+            output.write(MANIFEST_HEADER)
+        output.write(row)
 
 
-def ai_manifest_row(relpath: str, digest: str, model: str, chapter: dict, mat: dict,
-                    take: str, seed: str) -> str:
-    usage = (f"epic 世界底 · ch{chapter.get('n', '?')} {chapter.get('title', '')} · take {take} · "
-             f"seed {seed} · prompt：\"{mat['prompt']}\" · negative：\"{mat['negative']}\" · "
-             f"qc：pending（伪影三查待人工，SOP §4）")
-    return (f"| {relpath} | {digest} | AI 生成 · model={model} | "
-            f"生成式素材（AI 世界帧例外③，交付说明须披露） | {usage} |")
+def ai_asset(root, path, blob, source, license_text, usage, model, prompt, seed, disclosure, take):
+    for label, value in [('source', source), ('license', license_text), ('usage', usage), ('model', model), ('prompt', prompt), ('disclosure', disclosure)]:
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(f'AI registration requires {label}')
+    if isinstance(seed, bool) or not ((isinstance(seed, str) and seed.strip()) or (isinstance(seed, (int, float)) and math.isfinite(seed))):
+        raise ValueError('AI registration requires seed (use n/a when unavailable)')
+    if model.strip().lower() in ('unspecified', 'unknown', 'n/a'):
+        raise ValueError('AI registration requires the actual model identifier')
+    return {'path': norm(guard(root, path).relative_to(root.resolve())), 'sha256': sha256(blob),
+            'source': source, 'license': license_text, 'usage': usage, 'ai': True, 'model': model,
+            'prompt': prompt, 'seed': seed, 'disclosure': disclosure, 'take': take,
+            'qc': {'textFree': 'not_performed', 'geometry': 'not_performed', 'continuity': 'not_performed'}}
 
 
 def list_materials() -> None:
@@ -211,33 +249,34 @@ def list_materials() -> None:
     for k, v in MATERIAL_REGISTRY.items():
         print(f"[{v['id']}] {k:24} -> {v['name']}")
         print(f"     Lum={v['lum']}  R-B={v['rb']}  Vignette={v['vignette']}  Grade={v['grade']}")
-    print("\n章表（timeline.json chapters[]）可用 material 键逐章指定；未指定的章回退 cave_stone 并告警。")
+    print('\nEach timeline chapter requires an explicit material key; missing/unknown materials are rejected.')
 
 
 def load_chapters(project_root: Path) -> list:
-    timeline = project_root / "script" / "timeline.json"
+    timeline = guard(project_root, project_root / 'script' / 'timeline.json')
     if not timeline.exists():
         sys.exit(f"Error: {timeline} 不存在。先跑 chapter_timeline.py 产出 timeline.json。")
     with timeline.open("r", encoding="utf-8") as f:
         data = json.load(f)
-    return data.get("chapters", [])
+    if not isinstance(data, dict) or not isinstance(data.get('chapters'), list) or not data['chapters']:
+        raise ValueError('timeline.json requires a nonempty chapters array')
+    return data['chapters']
 
 
 def resolve_material(ch: dict, idx: int) -> tuple:
+    if not isinstance(ch, dict):
+        raise ValueError(f'Chapter {idx} must be an object')
     key = ch.get("material")
-    if key and key in MATERIAL_REGISTRY:
+    if isinstance(key, str) and key in MATERIAL_REGISTRY:
         return key, MATERIAL_REGISTRY[key]
-    if key:
-        print(f"  ⚠ ch{idx}: material=\"{key}\" 不在注册表，回退 cave_stone（可用键见 --list-materials）")
-    else:
-        print(f"  ⚠ ch{idx}: 章表未指定 material，回退 cave_stone（建议在 chapters.json 逐章写 material 键）")
-    return "cave_stone", MATERIAL_REGISTRY["cave_stone"]
+    raise ValueError(f'Chapter {idx}: select an explicit registered material; got {key!r} (see --list-materials)')
 
 
-def generate_prompts(project_root: Path) -> None:
+def generate_prompts(project_root: Path, overwrite=False) -> None:
     chapters = load_chapters(project_root)
-    slug = project_root.name
-    out_file = project_root / "script" / "world_prompts.json"
+    config = project_config(project_root)
+    slug, aspect = config['slug'], native_aspect(config)
+    out_file = guard(project_root, project_root / 'script' / 'world_prompts.json')
     output = []
     for idx, ch in enumerate(chapters):
         key, mat = resolve_material(ch, idx)
@@ -249,7 +288,8 @@ def generate_prompts(project_root: Path) -> None:
             "place": ch.get("place", ""),
             "material": key,
             "materialId": mat["id"],
-            "prompt": mat["prompt"],
+            'prompt': native_prompt(mat['prompt'], aspect),
+            'aspectRatio': aspect,
             "negativePrompt": mat["negative"],
             "targetFile": f"assets/{slug}/footage/ch{idx:02d}_{key}.png",
             "recommendedLum": mat["lum"],
@@ -257,132 +297,138 @@ def generate_prompts(project_root: Path) -> None:
             "recommendedVignette": mat["vignette"],
             "recommendedGrade": mat["grade"],
         })
-    out_file.parent.mkdir(parents=True, exist_ok=True)
-    with out_file.open("w", encoding="utf-8") as f:
-        json.dump(output, f, ensure_ascii=False, indent=2)
+    safe_write(project_root, out_file, (json.dumps(output, ensure_ascii=False, indent=2) + '\n').encode('utf-8'), overwrite)
     print(f"提示词规格已产出: {norm(out_file)}（{len(output)} 章）")
     print("下一步：有图像通道跑 --generate；无通道按 reference/ai-frame-sop.md 手工生成后 --register 登记。")
 
 
-def generate_images(project_root: Path, only: list, take: str) -> None:
-    base = os.environ.get("A2V_IMAGE_API_BASE", "").rstrip("/")
-    key = os.environ.get("A2V_IMAGE_API_KEY", "")
-    model = os.environ.get("A2V_IMAGE_MODEL", "")
+def generate_images(project_root: Path, only: list, take: str, overwrite=False) -> None:
+    config = project_config(project_root)
+    aspect = native_aspect(config)
+    if not re.fullmatch(r'[A-Za-z0-9_-]+', take):
+        raise ValueError('take must contain only letters, digits, _ and -')
+    provider = os.environ.get('A2V_IMAGE_PROVIDER', 'openai').lower()
+    if provider not in ('openai', 'minimax'):
+        raise ValueError('Supported providers: openai / minimax')
+    base, key, model = (os.environ.get(name, '').strip() for name in ('A2V_IMAGE_API_BASE', 'A2V_IMAGE_API_KEY', 'A2V_IMAGE_MODEL'))
     if not (base and key and model):
-        sys.exit(
-            "无图像生成通道（A2V_IMAGE_API_BASE / A2V_IMAGE_API_KEY / A2V_IMAGE_MODEL 未配齐）。\n"
-            "诚实降级：本命令不跑。当前产物停留在 world_prompts.json 提示词规格；\n"
-            "手工生成后用 --register 登记 MANIFEST，或配好通道再来。通道纪律见 reference/ai-frame-sop.md。"
-        )
-    provider = os.environ.get("A2V_IMAGE_PROVIDER", "openai").lower()
-    if provider == "minimax":
-        endpoint = os.environ.get("A2V_IMAGE_ENDPOINT", "/image_generation")
-        size = os.environ.get("A2V_IMAGE_ASPECT", "16:9")
-    else:
-        endpoint = os.environ.get("A2V_IMAGE_ENDPOINT", "/images/generations")
-        size = os.environ.get("A2V_IMAGE_SIZE", "1920x1080")
-    url = base + endpoint
-
-    specs_file = project_root / "script" / "world_prompts.json"
+        raise ValueError('No configured image provider; keep prompt specifications and generate/register manually.')
+    endpoint = os.environ.get('A2V_IMAGE_ENDPOINT', '/image_generation' if provider == 'minimax' else '/images/generations')
+    url = base.rstrip('/') + endpoint
+    parsed_url = urllib.parse.urlparse(url)
+    if parsed_url.username or parsed_url.password or parsed_url.query or parsed_url.fragment:
+        raise ValueError('Provider URL must not contain credentials or query parameters')
+    specs_file = guard(project_root, project_root / 'script' / 'world_prompts.json')
     if not specs_file.exists():
         generate_prompts(project_root)
-    with specs_file.open("r", encoding="utf-8") as f:
-        specs = json.load(f)
-
-    chosen = [s for s in specs if not only or s["chapterIndex"] in only]
-    print(f"通道: {provider}:{model} @ {url} | 待生成 {len(chosen)}/{len(specs)} 章")
-    ok = 0
-    RETRIES = 3
-    for s in chosen:
-        target = project_root / "public" / s["targetFile"]
-        target.parent.mkdir(parents=True, exist_ok=True)
-        if provider == "minimax":
-            # MiniMax 原生形态：/v1/image_generation + data.image_urls（临时 OSS 链接，需即时下载）
-            full_prompt = f"{s['prompt']}\n\nStrictly avoid in the image: {s['negativePrompt']}"
-            payload = {"model": model, "prompt": full_prompt, "aspect_ratio": size,
-                       "response_format": "url", "watermark": False}
+    specs = json.loads(specs_file.read_text(encoding='utf-8'))
+    if not isinstance(specs, list) or not specs:
+        raise ValueError('world_prompts.json must be a nonempty array')
+    selected, seen = [], set()
+    candidate_paths = set()
+    for spec in specs:
+        if not isinstance(spec, dict) or isinstance(spec.get('chapterIndex'), bool) or not isinstance(spec.get('chapterIndex'), int) or spec['chapterIndex'] < 0 or spec['chapterIndex'] in seen:
+            raise ValueError('Prompt specifications require unique nonnegative chapterIndex values')
+        seen.add(spec['chapterIndex'])
+        resolve_material(spec, spec['chapterIndex'])
+        if spec.get('aspectRatio') != aspect:
+            raise ValueError('Prompt specification aspectRatio must match the project native aspect')
+        if any(not isinstance(spec.get(name), str) or not spec[name].strip() for name in ('prompt', 'negativePrompt', 'targetFile')):
+            raise ValueError('Prompt specifications require prompt, negativePrompt and targetFile')
+        public = guard(project_root, project_root / 'public')
+        target = guard(public, public / spec['targetFile'])
+        if target.suffix.lower() not in ('.png', '.jpg', '.jpeg'):
+            raise ValueError('Candidate targets must use PNG/JPEG extensions')
+        target = target.with_name(f'{target.stem}_{take}{target.suffix}')
+        if not only or spec['chapterIndex'] in only:
+            if target.with_suffix('') in candidate_paths:
+                raise ValueError('Selected prompt specifications target the same candidate')
+            candidate_paths.add(target.with_suffix(''))
+            if not overwrite and any(guard(project_root, target.with_suffix(suffix)).exists() for suffix in ('.png', '.jpg', '.jpeg')):
+                raise FileExistsError(f'Candidate already exists: {target}; select a new --take or explicit --overwrite')
+            selected.append((spec, target))
+    if set(only) - seen or not selected:
+        raise ValueError('--only contains unknown chapters or selects no candidates')
+    for name in ('MANIFEST.json', 'MANIFEST.md'):
+        manifest_path = guard(project_root, project_root / name)
+        if name.endswith('.json') and manifest_path.exists():
+            manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+            if not isinstance(manifest, dict) or manifest.get('schemaVersion') != 1 or not isinstance(manifest.get('assets'), list) or any(not isinstance(entry, dict) for entry in manifest['assets']):
+                raise ValueError('MANIFEST.json must contain a valid assets array')
+    for spec, target in selected:
+        full_prompt = f"{spec['prompt']}\n\nStrictly avoid in the image: {spec['negativePrompt']}"
+        payload = {'model': model, 'prompt': full_prompt}
+        if provider == 'minimax':
+            size = os.environ.get('A2V_IMAGE_ASPECT', aspect)
+            if size != aspect:
+                raise ValueError('A2V_IMAGE_ASPECT must match the project native aspect')
+            payload.update(aspect_ratio=size, response_format='url', watermark=False)
         else:
-            full_prompt = f"{s['prompt']} Negative prompt: {s['negativePrompt']}"
-            payload = {"model": model, "prompt": full_prompt, "n": 1, "size": size,
-                       "response_format": "b64_json"}
-
-        blob = None
-        item = None
-        last_err = ""
-        for attempt in range(1, RETRIES + 1):
-            try:
-                try:
-                    data = post_json(url, payload, key)
-                except urllib.error.HTTPError as e:
-                    body = e.read().decode("utf-8", "replace")[:300]
-                    if e.code == 400 and "response_format" in body:
-                        payload.pop("response_format", None)
-                        data = post_json(url, payload, key)
-                    else:
-                        last_err = f"HTTP {e.code} {body}"
-                        continue
-                item = data.get("data")
-                if provider == "minimax":
-                    status = (data.get("base_resp") or {}).get("status_code", 0)
-                    if status != 0:
-                        last_err = f"base_resp {status} {str(data)[:200]}"
-                        continue
-                    urls = (item or {}).get("image_urls") or []
-                    if not urls:
-                        last_err = f"无 image_urls：{str(data)[:200]}"
-                        continue
-                    blob = fetch_bytes(urls[0])
-                else:
-                    entry = (item or [{}])[0] if isinstance(item, list) else {}
-                    if entry.get("b64_json"):
-                        blob = base64.b64decode(entry["b64_json"])
-                    elif entry.get("url"):
-                        blob = fetch_bytes(entry["url"])
-                    else:
-                        last_err = f"响应无 b64_json/url 字段：{str(data)[:200]}"
-                        continue
-                break  # 本章成功
-            except Exception as e:  # 网络抖动（SSL EOF / RemoteDisconnected 等）按次重试
-                last_err = f"{type(e).__name__}: {e}"
-                time.sleep(3 * attempt)
-        if blob is None:
-            print(f"  ✗ ch{s['chapterIndex']}: {RETRIES} 次尝试后失败（{last_err}）")
-            continue
-        # 按魔数落正确扩展名（通道可能返回 jpeg 字节而规格名是 .png）
-        if blob[:3] == b"\xff\xd8\xff" and target.suffix.lower() == ".png":
-            target = target.with_suffix(".jpg")
-        target.write_bytes(blob)
-        rel = "public/" + s["targetFile"].rsplit(".", 1)[0] + target.suffix
-        chapter = {"n": s["chapterIndex"] + 1, "title": s["title"]}
-        mat = MATERIAL_REGISTRY[s["material"]]
-        seed = item.get("seed", "n/a") if isinstance(item, dict) else "n/a"
-        manifest_append(project_root, ai_manifest_row(
-            rel, sha32(blob), model, chapter, mat, take, str(seed)))
-        print(f"  ✓ ch{s['chapterIndex']} -> {norm(target)}（已登记 MANIFEST，qc=pending 三查待做）")
-        ok += 1
-    print(f"完成 {ok}/{len(chosen)}。失败章可 --only <idx> 单独重试（批量轮次纪律：SOP §6 全片最多两轮）。")
-    if ok < len(chosen):
-        sys.exit(1)
+            default_size = '1024x1536' if config['height'] > config['width'] else '1536x1024' if config['width'] > config['height'] else '1024x1024'
+            if model == 'dall-e-3':
+                default_size = '1024x1792' if config['height'] > config['width'] else '1792x1024' if config['width'] > config['height'] else '1024x1024'
+            size = os.environ.get('A2V_IMAGE_SIZE', default_size)
+            dimensions = re.fullmatch(r'([1-9][0-9]*)x([1-9][0-9]*)', size)
+            if not dimensions or (int(dimensions[1]) > int(dimensions[2])) != (config['width'] > config['height']) or (int(dimensions[1]) < int(dimensions[2])) != (config['width'] < config['height']):
+                raise ValueError('A2V_IMAGE_SIZE must match the project native orientation')
+            payload.update(n=1, size=size)
+            if model.startswith('dall-e'):
+                payload['response_format'] = 'b64_json'
+        data = post_json(url, payload, key)
+        if not isinstance(data, dict):
+            raise ValueError('Image provider response must be an object')
+        item = data.get('data')
+        if provider == 'minimax':
+            if (data.get('base_resp') or {}).get('status_code', 0) != 0 or not isinstance(item, dict) or not item.get('image_urls'):
+                raise ValueError('MiniMax returned no image candidate')
+            blob, seed = fetch_bytes(item['image_urls'][0]), item.get('seed', 'n/a')
+        else:
+            entry = item[0] if isinstance(item, list) and item else {}
+            if not isinstance(entry, dict):
+                raise ValueError('OpenAI image response entry must be an object')
+            blob = base64.b64decode(entry['b64_json'], validate=True) if entry.get('b64_json') else fetch_bytes(entry['url']) if entry.get('url') else b''
+            seed = entry.get('seed', 'n/a')
+        if blob.startswith(b'\xff\xd8\xff'):
+            target = target.with_suffix('.jpg')
+        elif blob.startswith(b'\x89PNG\r\n\x1a\n'):
+            target = target.with_suffix('.png')
+        else:
+            raise ValueError('Provider returned no PNG/JPEG bytes')
+        with Image.open(io.BytesIO(blob)) as image:
+            actual_size = {'width': image.width, 'height': image.height}
+            image.verify()
+        asset = ai_asset(project_root, target, blob, f'AI generated via {provider}: {url}',
+                         'Provider generation terms; verify intended publication rights',
+                         f"Epic world background chapter {spec['chapterIndex']} take {take}",
+                         model, full_prompt, seed, 'AI-generated image', take)
+        asset.update(promptSpec=spec, negativePrompt=spec['negativePrompt'], requestedSize=payload.get('size', payload.get('aspect_ratio')))
+        asset['actualSize'] = actual_size
+        asset['licenseVerification'] = 'not_performed'
+        safe_write(project_root, target, blob, overwrite)
+        manifest_append(project_root, asset)
+        print(f'Generated {norm(target)}; QC not_performed. Review before production use.')
+    print(f'Generated {len(selected)} candidates. Revise failed shots based on their actual defects.')
 
 
-def register_files(project_root: Path, files: list, chapter: int, source: str, note: str) -> None:
-    for f in files:
-        p = Path(f)
-        if not p.exists():
-            sys.exit(f"Error: {f} 不存在")
-        blob = p.read_bytes()
-        try:
-            rel = norm(p.resolve().relative_to(project_root.resolve()))
-        except ValueError:
-            rel = norm(p.resolve())
-        usage = f"epic 世界底 · ch{chapter} · {note or '手工登记'} · qc：pending（伪影三查待人工，SOP §4）"
-        manifest_append(project_root, f"| {rel} | {sha32(blob)} | {source} | 生成式素材（交付说明须披露） | {usage} |")
-        print(f"  ✓ 已登记 {rel}（sha32 {sha32(blob)[:8]}…）")
-    print("登记完成；来源字段必须如实（AI 生成写模型；外部素材写 URL+许可；参考片抽帧=违规，不接受登记）。")
+def register_files(project_root: Path, files: list, chapter: int, source: str, note: str,
+                   license_text: str, model: str, prompt: str, seed, disclosure: str, take='manual') -> None:
+    if isinstance(chapter, bool) or not isinstance(chapter, int) or chapter < 0:
+        raise ValueError('chapter must be a nonnegative chapter index')
+    assets = []
+    for filename in files:
+        candidate = Path(filename)
+        target = guard(project_root, candidate if candidate.is_absolute() else project_root / candidate)
+        assets.append(ai_asset(project_root, target, target.read_bytes(), source, license_text,
+                               f'Epic world background chapter {chapter}: {note or "manual registration"}',
+                               model, prompt, seed, disclosure, take))
+    for asset in assets:
+        manifest_append(project_root, asset)
+        print(f"Registered {asset['path']} with full SHA256; QC not_performed.")
 
 
-def main() -> None:
+def main(argv=None) -> None:
     ap = argparse.ArgumentParser(description="epic AI 材质世界底：提示词规格/通道生成/MANIFEST 登记")
+    ap.add_argument('--overwrite', action='store_true', help='Explicitly replace existing specifications/candidates')
     ap.add_argument("--list-materials", action="store_true")
     ap.add_argument("--project", default=".", help="项目根（缺省当前目录）")
     ap.add_argument("--generate-prompts", action="store_true")
@@ -392,24 +438,35 @@ def main() -> None:
     ap.add_argument("--register", nargs="*", default=None, metavar="FILE",
                     help="登记手工产物进 MANIFEST（配合 --chapter/--source）")
     ap.add_argument("--chapter", type=int, default=0, help="--register 用：所属章号")
-    ap.add_argument("--source", default="AI 生成 · model=unspecified", help="--register 用：来源字段")
+    ap.add_argument('--source', help='Manual registration: real source')
+    ap.add_argument('--license', help='Manual registration: actual usage terms')
+    ap.add_argument('--model', help='Manual registration: model identifier')
+    ap.add_argument('--prompt', help='Manual registration: full submitted prompt including negatives')
+    ap.add_argument('--seed', help='Manual registration: seed or n/a')
+    ap.add_argument('--disclosure', help='Manual registration: publication disclosure')
     ap.add_argument("--note", default="", help="--register 用：用途附注")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
 
     if args.list_materials:
         list_materials()
     elif args.generate_prompts:
-        generate_prompts(Path(args.project).resolve())
+        generate_prompts(Path(args.project).resolve(), args.overwrite)
     elif args.generate:
-        only = [int(x) for x in args.only.split(",") if x.strip().isdigit()] if args.only else []
-        generate_images(Path(args.project).resolve(), only, args.take)
+        if args.only and not re.fullmatch(r'\d+(?:,\d+)*', args.only):
+            ap.error('--only must be comma-separated nonnegative chapter indices')
+        only = [int(value) for value in args.only.split(',')] if args.only else []
+        generate_images(Path(args.project).resolve(), only, args.take, args.overwrite)
     elif args.register is not None:
         if not args.register:
             ap.error("--register 需要至少一个文件路径")
-        register_files(Path(args.project).resolve(), args.register, args.chapter, args.source, args.note)
+        register_files(Path(args.project).resolve(), args.register, args.chapter, args.source, args.note,
+                       args.license, args.model, args.prompt, args.seed, args.disclosure, args.take)
     else:
         ap.print_help()
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except (ValueError, OSError) as error:
+        raise SystemExit(f'[gen_world_frames] {error}') from None

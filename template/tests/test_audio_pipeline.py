@@ -29,7 +29,9 @@ class AudioPipelineTests(unittest.TestCase):
         (self.root / 'src' / 'common').mkdir()
         (self.root / 'script').mkdir()
         (self.root / 'src' / 'config.ts').write_text("export const VIDEO = {slug: 'test'};", encoding='utf-8')
-        for name in ('mix_audio.py', 'probe_av_sync.mjs', 'tts_build.py', 'probe_delivery.py'):
+        (self.root / 'project.json').write_text(json.dumps({'slug': 'test', 'fps': 30, 'totalFrames': 90,
+                                                          'status': 'draft'}), encoding='utf-8')
+        for name in ('mix_audio.py', 'probe_av_sync.mjs', 'tts_build.py', 'probe_delivery.py', 'audio_project.py'):
             shutil.copyfile(SCRIPTS / name, self.root / 'scripts' / name)
         self.timeline(31)
         self.tone('audio_narration.wav', onset=1, stop=2.5)
@@ -130,7 +132,11 @@ class AudioPipelineTests(unittest.TestCase):
         # Stub only synthesis; exercise actual WAV/timeline/subtitle generation.
         specification = importlib.util.spec_from_file_location('tts_fixture', self.root / 'scripts' / 'tts_build.py')
         module = importlib.util.module_from_spec(specification)
-        specification.loader.exec_module(module)
+        sys.path.insert(0, str(self.root / 'scripts'))
+        try:
+            specification.loader.exec_module(module)
+        finally:
+            sys.path.pop(0)
         module.ENGINE = 'edge'
         module.EDGE_DELAY = 0
         module.LEAD = module.TAIL = module.GAP = 0
@@ -143,7 +149,7 @@ class AudioPipelineTests(unittest.TestCase):
         narration.write_text('This is a test.\n', encoding='utf-8')
         manifest = self.assets / 'audio.mix.json'
         manifest.write_text('{}', encoding='utf-8')
-        asyncio.run(module.main(str(narration)))
+        asyncio.run(module.main(str(narration), force=True))
         self.assertEqual(self.digest('audio.wav'), self.digest('audio_narration.wav'))
         self.assertFalse(manifest.exists())
         generated = json.loads((self.root / 'script' / 'timeline.json').read_text(encoding='utf-8'))

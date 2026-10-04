@@ -1,14 +1,18 @@
 # BGM Bake-off（用户圈选试听页）
 
 > 2026-10-02 用户定调：BGM 不由主脚本独选——候选以 **HTML 试听页**统一呈现给用户圈选，圈定后才落位混音。适用于一切要 BGM 的片（含 promo/explainer/custom 全配方）。首验：yunkai-promo（2026-10-02）。
+>
+> 2026-10-04 持久偏好：需要音乐时在分镜与建组前完成圈选；明确“不要音乐”或授权“你来选音乐”时记录对应决定。泛泛成本许可不等于选曲许可；已给过的有效授权不重复询问。
 
 ## 流程（阶段 2 内、混音前完成）
 
 1. **提名**：按片气质定 3 个方向 × 每向 2–3 首，外加对照组（现曲/本机存量）。**优先从 `bgm-library.md` 已验证曲池取**，不足再上新淘——Mixkit tag 页（`mixkit.co/free-stock-music/tag/{minimal,piano,documentary,ambient,tech}/`）的 JSON-LD 含 name/genre/duration 可脚本解析；新直链必须 `curl -sI` 验 HTTP 200 再下载。
 2. **生成试听页**：拷 `bgm-bakeoff-template.html` 到 `<项目根>/bgm_bakeoff/`，按卡片填曲（mp3 与 html 同目录、相对路径 src），文案按下方"卡片六件"写。
-3. **开页**：`cmd //c start "" "<项目根>\bgm_bakeoff\bakeoff.html"`，用户圈 2–3 首（可多轮提名，每轮按用户反馈收窄气质描述）。
+3. **开页**：使用宿主文件预览或浏览器打开 `<项目根>/bgm_bakeoff/bakeoff.html`，用户圈 2–3 首（可多轮提名，每轮按用户反馈收窄气质描述）。已授权主控选曲时由主控试听并记录。
 4. **贴片终选**：圈中曲裁到片长（长曲挑段、短曲单遍）→ `mix_audio.py` 侧链混音出 `audio.wav` → **remux 换音轨**（分镜未按拍点卡片的片直接 `ffmpeg -c:v copy` 换 `audio.wav`，不重渲画面）→ 每候选出一版贴片 mp4 给用户最终拍板。
 5. **定稿落位**：胜者落 `public/assets/<slug>/bgm.wav` + MANIFEST 登记（曲名/作者/ID/URL/许可/sha256）+ 交付说明 BGM 节更新 + 按 `bgm-library.md` 入库纪律回填曲库表。
+
+换音轨也改变成片 SHA256。旧 delivery/QC 不能沿用；标准流程在正式源工程重新渲染并审查。纯 remux 比选稿只作为 draft；没有匹配当前媒体与源码的完整证据时不能过最终门禁。
 
 ## 提名纪律（2026-10-02 云开首轮教训，三条全灭实录）
 

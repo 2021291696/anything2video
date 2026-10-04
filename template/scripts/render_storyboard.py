@@ -2,6 +2,7 @@
 """把 script/storyboard_src.md 中的时间令牌替换成 script/timeline.json 里的帧号，输出 项目根/分镜表.md。
 令牌：{S12.from} {S12.to} {S12.c3}（第 3 个字幕块起始帧）{C2}（第 2 章起始帧）{TOTAL}；均可带 ±整数：{S12.from-8}"""
 import json, re, sys, os
+from pathlib import Path
 here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # 项目根
 tl = json.load(open(f'{here}/script/timeline.json', encoding='utf-8'))
 S = {s['id']: s for s in tl['sentences']}

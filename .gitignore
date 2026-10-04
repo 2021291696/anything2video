@@ -28,3 +28,12 @@ dist/
 *.mimosa/
 .mimosa/
 .Codex/
+.render-bundle-*/
+*.render.lock
+.render-*
+docs/*-worker-report.md
+docs/work-items/
+docs/adversarial-v3-report.md
+docs/audio-boundaries-v3-report.md
+docs/editions-resume-coordination.md
+docs/forward-v3-report.md

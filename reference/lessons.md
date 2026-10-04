@@ -2,6 +2,17 @@
 
 首片尚未制作，故本表暂空。回填纪律：**首片过程中坑一出现当天就追加一行，不等收尾**（收尾只做一遍通读去重）；一条坑对应一次真实返工，写「现象 → 根因 → 判据/修法」，并同步修对应文档（SKILL.md / workflow-orchestration.md / 配方 / 模板脚本），防止同样的坑只靠记忆防。
 
+## v3 当前裁定
+
+本表保留历史事件与当时处方。旧行的宿主限制、固定效果、免版权/官方归属结论与原始 shell 命令不覆盖 production-contract.md；执行前以当前脚本和共享流程复核。不要把历史未实现建议当成已完成修复。
+
+- 2026-10-04 新增教训已合并：TTS 生成的 SubEntry 曾缺 emphasis，模板与生成器已同步；生成器后必须再运行 TypeScript。
+- probe_liveness 的组名 G2 不是必然存在的 Composition；应选项目实际 Composition（完整片默认 Video），再按镜头过滤。混音首句不能用音乐 onset 代替旁白，纯旁白与最终媒体分开验。
+- 用户否决一排排空描边框作为代码/表格内容：画面应有有意义 token、条目或状态；合法容量槽/空态须有解释与动作。导演手册已加入判据。
+- 2026-10-05 独立反向审查复现音频路径逃逸、TTS 固定帧率与源码快照漏项；修复和实际重验记录见 docs/optimization-v3.md，不用旧的删除旁白正本/混音回拷处方。
+
+## 历史实录
+
 | 日期 | 坑 | 处理 |
 |---|---|---|
 | 2026-09-25 | **现象**：首片 workflow 的 G1 打样门两轮卡死在「顶部品牌帽缺失」，但构建组修不了——BrandCap 属 `src/overlay/promo/**` 禁改图元库，而 workflow 派单脚本没给打样门阶段配覆盖层修复手。**根因**：workflow-orchestration.md §5 只写了「覆盖层条目主脚本自己修」，未规定 QC/打样修复轮必须显式派覆盖层修复 agent；且 promo 模板出厂缺 BrandCap（style-guide §1.2 有品牌帽规范但图元库没实现），首个配方落地时缺件只有实拍能暴露。**判据/修法**：①workflow 编排在打样门与 QC 修复轮都显式挂「覆盖层修复员」（只改 `src/overlay/**`+config），构建组问题与覆盖层问题分流派单；②模板已补 `src/overlay/promo/BrandCap.tsx`（y28–72、logo 30px+品牌名 L3 26px、SH01 淡出/SH02 起 12f 淡入常驻/CTA 段淡出，`hookUntil`/`ctaFrom` 按分镜表传参），Main 挂载；③brand-cap 几何以 style-guide §1.2 为准，验收三帧=钩子后首帧/常驻中期/CTA 段首帧。 |

@@ -1,79 +1,81 @@
-# 品牌资产包协议（public/assets/brand/）
+# 品牌资产协议
 
-一句话：品牌资产 = **约定目录 + 一个 JSON**。主会话在阶段 0 把解析值写进 `template/src/recipes/promo.ts` 的主色 token 供全片引用（本 skill **不生成** `src/brand.ts`——品牌化 = 替换配方文件的主色 token，见 §3）；缺什么都**整包回退**到内置 promo palette（正本 `template/src/recipes/promo.ts`，对照表见 §4）——不阻塞、不追问、不留半接包状态。
+品牌资料按字段接入：保留用户已提供且有效的名称、颜色、文案和资产，缺失字段单独处理。没有logo不影响使用真实品牌名与主色。模板的palette和示例品牌是实现起点，不是用户品牌事实。工程与交付遵循 `production-contract.md`。
 
-## 1. 目录约定
+## 1. 目录建议
 
-```
+```text
 public/assets/brand/
-├── logo.png      必需*   位图 logo：透明底，宽 ≥512px（CTA 端板放大用）
-├── logo.svg      推荐    矢量版：有 svg 优先用 svg（任意缩放不糊），png 作加载兜底
-├── logo-mono.png 可选    单色反白版（深色底/品牌色底上用；没有就按 §5 垫底板）
-├── brand.json    必需*   色板与文案（schema 见 §2）
-├── qr.png        可选    CTA 端板二维码图（白底/透明底，显示尺寸 ≥120px；未提供则端板留二维码位不放图）
-└── fonts/        可选    品牌字体 woff2/ttf（须 OFL 或已获授权；未提供用模板四款 OFL 字体）
+  brand.json       名称、颜色和经确认文案，可只提供部分字段
+  logo.svg         官方或用户授权的矢量标识
+  logo.png         透明底位图，源尺寸足够覆盖实际显示
+  logo-mono.png    已授权单色版本
+  qr.png           真实CTA地址对应二维码
+  fonts/           授权字体及许可文件
 ```
 
-\* 「必需」指**接入品牌包时**必给；目录整体不存在 = 未接入品牌包，是合法状态，走 §4 回退。文件放错层（如 `public/assets/brand.png`）一律视为未接入。
+这个目录是便于管理的约定。用户资产位于其他项目内目录时，核对真实路径后登记或复制，不因位置不同放弃有效资料。`brand.json` 和logo均非互相依赖的必填组合。
 
-## 2. brand.json schema
+所有资源路径相对于项目，解析时拒绝绝对路径、`..` 越界和指向项目外的链接。外来SVG检查外链、脚本与字体依赖；二维码核对真实目的地，避免把模板地址或未知短链上片。
+
+## 2. brand.json
 
 ```json
 {
-  "colors": { "primary": "#6630F8", "accent": "#F05F41", "neutral": "#A0A0A1" },
-  "slogan": "让大模型开卷考试",
-  "name": "示例科技",
-  "cta": "立即免费试用",
-  "contact": "example.com · 400-000-0000",
+  "name": "用户提供的品牌名称",
+  "colors": {"primary": "#21E6C1", "accent": "#FF7A45", "neutral": "#9A9AA6"},
+  "slogan": "用户确认的品牌语句",
+  "cta": "查看示例",
+  "contact": "用户核实的地址",
   "qr": "qr.png"
 }
 ```
 
-| 键 | 必需 | 语义 |
-|---|---|---|
-| `colors.primary` | 是 | 品牌主色：大字、CTA 端板底、品牌帽胶囊底 |
-| `colors.accent` | 是 | 强调色：只给单帧焦点（数字 / 按钮 / 对比中的「我方」） |
-| `colors.neutral` | 否 | 次级文字 / 未激活色；缺省 `#A0A0A1` |
-| `slogan` | 是 | 品牌条文案，≤16 字；超了截到 16 字加省略号 |
-| `name` | 否 | 品牌帽 / 端板的品牌名；缺省用 `config.ts` 的 `title.rest` 或 slug |
-| `cta` | 否 | CTA 端板动词短语，≤8 字；缺省由文案 agent 按产品写 |
-| `contact` | 否 | CTA 端板联系方式文案，≤24 字；缺省端板不放联系方式（确认点①可现收，见 `recipes/promo.md` §8） |
-| `qr` | 否 | CTA 端板二维码文件名（`brand/` 目录内，如 `qr.png`）；缺省端板留二维码位不放图 |
-
-**校验规则**：JSON 解析失败 / 缺必需键 / 色值非 `#RRGGBB` → 按「该键缺失」走 §4 回退，并在 BUILD_NOTES 记一行（哪把钥匙、为什么回退），不中断流程。
-
-## 3. 解析与接线（阶段 0 一次做完）
-
-> ⚠️ **名字错位警告**：brand.json 的 **`colors.primary`** 对应代码 token **`accent`**（主色），brand.json 的 **`colors.accent`** 对应代码 token **`secondary`**（强调位）——两套词表同词不同指，接线时以 §4 对照表为准，**勿按英文名对号入座**。
-
-1. 读 `public/assets/brand/brand.json` → **品牌化 = 替换 `template/src/recipes/promo.ts` 的主色 token**：把 `colors.primary` 写进 `accent`，并按该文件头注的 `accentFromBrand` 规则同步换掉随主色推导的一组 token（accentLight/accentTech/accentDeep/accentPale、glowAccent 系与 accentGlowRgb/haloDark/haloLight/techGlow/pillShadow/pillTextOnAccent）；再把 `colors.accent` 写进 `secondary`，同步换掉 `secondaryAlt`（亮变体）与 `glowSecondary`（光效字符串形状不变、只换基色）；`colors.neutral` 写进 `grey`。`slogan`/`name`/`cta`/`contact`/`qr` 由主脚本随分镜/覆盖层参数带入（不新建 `src/brand.ts`）。改完跑 `npx tsc --noEmit`，`ui.tsx`/`fx.tsx` 与镜头代码零改动（`PURPLE`/`ORANGE` 等是经 `getActiveRecipe()` 派生的别名，值自动随 token 变）。
-2. 镜头与覆盖层**只 import `src/ui.tsx` / `src/fx.tsx` 的常量**，禁止写彩色字面量——这是 `promo-style-guide.md` §品牌色纪律的执法点（QC 判据 4 会 grep 镜头源码）。
-3. 回退态（未接品牌包）= `recipes/promo.ts` 内置值原样不动；品牌帽与 CTA 端板改用**文字标**（品牌名 Noto 900 大字 + primary 硬投影），不找网图、不生成假 logo。
-
-## 4. 缺省回退 = 内置 promo palette（正本 `template/src/recipes/promo.ts`）
-
-| brand.json 键 | → palette token（回退值） | 出处 |
-|---|---|---|
-| `colors.primary` | `accent`（#21E6C1，电光青） | `template/src/recipes/promo.ts:18` |
-| `colors.accent` | `secondary`（#FF7A45，辅助橙） | `template/src/recipes/promo.ts:24` |
-| `colors.neutral` | `grey`（#9A9AA6，非激活文字） | `template/src/recipes/promo.ts:32` |
-| 背景 / 文字 | `bg` / `white`（#0B0B12 / #FFFFFF） | 同文件行 29 / 36 |
-| slogan | `config.ts` 的 `title.tagline` | — |
-| name | `config.ts` 的 `title.rest`，为空则 slug | — |
-
-回退是**整包回退**：任一必需文件缺失即按「未接入品牌包」处理，配色与文案全套用 `recipes/promo.ts` 内置值（§4 表）。不提供「用户给了 slogan 但没给 logo」的半接包形态——半品牌观感比纯内置更差，且让 QC 的 ≤3 色判据失去稳定基准。
-
-## 5. logo 使用规则（安全区与最小尺寸）
-
-| 规则 | 数值 |
+| 字段 | 接入与缺失处理 |
 |---|---|
-| 最小显示高度 | 品牌帽 28px；品牌条 22px（`BrandBar.tsx` 缺省 logo 位即 22×22）；CTA 端板 ≥40px；低于最小尺寸宁可不放 logo 只放文字 |
-| 净空（安全区） | 四周留白 ≥ logo 显示高度的 25%（如 40px 高的 logo，四周 10px 内不放其他元素） |
-| 变形 | 禁止拉伸：始终按原始宽高比缩放（svg 以 viewBox 等比）；只允许整体缩放与等比裁切容器 |
-| 背景 | logo 不直接压复杂画面：要么黑/纯色底，要么垫 8px 圆角底板（黑 75% 不透明或品牌 primary） |
-| 反白 | 深色底用 `logo-mono.png`；没有 mono 版时垫浅底板，**禁止**用 CSS 滤镜把彩色 logo 调成反白 |
-| 出处 | logo 是用户提供资产，写进交付说明「资产来源」一节；不得用网图或生成图替代真 logo |
+| `name` | 使用真实品牌名。缺失时用用户指定产品名；产品名也未知则在工作稿记录未定，不用slug或模板YOUR-BRAND冒充品牌。 |
+| `colors.primary` | 验证 `#RRGGBB` 后接主色。缺失时选中性视觉与有用途的强调色，不影响已提供名称与文案。 |
+| `colors.accent` | 可选第二重点色。未提供时按主色和实际对比需求设计，不机械增加第二色。 |
+| `colors.neutral` | 可选次级文字色；在目标背景上验证对比度。 |
+| `slogan` | 使用用户确认语句。过长时改排版或起草精简版本并审定，不截断造成含义改变；未提供可省略。 |
+| `cta` | 来源于用户目标与可执行下一步。免费、限时、折扣、官方关系等承诺需证据；未定内容不能直接上片。 |
+| `contact` | 只用核实过的公开联系方式；未提供则省略。 |
+| `qr` | 可选项目内资产，目的地对应CTA；未提供则省略，不留真假难辨占位。 |
 
-## 6. 与 B-roll 的关系
+JSON整体解析失败时保留原文件并记录错误，不能声称已接入；其他已由用户给出的有效资料可独立使用。单字段类型、值或资产无效时记录该项与原因，保留其他有效字段。声明是制作建议、待审稿或品牌事实，避免混称。
 
-品牌资产包只管 `public/assets/brand/`。B-roll 与其他外来素材走 `public/assets/broll/` + `MANIFEST.md`（字段：sha256 / 来源 URL / 许可 / 用途——沿用 `template/src/common/Footage.tsx` 头注约定），使用规则见 `recipes/promo.md` §素材策略。两个目录不混放：brand/ 里的东西永远不进 MANIFEST（它们不是「采集来的素材」）。
+## 3. 模板接线
+
+接线修改发生在**视频工程副本**的 `src/recipes/promo.ts` 和 `src/config.ts`，不能为了单一客户覆盖skill模板正本。当前模板的名称存在错位：`colors.primary` 对应palette `accent`，`colors.accent` 对应palette `secondary`。
+
+| 用户字段 | 工程token |
+|---|---|
+| primary | `accent` 及与其相关的亮/暗色、辉光与背景反差token |
+| accent | `secondary`、`secondaryAlt`、`glowSecondary` |
+| neutral | `grey`，必要时按使用场景调整相关灰色 |
+
+更换主色时按工程 `promo.ts` 中 `accentFromBrand` 注释核对 `accentLight/accentTech/accentDeep/accentPale`、`glowAccent/glowAccentS`、`accentGlowRgb/haloDark/haloLight/techGlow/pillShadow/pillTextOnAccent/textShadowOnSolid` 等依赖，同时把真实主色登记进 `accentFrom`；当前 `getActiveRecipe()` 会拒绝未登记主色。辉光本身未启用时也需避免残留不相关品牌token，不把相同字符串查找当视觉验证。
+
+必要信息层使用共享token或项目已约定组件接口，镜头不要各自猜颜色。实录、照片与生成素材保留可信的产品色与肤色；没有固定色彩数量豁免或品牌色面积配额。代码语义色和警示色也要说明用途。
+
+品牌名称写进 `VIDEO.brand`，slogan写进 `VIDEO.brandSlogan`；logo、CTA、contact、qr按实际使用的组件props接线。不同工程可能已有自己的品牌模块，保持既有接口，不强迫新建或禁止一个文件。完成后跑 `npm run typecheck`，并实际渲染启用品牌的镜头；类型检查不证明所有props已挂载。
+
+## 4. 没有完整品牌资料时
+
+优先使用用户提供的部分有效资料。只有真正缺失的字段需要设计或省略，记录所选值与依据。原模板的电光青主色、辅助橙、深底和示例标题不能当作产品要求自动沿用。
+
+缺logo时可用真实名称的文字标；不画假logo，不检索未知图标冒充官方资产。缺联系方式或二维码时用可核实的其他CTA，或省略未定项。品牌信息决定法律和事实含义的地方，须在发布前核定。
+
+## 5. logo、字体与二维码
+
+保留logo宽高比与品牌手册净空，不拉伸、不随意裁掉标识。位图源尺寸与显示尺寸比较，不能以输出1080p声称低分辨率logo已变清晰；SVG按viewBox等比缩放。无品牌手册时可从显示高度约25%的净空起步，目标设备预览决定最终值。
+
+深色底优先用授权反白版；没有时选清晰纯色底或适当底板，不用CSS滤镜造新的“官方反白”版本。字体需许可与字形完整，尤其检查中文、数字和实际命令。
+
+二维码要在实际导出的目标尺寸里验证扫码，并检查发布平台是否允许此类引导。尺寸、留白和停留时间取决于真实码复杂度与观看场景，不能只凭一个固定像素数过关。
+
+## 6. 统一资产登记
+
+品牌资源与B-roll、图标、字体、音乐、生成素材一样进入项目 `MANIFEST` 和结构化素材清单：相对path、完整64位sha256、source、license/授权证据、usage。用户提供不自动等于可公开再分发，明确其允许范围；工程公开时不能附未获源码仓库再分发许可的品牌文件。
+
+生成资产追加模型、完整prompt、seed或n/a、披露与三查状态，不能把生成图登记成官方logo。代码原创图元记录作者或本项目来源；下游交付保留上游许可与署名。目录 `brand/` 仅是组织方式，不享有登记豁免。

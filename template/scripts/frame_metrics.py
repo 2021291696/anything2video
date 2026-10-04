@@ -13,6 +13,7 @@ grid=点阵/网格幕底误报族（背景碎屑/紫色碎片计数按幕底豁�
 依赖：numpy pillow scipy。亮度统计用 int32。
 """
 import argparse, os, re, sys
+from pathlib import Path
 import numpy as np
 from PIL import Image
 from scipy import ndimage as ndi
