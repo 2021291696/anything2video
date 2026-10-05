@@ -68,7 +68,22 @@ node scripts/install.mjs doubao-work --export-dir D:/a2v-desktop-packages
 
 8个风格SKU：sand、chalk、blueprint、neon、pixel-arcade、paper-collage、swiss-print、crt-terminal。每个包含图元、SPEC和回归样张；同风格后续片优先复用。材质场景参考在 `reference/materials.md`，混合素材纪律在 `ai-frame-sop.md`。
 
-六个独立包均附11段6秒无音轨视觉预览，来源/许可与AI披露见 [samples/README.md](samples/README.md)。它们是历史风格参考，不是各宿主当前端到端认证。原生竖屏接线见 [portrait-wiring](reference/portrait-wiring.md)。
+### 风格样片：点缩略图直接播放
+
+每段 6 秒、1280×720、30fps、无音轨，取自历史成片的真实片段（封面为各片第 2 帧实测抽取）。点击缩略图在 GitHub 内嵌播放器中播放；clone 后也可打开离线放映页 [samples/index.html](samples/index.html)。
+
+|  |  |  |  |
+| :---: | :---: | :---: | :---: |
+| <a href="samples/sand-sample.mp4" title="播放沙画样片"><img src="samples/posters/sand-sample.jpg" alt="沙画样片封面" width="200"></a><br>**沙画** `sand`<br>沙粒与轮廓逐步成形 | <a href="samples/chalk-sample.mp4" title="播放粉笔黑板样片"><img src="samples/posters/chalk-sample.jpg" alt="粉笔黑板样片封面" width="200"></a><br>**粉笔黑板** `chalk`<br>笔触与几何推导 | <a href="samples/blueprint-sample.mp4" title="播放工程蓝图样片"><img src="samples/posters/blueprint-sample.jpg" alt="工程蓝图样片封面" width="200"></a><br>**工程蓝图** `blueprint`<br>结构线稿与尺寸标注 | <a href="samples/neon-sample.mp4" title="播放霓虹夜城样片"><img src="samples/posters/neon-sample.jpg" alt="霓虹夜城样片封面" width="200"></a><br>**霓虹夜城** `neon`<br>辉光与能量路径 |
+| <a href="samples/pixel-arcade-sample.mp4" title="播放像素街机样片"><img src="samples/posters/pixel-arcade-sample.jpg" alt="像素街机样片封面" width="200"></a><br>**像素街机** `pixel-arcade`<br>像素图形与游戏机语法 | <a href="samples/paper-collage-sample.mp4" title="播放剪纸拼贴样片"><img src="samples/posters/paper-collage-sample.jpg" alt="剪纸拼贴样片封面" width="200"></a><br>**剪纸拼贴** `paper-collage`<br>撕纸边缘与分层拼贴 | <a href="samples/swiss-print-sample.mp4" title="播放瑞士版式样片"><img src="samples/posters/swiss-print-sample.jpg" alt="瑞士版式样片封面" width="200"></a><br>**瑞士版式** `swiss-print`<br>网格与红黑字形 | <a href="samples/crt-terminal-sample.mp4" title="播放CRT终端样片"><img src="samples/posters/crt-terminal-sample.jpg" alt="CRT终端样片封面" width="200"></a><br>**CRT 终端** `crt-terminal`<br>磷光扫描线与命令行 |
+
+三种配方的真实成片段落（同样 6 秒、无音轨）：
+
+|  |  |  |
+| :---: | :---: | :---: |
+| <a href="samples/recipe-explainer-sample.mp4" title="播放讲解片样片"><img src="samples/posters/recipe-explainer-sample.jpg" alt="讲解片样片封面" width="200"></a><br>**讲解片** `explainer`<br>知识讲解与流程轨 | <a href="samples/recipe-promo-sample.mp4" title="播放宣传片样片"><img src="samples/posters/recipe-promo-sample.jpg" alt="宣传片样片封面" width="200"></a><br>**宣传片** `promo`<br>功能演示与贯穿线 | <a href="samples/recipe-epic-sample.mp4" title="播放史诗品牌片样片"><img src="samples/posters/recipe-epic-sample.jpg" alt="史诗品牌片样片封面" width="200"></a><br>**史诗品牌片** `epic`<br>AI 生成世界底 + 代码字幕 |
+
+样片是历史风格参考，不是各宿主当前端到端认证；来源/许可与 AI 披露逐段登记在 [samples/README.md](samples/README.md) 与 `samples/manifest.json`。六个独立包均附这 11 段视觉预览。原生竖屏接线见 [portrait-wiring](reference/portrait-wiring.md)。
 
 历史代码样片见 [examples](examples/)。这些早期样片不代表全部新配方都纯代码；新片的素材模式以各自MANIFEST为准。
 
