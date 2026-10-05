@@ -17,13 +17,13 @@ metadata:
 
 - 推荐直接安装：`node scripts/install.mjs workbuddy` 装入 `~/.workbuddy/skills/anything2video-workbuddy/`（该目录为本机实证的桌面版技能发现目录），重启 WorkBuddy 后在技能列表核对；也可加项目根参数。跨机分发用 `--export-dir <导出根目录>` 得到完整文件夹供手工导入。
 - 手工导入走当前 WorkBuddy 的技能管理/添加技能入口，支持的 ZIP 或文件夹格式以该版本界面为准。若只支持目录，解压保留 `anything2video-workbuddy/SKILL.md` 及全部子目录，不只上传入口文件。无导入入口时将解压目录作为本地任务资源显式读入口，记录为资源接入，不称已注册原生技能。
-- 导入后要求返回实际读取的入口路径和版本，并读取 `reference/production-contract.md`、`reference/production-workflow.md` 与所选完整配方。选教学 `recipes/explainer.md`、产品 promo、风格 custom、谱系 epic；分镜前读 `reference/directing-playbook.md`。风格、运动、AI素材、竖屏参考按需读。官方结构/元数据与验证边界见 `reference/desktop-hosts.md`、`docs/adapters.md`。
+- 导入后要求返回实际读取的入口路径和版本，并读取 `reference/production-contract.md`、`reference/production-workflow.md` 与所选完整配方。选教学 `recipes/explainer.md`、产品 promo、风格 custom、谱系 epic（🔥 市面爆款风向，热门向优先）；分镜前读 `reference/directing-playbook.md`。风格、运动、AI素材、竖屏参考按需读。官方结构/元数据与验证边界见 `reference/desktop-hosts.md`、`docs/adapters.md`。
 
 ## WorkBuddy 的执行方式
 
 选择能访问指定本地工程的任务，分别确认技能目录、工程目录和输出目录都在实际授权范围。云端任务、手机端或连接器远程执行不能默认拥有本机文件与依赖。
 
-2026-10-05 实测注意：任务输入框**回车不一定发送**，确认消息上屏（对话区出现你的消息）再等回复；若助手只输出计划迟迟不动手，先检查消息是否真的发出，再考虑切换到"深度/执行"型模型。开工前先让它执行 `node --version` 并贴原始输出，作为执行力验证。
+2026-10-05 实测注意：任务输入框**回车不一定发送**，确认消息上屏（对话区出现你的消息）再等回复；若助手只输出计划迟迟不动手，先检查消息是否真的发出，再考虑切换到“深度/执行”型模型。开工前先让它执行 `node --version` 并贴原始输出，作为执行力验证。
 
 用当前真实文件与命令工具先运行 doctor；核实 Node/npm/uv/ffmpeg/ffprobe/Chromium，记录工作目录与命令输出。没有终端时可完成调研、稿件与分镜，交付工程待执行清单；没有渲染产物不能报告已出片。不能用内置短视频生成按钮替代本包确定性渲染及证据合同。
 

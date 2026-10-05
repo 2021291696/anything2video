@@ -88,6 +88,6 @@ render 写媒体 SHA256、源码哈希清单与实际帧范围的 `.delivery.jso
 
 ## 资产与工具
 
-8个风格SKU：sand/chalk/blueprint/neon/pixel-arcade/paper-collage/swiss-print/crt-terminal。风格拿不准先放映随包 `samples/` 真实片段，来源和披露见 samples/README.md；样片不是当前宿主端到端认证。材质与混合镜头：materials、ai-frame-sop；史诗方法论：epic-brand-film。关键脚本：init、doctor、check-plan、render、tts_build、mix_audio、probe_av_sync、probe_delivery；Python用uv。`reference/workflow-orchestration.md` 保存历史派单与构建协议，跨宿主冲突以本入口和统一合同为准。
+8个风格SKU：sand/chalk/blueprint/neon/pixel-arcade/paper-collage/swiss-print/crt-terminal。风格拿不准先放映随包 `samples/` 真实片段，来源和披露见 samples/README.md；样片不是当前宿主端到端认证。材质与混合镜头：materials、ai-frame-sop；史诗方法论：epic-brand-film（🔥 市面爆款风向，热门向优先）。关键脚本：init、doctor、check-plan、render、tts_build、mix_audio、probe_av_sync、probe_delivery；Python用uv。`reference/workflow-orchestration.md` 保存历史派单与构建协议，跨宿主冲突以本入口和统一合同为准。
 
 安装与能力边界见 `docs/adapters.md`。Skill需要执行环境，不能在纯聊天窗口凭空渲染MP4。

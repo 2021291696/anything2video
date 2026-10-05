@@ -13,7 +13,7 @@ metadata:
 
 用户级 `~/.agents/skills/anything2video-codex/`，项目级 `<project>/.agents/skills/anything2video-codex/`。现有 `.codex/skills` 链接可保留，但核对是否指同一正本。通过 `$anything2video-codex <任务>` 或 SKILL.md 绝对路径触发；安装后在新会话核对实际加载路径。
 
-先完整读 `reference/production-contract.md`、`reference/production-workflow.md`，再读所选 `recipes/explainer.md`、promo、custom 或 epic。分镜前读 directing-playbook；运动、SKU、AI、品牌和编排参考按需加载。旧 explainer 文档是特定风格快照，不覆盖共享契约。
+先完整读 `reference/production-contract.md`、`reference/production-workflow.md`，再读所选 `recipes/explainer.md`、promo、custom 或 epic（谱系 epic = 🔥 市面爆款风向，热门向优先）。分镜前读 directing-playbook；运动、SKU、AI、品牌和编排参考按需加载。旧 explainer 文档是特定风格快照，不覆盖共享契约。
 
 ## Codex 的执行方式
 

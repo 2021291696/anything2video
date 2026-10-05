@@ -12,7 +12,7 @@ metadata:
 ## 先执行
 
 1. 完整读本次实际入口目录内的 `reference/production-contract.md`、`reference/production-workflow.md`。
-2. 选配方：教学 explainer、产品 promo、风格 custom、谱系 epic，完整读 `recipes/<类型>.md`。
+2. 选配方：教学 explainer、产品 promo、风格 custom、谱系 epic（🔥 市面爆款风向，热门向优先），完整读 `recipes/<类型>.md`。
 3. 分镜前读 `reference/directing-playbook.md`；按需加载 motion-language、styles/README 与 SPEC、ai-frame-sop、brand-assets、workflow-orchestration。旧 explainer 快照不覆盖统一契约。
 
 ## ZCode 的加载与编排

@@ -17,7 +17,7 @@ metadata:
 
 ## 先读与实测
 
-从 Location 完整读 `reference/production-contract.md`、`reference/production-workflow.md`，选择并读 recipes 中一个配方。分镜前读 directing-playbook；按需要加载 motion-language、styles/README 与 SPEC、ai-frame-sop、brand-assets 和 workflow-orchestration。旧 explainer 快照不覆盖共享规则。
+从 Location 完整读 `reference/production-contract.md`、`reference/production-workflow.md`，选择并读 recipes 中一个配方（谱系 epic = 🔥 市面爆款风向，热门向优先）。分镜前读 directing-playbook；按需要加载 motion-language、styles/README 与 SPEC、ai-frame-sop、brand-assets 和 workflow-orchestration。旧 explainer 快照不覆盖共享规则。
 
 检查文件、shell、Node/uv/ffmpeg/Chromium，再分别实际测试图片、MP4 与音频。多模态可用于发现素材伪影、布局遮挡和节奏，但只能报告真实读到/听到的范围。不能仅凭“多模态强”把静态截图验成动态和听感。
 

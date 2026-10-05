@@ -12,7 +12,7 @@ metadata:
 ## 先执行
 
 1. 从本次实际加载的 skill 目录完整读 `reference/production-contract.md`、`reference/production-workflow.md`。
-2. 选一个配方完整读：教学 `recipes/explainer.md`、产品 `recipes/promo.md`、风格 `recipes/custom.md`、谱系 `recipes/epic.md`。
+2. 选一个配方完整读：教学 `recipes/explainer.md`、产品 `recipes/promo.md`、风格 `recipes/custom.md`、谱系 `recipes/epic.md`（🔥 市面爆款风向，热门向优先）。
 3. 分镜前读 `reference/directing-playbook.md`；按需读 motion-language、styles/README 与 SPEC、ai-frame-sop、brand-assets、workflow-orchestration。历史 explainer 文档是特定风格快照，不能覆盖共享契约。
 
 ## Claude Code 的加载与工作方式
