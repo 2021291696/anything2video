@@ -16,5 +16,15 @@ const results = ['node', 'npm', 'ffmpeg', 'ffprobe', 'uv', 'git'].map(command =>
   const result = version(command);
   return {command, available: result.status === 0, version: (result.stdout || result.stderr || result.error?.message || '').split(/\r?\n/)[0]};
 });
-console.log(JSON.stringify({results, note: 'Provider credentials, browser readiness and application skill loading require separate checks.'}, null, 2));
+// 图像通道为可选能力：只报告环境配置，不影响退出码，不回显密钥值。
+const missing = ['A2V_IMAGE_API_BASE', 'A2V_IMAGE_API_KEY', 'A2V_IMAGE_MODEL'].filter(name => !(process.env[name] || '').trim());
+const imageChannel = {
+  check: 'image-channel',
+  available: missing.length === 0,
+  provider: missing.length === 0 ? (process.env.A2V_IMAGE_PROVIDER || 'openai').trim().toLowerCase() : null,
+  hint: missing.length === 0
+    ? 'AI 世界底可 gen_world_frames.py --generate；无通道时的降级路线见 recipes/epic.md'
+    : `missing ${missing.join(', ')}：epic 世界底需宿主多模态或手工生成+--register，其余配方不受影响`,
+};
+console.log(JSON.stringify({results, imageChannel, note: 'Provider credentials, browser readiness and application skill loading require separate checks. image-channel reports env configuration only; reachability is verified on first use.'}, null, 2));
 process.exitCode = results.some(r => !r.available) ? 1 : 0;

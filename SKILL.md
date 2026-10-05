@@ -52,7 +52,7 @@ metadata:
 
 ### 3 结构化分镜
 
-`project.json` 声明 width/height/fps/totalFrames/composition/recipe。`script/storyboard.json` 列全部镜头 `{id,from,to,group,component,purpose,action}`、claims、assets，格式见统一合同。覆盖每帧、无洞重叠。清单存在不证明镜头挂载，必须核对注册表与实渲染。
+`project.json` 声明 width/height/fps/totalFrames/composition/recipe。`script/storyboard.json` 列全部镜头 `{id,from,to,group,component,purpose,action}`、claims、assets，格式见统一合同。覆盖每帧、无洞重叠。清单存在不证明镜头挂载，必须核对注册表与实渲染。排布 AI 生成素材前先确认图像通道（doctor `imageChannel`；无通道禁排依赖生成的 AI 镜头，见统一合同）。
 
 每个镜头有信息变化、动作与结果。贯穿对象必须做事；章间可以有有意静止与呼吸，不强制每45帧乱动。复杂有机材质与精确图解分别分工，不能以装饰替代教学演示。
 

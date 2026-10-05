@@ -2,6 +2,8 @@
 
 给确有历史、技术源流或社区传承的主题，制作“谱系蒙太奇+做事的贯穿符号”的品牌片。观众最终要读出一条传承关系。卖功能用 `promo.md`，解释机制用 `explainer.md`。方法见 `reference/epic-brand-film.md`，工程要求见 `reference/production-contract.md`。
 
+> **能力前置**：本配方世界层默认依赖 AI 生图。开工先跑 `node <skill>/scripts/doctor.mjs` 看 `imageChannel`——可用则 `gen_world_frames.py --generate` 直出候选；不可用时世界层降级为程序材质（`reference/materials.md`）或手工生成+`--register`，分镜**禁止排布依赖生成的 AI 镜头**，别等生成步才撞墙。三条合法通道：API 环境变量三件套、宿主实测图像生成（登记同 `ai-frame-sop.md`）、手工生成素材；三者皆无就选程序材质路线。
+
 ## 1. 叙事骨架与 beats
 
 骨架：**起源状态 → 传承与转变 → 当下回应 → 收口**。章数按资料与叙事决定；一章完成一个主题，不固定8–16章。

@@ -42,6 +42,8 @@ Skill 是制作流程，不是模型权重。宿主至少需读写文件、运�
 
 各配方都可按镜头使用混合素材：代码做精确信息，已审过的生成图像做材质或场景。需要叙事理由，不能用历史器物填满软件教程。每条登记文件/sha256/来源/许可/用途；AI追加模型、完整提示词、seed或n/a、披露与三查结论。普通 API 使用条款不等于素材独占著作权，不写“免版权”。
 
+分镜排布 AI 生成素材前必须先确认图像通道：doctor 的 `imageChannel` 报告、宿主实测图像生成、已有手工素材三者有其一。三者皆无时不得把镜头设计成依赖 AI 生成，世界层改走程序材质路线——通道缺失要在分镜阶段暴露并改道，不能留到生成阶段才发现。
+
 结构化 assets 记录 `{path, sha256, source, license, usage, ai}`，sha256 为完整64位；AI 再加 `{model,prompt,seed,disclosure,qc:{textFree,geometry,continuity}}`。三查分别记录 passed/failed/not_performed，尚未审核必须 not_performed。草稿可带待审素材，最终三项必须 passed；不能以 pending 或一句“已检查”冒充。生成脚本输出 MANIFEST.json，主控审核后纳入 storyboard.assets，未实际使用的候选不算成片资产。品牌、字体和声音同样登记来源与授权。
 
 参考片只借结构、材质、运动与首尾呼应，不拿抽帧拼片。观察到“像AI”只能写推测，不声明其官方制作技术或比例。案例库候选总量不等于已核实原创模型作品数。
