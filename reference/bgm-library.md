@@ -21,7 +21,7 @@
 
 | 参考原声 | 出处 | 复用方式 |
 |---|---|---|
-| OPUS 品牌片原声（177s，曲目名未识别，2026-10-06 用户试听确认） | 《OPUS — A family history of making》，当今市面爆款品牌片 🔥 | 要同款气质时按 `bgm-bakeoff.md` 提名同气质可商用曲（上方曲池优先） |
+| opus小曲（OPUS 品牌片原声，177s；2026-10-06 用户试听确认并命名） | 《OPUS — A family history of making》，当今市面爆款品牌片 🔥 | 要同款气质时按 `bgm-bakeoff.md` 提名同气质可商用曲（上方曲池优先） |
 
 ## 使用约定
 
