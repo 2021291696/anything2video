@@ -30,6 +30,7 @@ function fixture(temp) {
   write(source, 'LICENSE', 'Fixture license\n');
   write(source, 'docs/adapters.md', 'Installation and verification\n');
   write(source, 'docs/optimization-v3.md', 'Measured v3 results and limitations\n');
+  write(source, 'docs/optimization-v3.1.md', 'Six-edition expansion and desktop boundaries\n');
   write(source, 'recipes/explainer.md', 'A complete recipe\n');
   write(source, 'reference/production-contract.md', 'Shared production contract\n');
   write(source, 'styles/README.md', 'Shared styles\n');
@@ -55,10 +56,11 @@ function fixture(temp) {
 const invoke = (source, ...args) => execFileSync(process.execPath, [path.join(source, 'scripts/install.mjs'), ...args], {encoding: 'utf8'});
 const failed = (script, ...args) => spawnSync(process.execPath, [script, ...args], {encoding: 'utf8'});
 
-test('four self-contained editions have identical core hashes and distinct entries', t => {
+test('six self-contained editions have identical core hashes and distinct entries', t => {
   const temp = temporary(t), source = fixture(temp), output = path.join(temp, 'editions');
   const packages = buildEditions(output, {source});
-  assert.equal(packages.length, 4);
+  assert.equal(packages.length, 6);
+  assert.deepEqual(packages.map(packageDir => path.basename(packageDir)), HOSTS.map(host => `anything2video-${host}`));
   const metadata = packages.map(verifyEdition);
   for (let index = 0; index < packages.length; index++) {
     const packageDir = packages[index];
@@ -77,7 +79,7 @@ test('four self-contained editions have identical core hashes and distinct entri
 
 test('a relocated offline package initializes and installs only its own host', t => {
   const temp = temporary(t), source = fixture(temp);
-  const [built] = buildEditions(path.join(temp, 'editions'), {source});
+  const built = buildEditions(path.join(temp, 'editions'), {source}).find(packageDir => path.basename(packageDir) === 'anything2video-claude-code');
   const relocated = path.join(temp, 'offline relocated package');
   fs.renameSync(built, relocated);
   const project = path.join(temp, 'film');
@@ -123,6 +125,24 @@ test('MiniMax data directory is explicit and invalid flag combinations fail', t 
   }
 });
 
+test('desktop hosts export complete packages for manual import without host configuration', t => {
+  const temp = temporary(t), source = fixture(temp);
+  const exportRoot = path.join(temp, 'desktop-export');
+  assert.ok(invoke(source, 'workbuddy', '--export-dir', exportRoot).includes('Exported complete package'));
+  verifyEdition(path.join(exportRoot, 'anything2video-workbuddy'));
+  assert.ok(invoke(source, 'doubao', '--export-dir', exportRoot).includes('Exported complete package'));
+  verifyEdition(path.join(exportRoot, 'anything2video-doubao-work'));
+  assert.equal(fs.existsSync(path.join(exportRoot, 'skills')), false);
+  for (const args of [['workbuddy'], ['doubao-work', path.join(temp, 'project')], ['claude-code', '--export-dir', exportRoot], ['minimax', '--export-dir', exportRoot], ['workbuddy', '--export-dir'], ['workbuddy', '--export-dir', exportRoot, '--data-dir', exportRoot]]) {
+    assert.notEqual(failed(path.join(source, 'scripts/install.mjs'), ...args).status, 0, JSON.stringify(args));
+  }
+  const relocated = buildEditions(path.join(temp, 'editions'), {source}).find(packageDir => path.basename(packageDir) === 'anything2video-doubao-work');
+  const reExport = path.join(temp, 're-export');
+  assert.ok(invoke(relocated, 'doubao-work', '--export-dir', reExport).includes('Exported complete package'));
+  verifyEdition(path.join(reExport, 'anything2video-doubao-work'));
+  assert.notEqual(failed(path.join(relocated, 'scripts/install.mjs'), 'workbuddy', '--export-dir', reExport).status, 0);
+});
+
 test('tampered core is rejected before any destination is created', t => {
   const temp = temporary(t), source = fixture(temp);
   const [packageDir] = buildEditions(path.join(temp, 'editions'), {source});
@@ -132,17 +152,18 @@ test('tampered core is rejected before any destination is created', t => {
   assert.equal(fs.existsSync(destination), false);
 });
 
-test('nonempty outputs are preserved and overwrite checks all four identities first', t => {
+test('nonempty outputs are preserved and overwrite checks all six identities first', t => {
   const temp = temporary(t), source = fixture(temp), output = path.join(temp, 'editions');
   const packages = buildEditions(output, {source});
   write(output, 'notes.txt', 'unrelated file');
   assert.throws(() => buildEditions(output, {source}), /not empty/);
   const firstEntry = fs.readFileSync(path.join(packages[0], 'SKILL.md'), 'utf8');
-  const lastMetadata = JSON.parse(fs.readFileSync(path.join(packages[3], 'edition.json'), 'utf8'));
-  write(packages[3], 'edition.json', JSON.stringify({...lastMetadata, host: 'codex'}));
-  assert.throws(() => buildEditions(output, {source, overwrite: true}), /matching edition identity/);
+  const lastIndex = packages.length - 1;
+  const lastMetadata = JSON.parse(fs.readFileSync(path.join(packages[lastIndex], 'edition.json'), 'utf8'));
+  write(packages[lastIndex], 'edition.json', JSON.stringify({...lastMetadata, host: 'not-a-host'}));
+  assert.throws(() => buildEditions(output, {source, overwrite: true}), /identity/);
   assert.equal(fs.readFileSync(path.join(packages[0], 'SKILL.md'), 'utf8'), firstEntry);
-  write(packages[3], 'edition.json', JSON.stringify(lastMetadata));
+  write(packages[lastIndex], 'edition.json', JSON.stringify(lastMetadata));
   buildEditions(output, {source, overwrite: true});
   assert.equal(fs.readFileSync(path.join(output, 'notes.txt'), 'utf8'), 'unrelated file');
 });

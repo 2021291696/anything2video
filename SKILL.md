@@ -2,7 +2,7 @@
 name: anything2video
 description: Create original teaching videos, explainers, promotional films and brand films from a topic, article or product. Produce researched narration, shot plans, deterministic Remotion animation, licensed or disclosed generated assets, audio, rendered video and measured quality evidence. Works with ZCode, Claude Code, Codex and other agents with file and command access. 给主题、文章、产品生成原创教学视频、科普片、宣传片、品牌片，包含调研、分镜、代码动画、配音、审片和交付。
 metadata:
-  version: "3.0.0"
+  version: "3.1.0"
 ---
 
 # anything2video
@@ -19,7 +19,7 @@ metadata:
 2. 类型选配方：讲知识 `recipes/explainer.md`；卖功能 `recipes/promo.md`；风格化叙事 `recipes/custom.md`；讲谱系/历史 `recipes/epic.md`。先完整读所选配方。
 3. 分镜前读 `reference/directing-playbook.md`。需要动作设计时读 `reference/motion-language.md`；连续做片时读 `reference/style-ledger.md`。历史 `reference/explainer/` 是特定黑底MG风格的上游快照，固定画幅、效果配额、确认点和宿主指令不覆盖共享契约。
 4. 用AI世界底读 `reference/ai-frame-sop.md`；用已有风格读 `styles/README.md` 和对应SPEC。只加载本任务相关参考，避免全量文档压垮执行。
-5. 按宿主读 `docs/adapters.md`。先检测真实能力，再选择并行或顺序，不假设ZCode workflow/tmux可用。
+5. 按宿主读 `docs/adapters.md`。重点支持豆包工作、WorkBuddy、Claude Code、Codex四个独立入口，另保留ZCode与MiniMax Code；桌面接入依据见 `reference/desktop-hosts.md`。先检测真实能力，再选择并行或顺序，不假设ZCode workflow/tmux可用。
 
 ## 硬性原则
 

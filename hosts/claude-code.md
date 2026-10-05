@@ -2,7 +2,7 @@
 name: anything2video-claude-code
 description: 在 Claude Code 中从主题、文章或产品制作原创教学、科普和宣传视频；交付可复现 Remotion 工程、配音、分镜、成片与审片证据。Use for original video production in Claude Code.
 metadata:
-  version: "3.0.0"
+  version: "3.1.0"
 ---
 
 # anything2video · Claude Code 专属版
@@ -21,6 +21,7 @@ metadata:
 - 交互会话 `/anything2video-claude-code <主题、平台与约束>`。若当前版本未发现目录，显式提供 SKILL.md 绝对路径，核对实际读取位置，不猜已加载。
 - headless 可用 `claude -p "完整阅读指定 SKILL.md 并执行任务"`，从授权工程目录启动；具体 flags 先看本机 `claude --help`。不添加绕过权限的默认参数。
 - 使用当前会话实际提供的文件与 shell 工具。子代理仅在可用时用于独立镜头文件、资料整理或测试；主会话负责导演、共享 API、整合与最终审片。长运行保持磁盘阶段记录，不靠摘要猜完成情况。
+- 技能相对路径均以实际入口目录为根；命令从工程执行，不把用户级安装目录当工程。计划/只读模式只完成对应设计工作，待当前授权与工具允许执行时再建工程，不把计划响应记成渲染。
 - 不同 Claude 模型/会话的视频和音频能力不同。实际测试图片、MP4 播放和听取；只读图片就只能通过静态视觉项，不能把联系表当完整运动与听感验收。
 
 ## 生产约束
