@@ -2,7 +2,7 @@
 name: anything2video-claude-code
 description: 在 Claude Code 中从主题、文章或产品制作原创教学、科普和宣传视频；交付可复现 Remotion 工程、配音、分镜、成片与审片证据。Use for original video production in Claude Code.
 metadata:
-  version: "3.1.0"
+  version: "3.1.1"
 ---
 
 # anything2video · Claude Code 专属版

@@ -2,7 +2,7 @@
 name: anything2video-minimax-code
 description: 在 MiniMax Code 中从主题、文章或产品制作原创教学、科普与宣传视频，利用当前真实文件、命令与多模态能力完成可复现工程和质量证据。Use for original video production in MiniMax Code.
 metadata:
-  version: "3.1.0"
+  version: "3.1.1"
 ---
 
 # anything2video · MiniMax Code 专属版

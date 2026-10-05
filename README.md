@@ -34,17 +34,17 @@ node scripts/install.mjs claude-code
 node scripts/install.mjs zcode
 node scripts/install.mjs codex
 node scripts/install.mjs minimax-code
+node scripts/install.mjs workbuddy
 node scripts/install.mjs doubao-work --export-dir D:/a2v-desktop-packages
-node scripts/install.mjs workbuddy --export-dir D:/a2v-desktop-packages
 ```
 
-默认用户级安装，已有目录会被保护，更新先备份。前三种可追加项目根参数；MiniMax 可用 `--data-dir <真实DATA_DIR>`，不要传 skills 子目录。豆包工作与 WorkBuddy 没有 已核实的自动发现目录，`--export-dir` 只导出完整包供手工导入，不写宿主配置。
+默认用户级安装，已有目录会被保护，更新先备份。前五种可追加项目根参数；MiniMax 可用 `--data-dir <真实DATA_DIR>`，不要传 skills 子目录。WorkBuddy 安装进 `~/.workbuddy/skills/`（本机实证的桌面技能目录），重启应用后核对发现。豆包工作没有已核实的自动发现目录，`--export-dir` 只导出完整包供手工导入，不写宿主配置。
 
 - Claude Code：`.claude/skills/anything2video-claude-code/`，新会话 `/anything2video-claude-code`。
 - Codex：`.agents/skills/anything2video-codex/`，新会话 `$anything2video-codex`。
 - ZCode：`.agents/skills/anything2video-zcode/`，用 `zcode skills list --json` 核对实际路径；普通 CLI 和可选 workflow 均可。
 - MiniMax Code：`{{DATA_DIR}}/skills/anything2video-minimax-code/`，下一会话原生 skill 加载核对 Location。
-- WorkBuddy桌面：导入导出的完整包（重点平台）；CodeBuddy IDE/CLI项目用 `.codebuddy/skills/anything2video/`，入口依版本核对。
+- WorkBuddy桌面：`~/.workbuddy/skills/anything2video-workbuddy/` 安装后重启核对（重点平台）；CodeBuddy IDE/CLI项目用 `.codebuddy/skills/anything2video/`，入口依版本核对。
 - 豆包工作：在可访问本地文件的工作任务中授权导出目录并显式读入口（重点平台）；原生导入格式未核实，不猜路径。
 
 [Releases](https://github.com/2021291696/anything2video/releases) 提供六份完整 ZIP，可脱离原仓库初始化工程。自建：`node scripts/build-editions.mjs <仓库外输出目录>`。每包 edition.json 保存入口哈希和公共核心清单，六包公共文件 SHA256 一致。原 generic 版与已有链接保留。

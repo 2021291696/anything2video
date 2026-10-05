@@ -3,10 +3,10 @@ name: anything2video-workbuddy
 description: 在 WorkBuddy 桌面本地任务中，把主题、文章或产品制作成原创教学和科普视频，交付可复现 Remotion 工程、配音、分镜、成片及真实审片证据。
 description_zh: 在 WorkBuddy 本地任务中制作原创代码视频，完成稿件、配音、分镜、渲染、修复与交付。
 description_en: Produce original teaching videos in WorkBuddy local tasks with researched narration, reproducible Remotion projects and measured review evidence.
-version: "3.1.0"
+version: "3.1.1"
 author: "2021291696"
 metadata:
-  version: "3.1.0"
+  version: "3.1.1"
 ---
 
 # anything2video · WorkBuddy 专属版
@@ -15,10 +15,9 @@ metadata:
 
 ## 导入与读取
 
-- 使用当前 WorkBuddy 的技能管理/添加技能入口导入完整包；支持的 ZIP 或文件夹格式以该版本界面为准。若只支持目录，解压保留 `anything2video-workbuddy/SKILL.md` 及全部子目录，不只上传入口文件。
-- 仓库或本包可运行 `node <skill>/scripts/install.mjs workbuddy --export-dir <导出根目录>`，得到供手工导入的完整文件夹。导出不是安装，也不证明应用已发现；不猜 `.workbuddy/skills`。
-- 导入后要求返回实际读取的入口路径和版本，并读取 `reference/production-contract.md`、`reference/production-workflow.md` 与所选完整配方。未提供导入入口时，将解压目录作为本地任务资源并显式读入口，不能称已注册原生技能。
-- 选教学 `recipes/explainer.md`、产品 promo、风格 custom、谱系 epic；分镜前读 `reference/directing-playbook.md`。风格、运动、AI素材、竖屏参考按需读。官方结构/元数据与验证边界见 `reference/desktop-hosts.md`、`docs/adapters.md`。
+- 推荐直接安装：`node scripts/install.mjs workbuddy` 装入 `~/.workbuddy/skills/anything2video-workbuddy/`（该目录为本机实证的桌面版技能发现目录），重启 WorkBuddy 后在技能列表核对；也可加项目根参数。跨机分发用 `--export-dir <导出根目录>` 得到完整文件夹供手工导入。
+- 手工导入走当前 WorkBuddy 的技能管理/添加技能入口，支持的 ZIP 或文件夹格式以该版本界面为准。若只支持目录，解压保留 `anything2video-workbuddy/SKILL.md` 及全部子目录，不只上传入口文件。无导入入口时将解压目录作为本地任务资源显式读入口，记录为资源接入，不称已注册原生技能。
+- 导入后要求返回实际读取的入口路径和版本，并读取 `reference/production-contract.md`、`reference/production-workflow.md` 与所选完整配方。选教学 `recipes/explainer.md`、产品 promo、风格 custom、谱系 epic；分镜前读 `reference/directing-playbook.md`。风格、运动、AI素材、竖屏参考按需读。官方结构/元数据与验证边界见 `reference/desktop-hosts.md`、`docs/adapters.md`。
 
 ## WorkBuddy 的执行方式
 

@@ -2,7 +2,7 @@
 name: anything2video
 description: Create original teaching videos, explainers, promotional films and brand films from a topic, article or product. Produce researched narration, shot plans, deterministic Remotion animation, licensed or disclosed generated assets, audio, rendered video and measured quality evidence. Works with ZCode, Claude Code, Codex and other agents with file and command access. 给主题、文章、产品生成原创教学视频、科普片、宣传片、品牌片，包含调研、分镜、代码动画、配音、审片和交付。
 metadata:
-  version: "3.1.0"
+  version: "3.1.1"
 ---
 
 # anything2video

@@ -101,6 +101,7 @@ test('root installers support aliases and preserve generic and existing dedicate
     ['claude', '.claude', 'claude-code'], ['claude-code', '.claude', 'claude-code'],
     ['zcode', '.agents', 'zcode'], ['codex', '.agents', 'codex'],
     ['minimax', '.minimax', 'minimax-code'], ['minimax-code', '.minimax', 'minimax-code'],
+    ['workbuddy', '.workbuddy', 'workbuddy'],
   ]) {
     const projectRoot = path.join(temp, `host-${host}`);
     write(projectRoot, `${folder}/skills/anything2video/SKILL.md`, 'User generic installation');
@@ -125,7 +126,7 @@ test('MiniMax data directory is explicit and invalid flag combinations fail', t 
   }
 });
 
-test('desktop hosts export complete packages for manual import without host configuration', t => {
+test('desktop hosts install or export per verified discovery boundaries', t => {
   const temp = temporary(t), source = fixture(temp);
   const exportRoot = path.join(temp, 'desktop-export');
   assert.ok(invoke(source, 'workbuddy', '--export-dir', exportRoot).includes('Exported complete package'));
@@ -133,7 +134,11 @@ test('desktop hosts export complete packages for manual import without host conf
   assert.ok(invoke(source, 'doubao', '--export-dir', exportRoot).includes('Exported complete package'));
   verifyEdition(path.join(exportRoot, 'anything2video-doubao-work'));
   assert.equal(fs.existsSync(path.join(exportRoot, 'skills')), false);
-  for (const args of [['workbuddy'], ['doubao-work', path.join(temp, 'project')], ['claude-code', '--export-dir', exportRoot], ['minimax', '--export-dir', exportRoot], ['workbuddy', '--export-dir'], ['workbuddy', '--export-dir', exportRoot, '--data-dir', exportRoot]]) {
+  // WorkBuddy has a verified local skills directory and installs like other hosts.
+  const workbuddyRoot = path.join(temp, 'workbuddy-host');
+  assert.ok(invoke(source, 'workbuddy', workbuddyRoot).includes('Installed complete package'));
+  verifyEdition(path.join(workbuddyRoot, '.workbuddy/skills/anything2video-workbuddy'));
+  for (const args of [['doubao-work'], ['doubao-work', path.join(temp, 'project')], ['claude-code', '--export-dir', exportRoot], ['minimax', '--export-dir', exportRoot], ['workbuddy', '--export-dir'], ['workbuddy', '--export-dir', exportRoot, '--data-dir', exportRoot]]) {
     assert.notEqual(failed(path.join(source, 'scripts/install.mjs'), ...args).status, 0, JSON.stringify(args));
   }
   const relocated = buildEditions(path.join(temp, 'editions'), {source}).find(packageDir => path.basename(packageDir) === 'anything2video-doubao-work');

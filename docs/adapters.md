@@ -4,7 +4,7 @@
 
 v3.1 专属名称为 anything2video-doubao-work、anything2video-workbuddy、anything2video-claude-code、anything2video-codex、anything2video-zcode、anything2video-minimax-code，各包 `edition.json` 记录入口和公共核心完整 SHA256。公共核心一致、入口适配不同，不声称模型表现一致。豆包工作、WorkBuddy、Claude Code、Codex 为重点平台，ZCode 与 MiniMax Code 继续保留。
 
-从仓库或对应完整独立包运行 `node scripts/install.mjs claude-code|zcode|codex|minimax-code`。默认用户级安装；前三种可加项目根参数。目标存在会被保护，更新前备份并核对。MiniMax 可 `--data-dir <真实DATA_DIR>`，不要传 skills 子目录。豆包工作与 WorkBuddy 运行 `node scripts/install.mjs doubao-work|workbuddy --export-dir <导出根目录>` 得到完整包供手工导入；导出不写宿主配置，也不代表应用已发现。原 generic 目录和已有链接保留。
+从仓库或对应完整独立包运行 `node scripts/install.mjs claude-code|zcode|codex|minimax-code|workbuddy`。默认用户级安装；可加项目根参数。目标存在会被保护，更新前备份并核对。MiniMax 可 `--data-dir <真实DATA_DIR>`，不要传 skills 子目录。豆包工作运行 `node scripts/install.mjs doubao-work --export-dir <导出根目录>` 得到完整包供手工导入；导出不写宿主配置，也不代表应用已发现。原 generic 目录和已有链接保留。
 
 ## ZCode
 
@@ -24,7 +24,7 @@ v3.1 专属名称为 anything2video-doubao-work、anything2video-workbuddy、any
 
 ## WorkBuddy（重点平台）
 
-专属包 `anything2video-workbuddy` 由 `install.mjs workbuddy --export-dir <导出根目录>` 导出，入口含官方开放平台列出的 description_zh/description_en/version/author 字段。桌面版用技能管理/添加技能入口导入完整包；格式与大小限制以该版本界面为准，依据见[官方说明](https://open.workbuddy.cn/docs/skill)与 `reference/desktop-hosts.md`。无导入入口时把解压目录作为本地任务资源显式读取，记录为资源接入，不称已注册技能。CodeBuddy IDE/CLI 是另一产品，项目目录 `.codebuddy/skills/anything2video/` 走 generic 包安装（见[官方文档](https://www.workbuddy.cn/docs/ide/Features/Skills)），两种入口不能混称。
+专属包 `anything2video-workbuddy` 直接 `install.mjs workbuddy` 安装到 `~/.workbuddy/skills/`（本机实证的桌面版技能发现目录，依据见 `reference/desktop-hosts.md`），重启后在技能列表核对；入口含官方开放平台列出的 description_zh/description_en/version/author 字段。跨机分发用 `--export-dir` 导出，或在技能管理/添加技能入口导入完整包，格式与大小限制以该版本界面为准。CodeBuddy IDE/CLI 是另一产品，项目目录 `.codebuddy/skills/anything2video/` 走 generic 包安装（见[官方文档](https://www.workbuddy.cn/docs/ide/Features/Skills)），两种入口不能混称。
 
 ## 豆包工作（重点平台）
 
