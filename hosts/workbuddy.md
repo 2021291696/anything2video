@@ -3,10 +3,10 @@ name: anything2video-workbuddy
 description: 在 WorkBuddy 桌面本地任务中，把主题、文章或产品制作成原创教学和科普视频，交付可复现 Remotion 工程、配音、分镜、成片及真实审片证据。
 description_zh: 在 WorkBuddy 本地任务中制作原创代码视频，完成稿件、配音、分镜、渲染、修复与交付。
 description_en: Produce original teaching videos in WorkBuddy local tasks with researched narration, reproducible Remotion projects and measured review evidence.
-version: "3.1.1"
+version: "3.1.2"
 author: "2021291696"
 metadata:
-  version: "3.1.1"
+  version: "3.1.2"
 ---
 
 # anything2video · WorkBuddy 专属版
@@ -22,6 +22,8 @@ metadata:
 ## WorkBuddy 的执行方式
 
 选择能访问指定本地工程的任务，分别确认技能目录、工程目录和输出目录都在实际授权范围。云端任务、手机端或连接器远程执行不能默认拥有本机文件与依赖。
+
+**模型必须选支持工具调用的执行型模型**（2026-10-05 实测：默认 GLM-5.3-Flash 为纯对话型，任务里只输出计划文字，不调用命令/文件工具，多次要求仍零执行证据）。切到执行型模型后再开工，并先让它执行 `node --version` 贴原始输出验证执行力。
 
 用当前真实文件与命令工具先运行 doctor；核实 Node/npm/uv/ffmpeg/ffprobe/Chromium，记录工作目录与命令输出。没有终端时可完成调研、稿件与分镜，交付工程待执行清单；没有渲染产物不能报告已出片。不能用内置短视频生成按钮替代本包确定性渲染及证据合同。
 

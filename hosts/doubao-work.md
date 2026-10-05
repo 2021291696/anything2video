@@ -2,7 +2,7 @@
 name: anything2video-doubao-work
 description: 在豆包桌面工作模式中，基于完整本地资源包制作原创教学和科普视频，按真实文件、命令与媒体能力完成调研、分镜、Remotion 工程、配音、渲染和审片；能力不足时交付待执行工程。
 metadata:
-  version: "3.1.1"
+  version: "3.1.2"
 ---
 
 # anything2video · 豆包工作专属版

@@ -2,7 +2,7 @@
 name: anything2video-zcode
 description: 在 ZCode 中从主题、文章或产品制作原创教学、科普、宣传与品牌视频；普通 CLI 或可用 workflow 编排均可，交付可复现工程和真实质量证据。Use for original video production in ZCode.
 metadata:
-  version: "3.1.1"
+  version: "3.1.2"
 ---
 
 # anything2video · ZCode 专属版

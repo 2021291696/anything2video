@@ -2,7 +2,7 @@
 name: anything2video-codex
 description: 在 Codex CLI 或桌面中制作原创教学、科普、宣传和品牌视频，使用文件、命令和可用媒体工具完成 Remotion 工程、配音、分镜、渲染与审片修复。Use for original video production in Codex.
 metadata:
-  version: "3.1.1"
+  version: "3.1.2"
 ---
 
 # anything2video · Codex 专属版
