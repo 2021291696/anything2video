@@ -31,6 +31,10 @@ function fixture(temp) {
   write(source, 'docs/adapters.md', 'Installation and verification\n');
   write(source, 'docs/optimization-v3.md', 'Measured v3 results and limitations\n');
   write(source, 'docs/optimization-v3.1.md', 'Six-edition expansion and desktop boundaries\n');
+  write(source, 'docs/optimization-v3.6.md', 'huashu absorption record\n');
+  write(source, 'docs/optimization-v3.7.md', 'release contract repair record\n');
+  write(source, 'gallery/README.md', 'Motion card gallery\n');
+  write(source, 'audio-engine/README.md', 'Programmatic score vendor\n');
   write(source, 'recipes/explainer.md', 'A complete recipe\n');
   write(source, 'reference/production-contract.md', 'Shared production contract\n');
   write(source, 'styles/README.md', 'Shared styles\n');

@@ -429,37 +429,35 @@ async def main(narr=None, *, force=False, legacy_config=False, fps=None):
     PROJECT.mkdir('script')
     PROJECT.mkdir('src/common')
     PROJECT.write_text('script/timeline.json', json.dumps(tl, ensure_ascii=False, indent=1))
-    with open(PROJECT.path('script/timeline.md'), 'w', encoding='utf-8') as f:
-        f.write(f"# 时间轴（{ENGINE} · {tl['voice']} {tl['rate']}，共 {total} 帧 = {total/FPS:.1f}s，{cnt} {unit}，语速 {cnt/max(1e-6,speech_sec):.2f} {unit}/s）\n\n")
-        f.write('| 句 | 章 | 帧 from–to | 时长 | 文本（| 为字幕切分） |\n|---|---|---|---|---|\n')
-        for s in sentences:
-            f.write(f"| {s['id']} | {s['chapter']} | {s['from']}–{s['to']} | {(s['to']-s['from']+1)/FPS:.1f}s | {'｜'.join(sb['text'] for sb in s['subs'])} |\n")
-        f.write('\n## 章节起始帧\n')
-        for c in chapters:
-            f.write(f"- 第{c['n']}章 {c['title']}：f{c['from']}\n")
+    md = [f"# 时间轴（{ENGINE} · {tl['voice']} {tl['rate']}，共 {total} 帧 = {total/FPS:.1f}s，{cnt} {unit}，语速 {cnt/max(1e-6,speech_sec):.2f} {unit}/s）\n\n",
+          '| 句 | 章 | 帧 from–to | 时长 | 文本（| 为字幕切分） |\n|---|---|---|---|---|\n']
+    for s in sentences:
+        md.append(f"| {s['id']} | {s['chapter']} | {s['from']}–{s['to']} | {(s['to']-s['from']+1)/FPS:.1f}s | {'｜'.join(sb['text'] for sb in s['subs'])} |\n")
+    md.append('\n## 章节起始帧\n')
+    for c in chapters:
+        md.append(f"- 第{c['n']}章 {c['title']}：f{c['from']}\n")
+    Path(PROJECT.path('script/timeline.md')).write_text(''.join(md), encoding='utf-8')
     # 文本一律走 json.dumps：JSON 字符串就是合法的 TS 字面量，且会转义 " \ 与控制字符
     # （手工拼引号会被解说词里的 \ ' ` ${} 破坏语法，甚至把文本写成代码）
     def lit(s):
         return json.dumps(s, ensure_ascii=False)
-    with open(PROJECT.path('src/common/subs.ts'), 'w', encoding='utf-8') as f:
-        f.write('// 自动生成：scripts/tts_build.py（词边界 / 逐块合成 → 字幕块）。手改请改 script/narration.txt 后重跑。\n')
-        f.write("export type SubEntry = {from: number; to: number; text: string; en?: string; cn?: string; emphasis?: boolean};\nexport const SUBS: SubEntry[] = [\n")
-        for sb in all_subs:
-            alt = ''.join(f", {k}: {lit(sb[k])}" for k in ('en', 'cn') if sb.get(k))
-            f.write(f"  {{from: {sb['from']}, to: {sb['to']}, text: {lit(sb['text'])}{alt}}},\n")
-        f.write('];\n')
-    with open(PROJECT.path('src/common/timeline.ts'), 'w', encoding='utf-8') as f:
-        f.write('// 自动生成：scripts/tts_build.py。帧号 1 起含端点。\n')
-        f.write(f'export const TOTAL_FRAMES = {total};\n')
-        f.write('export const CHAPTER_STARTS: Array<{n: number; title: string; from: number}> = [\n')
-        for c in chapters:
-            f.write(f"  {{n: {c['n']}, title: {lit(c['title'])}, from: {c['from']}}},\n")
-        f.write('];\n')
-        f.write('export type Sentence = {id: string; chapter: number; from: number; to: number; text: string};\n')
-        f.write('export const SENTENCES: Sentence[] = [\n')
-        for s in sentences:
-            f.write(f"  {{id: {lit(s['id'])}, chapter: {s['chapter']}, from: {s['from']}, to: {s['to']}, text: {lit(s['text'])}}},\n")
-        f.write('];\n')
+    ts = ['// 自动生成：scripts/tts_build.py（词边界 / 逐块合成 → 字幕块）。手改请改 script/narration.txt 后重跑。\n',
+          "export type SubEntry = {from: number; to: number; text: string; en?: string; cn?: string; emphasis?: boolean};\nexport const SUBS: SubEntry[] = [\n"]
+    for sb in all_subs:
+        alt = ''.join(f", {k}: {lit(sb[k])}" for k in ('en', 'cn') if sb.get(k))
+        ts.append(f"  {{from: {sb['from']}, to: {sb['to']}, text: {lit(sb['text'])}{alt}}},\n")
+    ts.append('];\n')
+    Path(PROJECT.path('src/common/subs.ts')).write_text(''.join(ts), encoding='utf-8')
+    tl_ts = ['// 自动生成：scripts/tts_build.py。帧号 1 起含端点。\n',
+             f'export const TOTAL_FRAMES = {total};\n',
+             'export const CHAPTER_STARTS: Array<{n: number; title: string; from: number}> = [\n']
+    for c in chapters:
+        tl_ts.append(f"  {{n: {c['n']}, title: {lit(c['title'])}, from: {c['from']}}},\n")
+    tl_ts.append('];\nexport type Sentence = {id: string; chapter: number; from: number; to: number; text: string};\nexport const SENTENCES: Sentence[] = [\n')
+    for s in sentences:
+        tl_ts.append(f"  {{id: {lit(s['id'])}, chapter: {s['chapter']}, from: {s['from']}, to: {s['to']}, text: {lit(s['text'])}}},\n")
+    tl_ts.append('];\n')
+    Path(PROJECT.path('src/common/timeline.ts')).write_text(''.join(tl_ts), encoding='utf-8')
     print(f'lang={lang} engine={ENGINE} voice={tl["voice"]} total_frames={total} ({total/FPS:.1f}s) '
           f'sentences={len(sentences)} {"chars" if lang == "zh" else "words"}={cnt} speech={speech_sec:.1f}s '
           f'rate={cnt/max(1e-6,speech_sec):.2f} {unit}/s')

@@ -6,9 +6,9 @@ import {fileURLToPath} from 'node:url';
 
 export const SOURCE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const HOSTS = Object.freeze(['doubao-work', 'workbuddy', 'claude-code', 'codex', 'zcode', 'minimax-code']);
-const directories = ['recipes', 'reference', 'styles', 'template', 'scripts'];
-const individual = ['LICENSE', 'docs/adapters.md', 'docs/optimization-v3.md', 'docs/optimization-v3.1.md'];
-const excluded = /^(?:\.git|\.venv|node_modules|\.Codex|\.mimosa|\.zcode|__pycache__|audio|renders|stills|fin_frames|out|dist|build.*|tests|examples|cache|\.cache|.*-cache|secrets?|credentials?|\..*stills|\.verify.*|\.probe.*|\.render-bundle.*)$/i;
+const directories = ['recipes', 'reference', 'styles', 'template', 'scripts', 'gallery', 'audio-engine'];
+const individual = ['LICENSE', 'docs/adapters.md', 'docs/optimization-v3.md', 'docs/optimization-v3.1.md', 'docs/optimization-v3.6.md', 'docs/optimization-v3.7.md'];
+const excluded = /^(?:\.git|\.venv|node_modules|\.Codex|\.mimosa|\.zcode|__pycache__|\.pytest_cache|audio|renders|stills|fin_frames|out|dist|build.*|tests|examples|cache|\.cache|.*-cache|secrets?|credentials?|\..*stills|\.verify.*|\.probe.*|\.render-bundle.*)$/i;
 const privateFile = /(?:^\.env(?:\..*)?$|^(?:secrets?|credentials?)(?:\..*)?$|^\.(?:npmrc|pypirc|netrc|git-credentials)$|\.(?:log|pyc|pem|key|p12|pfx)$|(?:^|[._-])worker-report(?:[._-]|$))/i;
 const sha256 = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 const exists = file => {try {fs.lstatSync(file); return true;} catch (error) {if (error.code === 'ENOENT') return false; throw error;}};
@@ -39,6 +39,18 @@ function frontmatterOf(text) {
   const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
   if (!match) throw new Error('Missing YAML frontmatter');
   return match[1];
+}
+function splitFrontmatter(text) {
+  const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
+  if (!match) throw new Error('Missing YAML frontmatter');
+  return {frontmatter: match[0], body: text.slice(match[0].length)};
+}
+// Edition entrypoints compose the per-host frontmatter with the shared SKILL.md body:
+// host identity stays edition-specific while the entry guidance has one maintained source.
+export function composeEntry(hostEntryText, coreSkillText) {
+  const host = splitFrontmatter(hostEntryText);
+  const core = splitFrontmatter(coreSkillText);
+  return `${host.frontmatter.trimEnd()}\n\n${core.body.replace(/^\r?\n+/, '')}`;
 }
 function declaredVersion(frontmatter) {
   // Support the maintained metadata block and legacy packages, never Markdown body text.
@@ -101,7 +113,8 @@ function packageInputs(source) {
   const files = collectCoreFiles(source);
   const coreHashes = Object.fromEntries(files.map(relative => [relative, sha256(path.join(source, ...relative.split('/')))]));
   const entries = Object.fromEntries(HOSTS.map(host => [host, validateEntry(source, host, version)]));
-  return {version, files, coreHashes, entries};
+  const coreText = fs.readFileSync(path.join(source, 'SKILL.md'), 'utf8');
+  return {version, files, coreHashes, entries, coreText};
 }
 
 function writePackage(source, destination, host, inputs) {
@@ -111,7 +124,7 @@ function writePackage(source, destination, host, inputs) {
     fs.mkdirSync(path.dirname(target), {recursive: true});
     fs.copyFileSync(path.join(source, ...relative.split('/')), target);
   }
-  fs.writeFileSync(path.join(destination, 'SKILL.md'), inputs.entries[host]);
+  fs.writeFileSync(path.join(destination, 'SKILL.md'), composeEntry(inputs.entries[host], inputs.coreText));
   fs.writeFileSync(path.join(destination, 'edition.json'), JSON.stringify({
     schemaVersion: 1, version: inputs.version, host, name: `anything2video-${host}`,
     entrypointSha256: sha256(path.join(destination, 'SKILL.md')), coreHashes: inputs.coreHashes,

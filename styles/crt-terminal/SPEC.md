@@ -1,4 +1,4 @@
-# SPEC：CRT 终端（crt-terminal）
+# SPEC：终端（crt-terminal）
 
 **入库日期**：2026-09-29（用户确认）｜**正本源工程**：`style-samples/src/styles-try/crt-terminal/`（样片《终端唤醒》12s，用户确认）｜**图元库**：`crt.tsx`（无纹理/字体文件依赖）
 **风格句**：磷光 CRT 终端——黑绿底、等宽字逐字敲入、荧光晕、扫描线+曲率暗角、块状光标、ASCII 框线/进度条、boot 日志。一切内容都是"终端里打出来的字符"。

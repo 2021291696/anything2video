@@ -1,4 +1,4 @@
-# SPEC：像素街机（pixel-arcade）
+# SPEC：街机（pixel-arcade）
 
 **入库日期**：2026-09-29（用户确认）｜**正本源工程**：`style-samples/src/styles-try/pixel-arcade/`（样片《午夜游戏厅》12s，用户确认）｜**图元库**：`pixel.tsx` + `PressStart2P-Regular.ttf`（OFL）
 **风格句**：复古像素街机——8px 像素网格、有限色块阵、CRT 扫描线+暗角、阶梯缓动、大像素字。所有"圆"都是方块拼的。

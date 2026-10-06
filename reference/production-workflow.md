@@ -22,7 +22,7 @@
 
 工程内运行 `uv run python scripts/tts_build.py`；TTS 不可用则导入已授权音频，不能假设凭宿主名就有语音通道。无旁白影片用 `chapter_timeline.py`，从 project.json 的 fps 建章表，保留 material 等元数据。音乐可无；需要音乐先按 bgm-bakeoff.md 试听定曲，再进分镜与建组。明确无音乐或已有选曲授权时记录决定。核对许可，清晰拍点可辅助动作，不能反过来压缩理解时间。
 
-`audio_narration.wav` 是正本，`audio.wav` 是混音派生物。运行 `uv run python scripts/mix_audio.py`，风格音效仅显式选择。检查头尾、中段对位、削波、响度、音色和背景遮挡，首句 onset probe 只证明首句。
+`audio_narration.wav` 是正本，`audio.wav` 是混音派生物。运行 `uv run python scripts/mix_audio.py`，风格音效仅显式选择。钉帧音效在混音后第三步 `uv run python scripts/mix_sfx.py`（cues 表 + `audio/sfx/sfx-mix.json` 台账；重跑混音后必须重跑本步，工具防双混）。检查头尾、中段对位、削波、响度、音色和背景遮挡，首句 onset probe 只证明首句。
 
 音频脚本以 project.json 的 slug/fps 为准，config slug 不一致先同步真实资产引用；已有正本只在授权更新时用 tts_build.py --force。TTS 会更新 totalFrames；重建音频后分镜、字幕、覆盖层和实际 Composition 同步核对，再运行 TypeScript 和真实渲染。
 

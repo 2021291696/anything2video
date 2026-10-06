@@ -3,6 +3,7 @@ import {AbsoluteFill, Sequence, useCurrentFrame} from 'remotion';
 import {SUBS} from './subs';
 import {fitSize, textW} from './textfit';
 import {arcAccent} from '../ui';
+import {getActiveRecipe} from '../recipes';
 
 /**
  * 字幕：白 #FFF Noto Sans SC 700 44px、居中 x=640、CSS top 637（墨迹 y644–684）、黑描边 4px（16+8+4 方向 text-shadow 环，避免 -webkit-text-stroke 的尖角刺）、
@@ -10,19 +11,27 @@ import {arcAccent} from '../ui';
  * U5 两档：普通句维持 44px 白；SUBS 条目 emphasis=true 走重点档——54px（emphasisSize）+ 色彩弧线主色（accent(N)）+
  * 描边环之后追加 0 0 18px 辉光（环本身 16+8+4 不动，尖角刺不复发）。缺省全 false 时与旧版逐值等价。
  * 相邻块窗重叠时的交叉淡化（S11 同屏登记的共用层修正）见 SubSeq：重叠窗内两块透明度互补（和 ≤1），无重叠时逐值等价旧硬切。
+ * v3.3.0 chrome token：subColor/subStroke/subAccent 从配方 chrome 读取（惰性，规避模块加载顺序）；缺省 chrome 与旧字面量逐值等价，
+ * 风格皮肤（config.VIDEO.style）可覆写——纸化不再需要手改本文件（qr-scan 2026-10-06 判例的制度化）。
  */
+const chromeSub = () => getActiveRecipe().chrome;
 export const SUB_STYLE = {
   fontSize: 44,
   /** 重点档字号（U5）：emphasis=true 的字幕块用 54px。 */
   emphasisSize: 54,
   weight: 700,
   top: 637,
-  color: '#FFFFFF',
+  get color() {
+    return chromeSub().subColor;
+  },
   stroke: 4,
-  strokeColor: '#000000',
-  /** 重点档取色入口（U5，取自 U1 色彩弧线）：accent(N) 惰性包装（不 Top-level 调用，规避 common↔ui 循环 import 的模块初始化顺序问题）。
-   *  无 colorArc 配置时恒等于 PAL.accent。返回 6 位 hex，供 66/80 等 8 位 alpha 后缀拼接。 */
-  accent: (N: number): string => arcAccent(N),
+  get strokeColor() {
+    return chromeSub().subStroke;
+  },
+  /** 重点档取色入口（U5，取自 U1 色彩弧线）：chrome.subAccent 钉色优先；否则 accent(N) 惰性包装
+   *  （不 Top-level 调用，规避 common↔ui 循环 import 的模块初始化顺序问题）。
+   *  无 colorArc 配置且无皮肤钉色时恒等于 PAL.accent。返回 6 位 hex，供 66/80 等 8 位 alpha 后缀拼接。 */
+  accent: (N: number): string => chromeSub().subAccent ?? arcAccent(N),
 };
 export const SUB_MAX_W = 1160; // 安全区 x60–1220；超宽自动缩到 34px 兜底（中文 ≤16 字 / 英文 ≤48 字符本来就装得下）
 const ring = (r: number, k: number, col: string) => Array.from({length: k}, (_, i) => {

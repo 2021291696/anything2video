@@ -57,4 +57,15 @@ export const PROMO: Recipe = {
     pillTextOnAccent: '#06231D', // 青底胶囊文字 = 深青（accentFromBrand 时随主色一起换）
     textShadowOnSolid: '0 1px 0 rgba(0,0,0,.5), 0 -1px 0 rgba(0,0,0,.5), 0 0 10px rgba(33,230,193,.45)', // 青系（accent 33,230,193 同源）
   },
+  // 机身件缺省 = v3.2.0 前硬编码字面量（promo 自身覆盖层不渲这些件，值供风格组合与其他组件兜底）
+  chrome: {
+    subColor: '#FFFFFF',
+    subStroke: '#000000',
+    barFill: 'rgba(190,170,250,0.52)',
+    barTrack: 'rgba(243,243,243,0.32)',
+    barLabel: 'rgba(255,255,255,0.55)',
+    barDivider: 'rgba(255,255,255,0.55)',
+    barGlow: true,
+    endFade: '#000000',
+  },
 };

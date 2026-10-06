@@ -47,5 +47,42 @@ export type RecipePalette = {
 /** 配方：同一引擎的一种视频类型。overlaySet 决定 Main 挂哪族覆盖层。
  *  accentFrom（发现 10）：合法主色集合断言——palette.accent 必须落在本集合内（getActiveRecipe 渲染前校验，
  *  不在则 console.error + 抛错，不允许静默渲出）。集合 = 模板正本色 + styles/ 各 SPEC 声明的主色抄录；
- *  accentFromBrand 换主色时必须同步把新色登记进集合（reference/brand-assets.md §3）。 */
-export type Recipe = {id: RecipeId; name: string; palette: RecipePalette; overlaySet: OverlaySet; accentFrom?: string[]};
+ *  accentFromBrand 换主色时必须同步把新色登记进集合（reference/brand-assets.md §3）。
+ *  chrome（v3.3.0 起）：机身件色 token——字幕/进度条/结尾从调色板取色，风格皮肤（StyleSkin）可覆写，
+ *  根治"配方机身件硬编码导致换风格时双材质系统"（qr-scan 2026-10-06 判例）。 */
+export type Recipe = {id: RecipeId; name: string; palette: RecipePalette; chrome: ChromePalette; overlaySet: OverlaySet; accentFrom?: string[]};
+
+/** 机身件色：值锚点 = v3.2.0 及以前 Subtitle/ProgressBar/Overlay 里的硬编码字面量（缺省即逐值等价）。
+ *  带 ? 的 token 缺省时走 arcAccent(N)（色彩弧线联动，与旧行为一致）；皮肤想钉死色就显式给值。 */
+export type ChromePalette = {
+  subColor: string; // 字幕主色（旧字面量 #FFFFFF）
+  subStroke: string; // 字幕描边环色（旧字面量 #000000）
+  subAccent?: string; // 重点字幕色；缺省 = arcAccent(N)
+  barFill: string; // 进度条已播填充（旧字面量 rgba(190,170,250,0.52)）
+  barTrack: string; // 进度条未播轨道（旧字面量 rgba(243,243,243,0.32)）
+  barLabel: string; // 非当前章名（含 alpha；旧字面量 rgba(255,255,255,0.55)）
+  barDivider: string; // 章节分隔线（含 alpha；旧字面量 rgba(255,255,255,0.55)）
+  barHair?: string; // 填充顶部发丝线；缺省 = arcAccent(N)
+  barLabelActive?: string; // 当前章名；缺省 = arcAccent(N)
+  barGlow: boolean; // 发丝线/当前章名辉光开关（暗底配方 true；纸/平色皮肤 false）
+  endFade: string; // 片尾渐隐底色（旧字面量 #000000）
+};
+
+/** 风格侧：独立于配方的视觉皮肤。palette/chrome 均为浅合并覆写（未覆盖字段沿用配方默认）。
+ *  11 个风格 = 3 张配方正本脸（值=现配方，保证吸收后逐值等价）+ 8 个 SKU（值从各 SPEC 锁死色板派生）。
+ *  选型流程见 SKILL.md「确认与授权」：单问挑一张套餐卡（样片库 samples/index.html）。 */
+export type StyleId =
+  | 'deep-space' // 深空电光青（吸收自 promo）
+  | 'mg-purple' // 紫调黑底 MG（吸收自 explainer）
+  | 'epic-paper' // 暖纸白印章红描金（吸收自 epic）
+  | 'sand'
+  | 'chalk'
+  | 'blueprint'
+  | 'neon'
+  | 'pixel-arcade'
+  | 'paper-collage'
+  | 'swiss-print'
+  | 'crt-terminal';
+
+/** 风格皮肤：accentLegal = 本风格合法主色集合（并入配方 accentFrom 参与断言，皮肤换血后不误伤）。 */
+export type StyleSkin = {id: StyleId; name: string; accentLegal: string[]; palette: Partial<RecipePalette>; chrome: Partial<ChromePalette>};

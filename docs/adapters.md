@@ -1,6 +1,6 @@
 # 六端专属版安装与执行
 
-同一包提供 SKILL.md、recipes、reference、styles、template、scripts。宿主差异限于加载与编排；事实、素材、音频、审片和交付规则完全共用。适配成功不能推导成模型质量一致。
+同一包提供 SKILL.md、recipes、reference、styles、template、scripts、gallery、audio-engine、samples。宿主差异限于加载与编排；事实、素材、音频、审片和交付规则完全共用。适配成功不能推导成模型质量一致。
 
 v3.1 专属名称为 anything2video-doubao-work、anything2video-workbuddy、anything2video-claude-code、anything2video-codex、anything2video-zcode、anything2video-minimax-code，各包 `edition.json` 记录入口和公共核心完整 SHA256。公共核心一致、入口适配不同，不声称模型表现一致。豆包工作、WorkBuddy、Claude Code、Codex 为重点平台，ZCode 与 MiniMax Code 继续保留。
 
@@ -8,7 +8,7 @@ v3.1 专属名称为 anything2video-doubao-work、anything2video-workbuddy、any
 
 ## ZCode
 
-专属包正本在 `~/.agents/skills/anything2video-zcode`；generic 仍在原目录。用 `zcode skills list --json` 核对实际路径；有版本发现 `.zcode/skills` 或设置页导入，以随包 configuration-guide 和本机 help 为准。用户同名项可能遮盖项目项。普通 headless `zcode -p "完整阅读指定SKILL.md并执行" --cwd <工程>`；旧 dynamic workflow 可选，真实 API 存在才用，不要求每个版本都有注入函数。不同模型的图片/MP4/音频能力分别实测。
+专属包正本在 `~/.agents/skills/anything2video-zcode`；generic 仍在原目录。用 `zcode skills list --json` 核对实际路径；有版本发现 `.zcode/skills` 或设置页导入，以随包 configuration-guide 和本机 help 为准。用户同名项可能遮盖项目项。普通 headless `zcode -p "完整阅读指定SKILL.md并执行" --cwd <工程>`；旧 dynamic workflow 可选，真实 API 存在才用，不要求每个版本都有注入函数。不同模型的图片/MP4/音频能力分别实测。仅在实际 Workflow API 中：args 可能是 JSON 字符串，先解析；agent() 必须 await，返回值先 toText；用 log 输出，不能靠 return；禁用 phase/log/agent/parallel/pipeline 作变量名；先跑三行最小脚本验证注入行为，再写完整逻辑；大段结构化数据落盘传路径，不经 agent prompt 往返。
 
 ## Claude Code
 
@@ -24,7 +24,7 @@ v3.1 专属名称为 anything2video-doubao-work、anything2video-workbuddy、any
 
 ## WorkBuddy（重点平台）
 
-专属包 `anything2video-workbuddy` 直接 `install.mjs workbuddy` 安装到 `~/.workbuddy/skills/`（本机实证的桌面版技能发现目录，依据见 `reference/desktop-hosts.md`），重启后在技能列表核对；入口含官方开放平台列出的 description_zh/description_en/version/author 字段。跨机分发用 `--export-dir` 导出，或在技能管理/添加技能入口导入完整包，格式与大小限制以该版本界面为准。CodeBuddy IDE/CLI 是另一产品，项目目录 `.codebuddy/skills/anything2video/` 走 generic 包安装（见[官方文档](https://www.workbuddy.cn/docs/ide/Features/Skills)），两种入口不能混称。
+专属包 `anything2video-workbuddy` 直接 `install.mjs workbuddy` 安装到 `~/.workbuddy/skills/`（本机实证的桌面版技能发现目录，依据见 `reference/desktop-hosts.md`），重启后在技能列表核对；入口含官方开放平台列出的 description_zh/description_en/version/author 字段。跨机分发用 `--export-dir` 导出，或在技能管理/添加技能入口导入完整包，格式与大小限制以该版本界面为准。CodeBuddy IDE/CLI 是另一产品，项目目录 `.codebuddy/skills/anything2video/` 走 generic 包安装（见[官方文档](https://www.workbuddy.cn/docs/ide/Features/Skills)），两种入口不能混称。实测注意（2026-10-05）：任务输入框**回车不一定发送**，确认消息上屏再等回复；开工前先让助手执行 `node --version` 并贴原始输出，作为执行力验证。
 
 ## 豆包工作（重点平台）
 

@@ -55,4 +55,15 @@ export const EXPLAINER: Recipe = {
     pillTextOnAccent: '#FFFFFF', // 紫底胶囊文字 = 白（explainer 一贯做法）
     textShadowOnSolid: '0 1px 0 rgba(0,0,0,.5), 0 -1px 0 rgba(0,0,0,.5), 0 0 10px rgba(102,45,248,.45)', // 紫系（accentGlowRgb 102,45,248 同源）
   },
+  // 机身件缺省 = v3.2.0 前硬编码字面量（逐值等价；subAccent/barHair/barLabelActive 缺省走 arcAccent）
+  chrome: {
+    subColor: '#FFFFFF',
+    subStroke: '#000000',
+    barFill: 'rgba(190,170,250,0.52)',
+    barTrack: 'rgba(243,243,243,0.32)',
+    barLabel: 'rgba(255,255,255,0.55)',
+    barDivider: 'rgba(255,255,255,0.55)',
+    barGlow: true,
+    endFade: '#000000',
+  },
 };

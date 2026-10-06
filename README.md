@@ -2,7 +2,7 @@
 
 把主题、文章或产品做成原创视频的 Agent Skill。包含调研、稿件、配音、分镜、代码动画、渲染、审片与修复流程，适配 Claude Code、Codex、豆包工作、WorkBuddy、ZCode 和 MiniMax Code 等具备文件与命令执行能力的助手。
 
-**v3.1 提供豆包工作、WorkBuddy、Claude Code、Codex、ZCode、MiniMax Code 六份专属版，前四个为重点平台。** 各自适配加载与编排，共用相同的配方、图元、模板和生产脚本。豆包工作与 WorkBuddy 是桌面手工导入包，接入边界与未知项见 [reference/desktop-hosts.md](reference/desktop-hosts.md)。导演方法、原生画幅、多点打样与证据门禁帮助稳定制作；Skill 不改变模型权重，不承诺全面等价于 Opus 或一次提示生成精品。代码承担精确信息，审核后的生成素材承担场景，逐件登记来源和披露。
+**提供豆包工作、WorkBuddy、Claude Code、Codex、ZCode、MiniMax Code 六份专属版（当前 v3.7.0），前四个为重点平台。** 各自适配加载与编排，共用相同的配方、图元、模板和生产脚本。豆包工作与 WorkBuddy 是桌面手工导入包，接入边界与未知项见 [reference/desktop-hosts.md](reference/desktop-hosts.md)。导演方法、原生画幅、多点打样与证据门禁帮助稳定制作；Skill 不改变模型权重，不承诺全面等价于 Opus 或一次提示生成精品。代码承担精确信息，审核后的生成素材承担场景，逐件登记来源和披露。
 
 English: A portable agent skill for producing researched, original code-composited videos with narration, shot contracts, deterministic rendering and measured quality evidence. Model capabilities and application support still need real validation.
 
@@ -66,24 +66,27 @@ node scripts/install.mjs doubao-work --export-dir D:/a2v-desktop-packages
 
 讲知识：`recipes/explainer.md`；卖功能：`promo.md`；风格化叙事：`custom.md`；谱系/品牌历史：`epic.md`。旧配方里的宿主、授权、画幅和音频口径统一由 [production-contract](reference/production-contract.md) 覆盖。explainer参考已随仓库附在 `reference/explainer/`，不依赖本机另一个skill目录。
 
-8个风格SKU：sand、chalk、blueprint、neon、pixel-arcade、paper-collage、swiss-print、crt-terminal。每个包含图元、SPEC和回归样张；同风格后续片优先复用。材质场景参考在 `reference/materials.md`，混合素材纪律在 `ai-frame-sop.md`。
+16个风格SKU（v3.5.0 起套餐池 19 张卡 = 16 SKU + 3 配方正本脸）：sand、chalk、blueprint、neon、pixel-arcade、paper-collage、swiss-print、crt-terminal，及轴 D 八新卡 guofeng-scroll、paperclip-sticker、hanazi-916（9:16 竖屏原生）、aurora-glass、line-art、isometric-city、morph、liquid-flow。每个包含图元、SPEC和回归样张；同风格后续片优先复用。材质场景参考在 `reference/materials.md`，混合素材纪律在 `ai-frame-sop.md`。
 
 ### 风格样片：点缩略图直接播放
 
-每段 6 秒、1280×720、30fps、无音轨，取自历史成片的真实片段（封面为各片第 2 帧实测抽取）。点击缩略图在 GitHub 内嵌播放器中播放；clone 后也可打开离线放映页 [samples/index.html](samples/index.html)。
+每段 12-15 秒、1280×720、30fps、带完整音频（TTS 旁白+音效+BGM），为 v3.4.0 套餐制重制的逐卡样片——卡的类型骨架 × 卡的风格视觉（封面为各片第 2 帧实测抽取）。点击缩略图在 GitHub 内嵌播放器中播放；clone 后也可打开离线放映页 [samples/index.html](samples/index.html)。
 
 |  |  |  |  |
 | :---: | :---: | :---: | :---: |
-| <a href="samples/sand-sample.mp4" title="播放沙画样片"><img src="samples/posters/sand-sample.jpg" alt="沙画样片封面" width="200"></a><br>**沙画** `sand`<br>沙粒与轮廓逐步成形 | <a href="samples/chalk-sample.mp4" title="播放粉笔黑板样片"><img src="samples/posters/chalk-sample.jpg" alt="粉笔黑板样片封面" width="200"></a><br>**粉笔黑板** `chalk`<br>笔触与几何推导 | <a href="samples/blueprint-sample.mp4" title="播放工程蓝图样片"><img src="samples/posters/blueprint-sample.jpg" alt="工程蓝图样片封面" width="200"></a><br>**工程蓝图** `blueprint`<br>结构线稿与尺寸标注 | <a href="samples/neon-sample.mp4" title="播放霓虹夜城样片"><img src="samples/posters/neon-sample.jpg" alt="霓虹夜城样片封面" width="200"></a><br>**霓虹夜城** `neon`<br>辉光与能量路径 |
-| <a href="samples/pixel-arcade-sample.mp4" title="播放像素街机样片"><img src="samples/posters/pixel-arcade-sample.jpg" alt="像素街机样片封面" width="200"></a><br>**像素街机** `pixel-arcade`<br>像素图形与游戏机语法 | <a href="samples/paper-collage-sample.mp4" title="播放剪纸拼贴样片"><img src="samples/posters/paper-collage-sample.jpg" alt="剪纸拼贴样片封面" width="200"></a><br>**剪纸拼贴** `paper-collage`<br>撕纸边缘与分层拼贴 | <a href="samples/swiss-print-sample.mp4" title="播放瑞士版式样片"><img src="samples/posters/swiss-print-sample.jpg" alt="瑞士版式样片封面" width="200"></a><br>**瑞士版式** `swiss-print`<br>网格与红黑字形 | <a href="samples/crt-terminal-sample.mp4" title="播放CRT终端样片"><img src="samples/posters/crt-terminal-sample.jpg" alt="CRT终端样片封面" width="200"></a><br>**CRT 终端** `crt-terminal`<br>磷光扫描线与命令行 |
+| <a href="samples/sand-sample.mp4" title="播放沙画样片"><img src="samples/posters/sand-sample.jpg" alt="沙画样片封面" width="200"></a><br>**沙画** `sand`<br>沙粒与轮廓逐步成形 | <a href="samples/chalk-sample.mp4" title="播放黑板样片"><img src="samples/posters/chalk-sample.jpg" alt="黑板样片封面" width="200"></a><br>**黑板** `chalk`<br>笔触与几何推导 | <a href="samples/blueprint-sample.mp4" title="播放蓝图样片"><img src="samples/posters/blueprint-sample.jpg" alt="蓝图样片封面" width="200"></a><br>**蓝图** `blueprint`<br>结构线稿与尺寸标注 | <a href="samples/neon-sample.mp4" title="播放霓虹样片"><img src="samples/posters/neon-sample.jpg" alt="霓虹样片封面" width="200"></a><br>**霓虹** `neon`<br>辉光与能量路径 |
+| <a href="samples/pixel-arcade-sample.mp4" title="播放街机样片"><img src="samples/posters/pixel-arcade-sample.jpg" alt="街机样片封面" width="200"></a><br>**街机** `pixel-arcade`<br>像素图形与游戏机语法 | <a href="samples/paper-collage-sample.mp4" title="播放拼贴样片"><img src="samples/posters/paper-collage-sample.jpg" alt="拼贴样片封面" width="200"></a><br>**拼贴** `paper-collage`<br>撕纸边缘与分层拼贴 | <a href="samples/swiss-print-sample.mp4" title="播放版式样片"><img src="samples/posters/swiss-print-sample.jpg" alt="版式样片封面" width="200"></a><br>**版式** `swiss-print`<br>网格与红黑字形 | <a href="samples/crt-terminal-sample.mp4" title="播放终端样片"><img src="samples/posters/crt-terminal-sample.jpg" alt="终端样片封面" width="200"></a><br>**终端** `crt-terminal`<br>磷光扫描线与命令行 |
+| <a href="samples/deep-space-sample.mp4" title="播放深空样片"><img src="samples/posters/deep-space-sample.jpg" alt="深空样片封面" width="200"></a><br>**深空** `deep-space`<br>星尘黑底与电光青 | <a href="samples/mg-purple-sample.mp4" title="播放夜航样片"><img src="samples/posters/mg-purple-sample.jpg" alt="夜航样片封面" width="200"></a><br>**夜航** `mg-purple`<br>紫调 HUD 讲解 | <a href="samples/epic-paper-sample.mp4" title="播放神话样片"><img src="samples/posters/epic-paper-sample.jpg" alt="神话样片封面" width="200"></a><br>**神话** `epic-paper`<br>暖纸描金与年代轴 |  |
+| <a href="samples/guofeng-scroll-sample.mp4" title="播放月窗样片"><img src="samples/posters/guofeng-scroll-sample.jpg" alt="月窗样片封面" width="200"></a><br>**月窗** `guofeng-scroll`<br>黑底月窗与朱印题跋 | <a href="samples/paperclip-sticker-sample.mp4" title="播放贴纸人样片"><img src="samples/posters/paperclip-sticker-sample.jpg" alt="贴纸人样片封面" width="200"></a><br>**贴纸人** `paperclip-sticker`<br>贴纸科普与图解 | <a href="samples/hanazi-916-sample.mp4" title="播放花字样片"><img src="samples/posters/hanazi-916-sample.jpg" alt="花字样片封面" width="200"></a><br>**花字** `hanazi-916`<br>9:16 竖屏综艺花字 | <a href="samples/aurora-glass-sample.mp4" title="播放玻璃样片"><img src="samples/posters/aurora-glass-sample.jpg" alt="玻璃样片封面" width="200"></a><br>**玻璃** `aurora-glass`<br>弥散渐变与玻璃拟态 |
+| <a href="samples/line-art-sample.mp4" title="播放线条样片"><img src="samples/posters/line-art-sample.jpg" alt="线条样片封面" width="200"></a><br>**线条** `line-art`<br>一笔画线条生长 | <a href="samples/isometric-city-sample.mp4" title="播放等轴样片"><img src="samples/posters/isometric-city-sample.jpg" alt="等轴样片封面" width="200"></a><br>**等轴** `isometric-city`<br>2.5D 等轴小城 | <a href="samples/morph-sample.mp4" title="播放形变样片"><img src="samples/posters/morph-sample.jpg" alt="形变样片封面" width="200"></a><br>**形变** `morph`<br>形状插值变形链 | <a href="samples/liquid-flow-sample.mp4" title="播放液态样片"><img src="samples/posters/liquid-flow-sample.jpg" alt="液态样片封面" width="200"></a><br>**液态** `liquid-flow`<br>goo 流体与液态融合 |
 
-三种配方的真实成片段落（同样 6 秒、无音轨）：
+历史配方样片（同样 6 秒、无音轨，作配方层参考）：
 
 |  |  |  |
 | :---: | :---: | :---: |
 | <a href="samples/recipe-explainer-sample.mp4" title="播放讲解片样片"><img src="samples/posters/recipe-explainer-sample.jpg" alt="讲解片样片封面" width="200"></a><br>**讲解片** `explainer`<br>知识讲解与流程轨 | <a href="samples/recipe-promo-sample.mp4" title="播放宣传片样片"><img src="samples/posters/recipe-promo-sample.jpg" alt="宣传片样片封面" width="200"></a><br>**宣传片** `promo`<br>功能演示与贯穿线 | <a href="samples/recipe-epic-sample.mp4" title="播放史诗品牌片样片"><img src="samples/posters/recipe-epic-sample.jpg" alt="史诗品牌片样片封面" width="200"></a><br>**史诗品牌片** `epic`<br>AI 生成世界底 + 代码字幕 |
 
-样片是历史风格参考，不是各宿主当前端到端认证；来源/许可与 AI 披露逐段登记在 [samples/README.md](samples/README.md) 与 `samples/manifest.json`。六个独立包均附这 11 段视觉预览。原生竖屏接线见 [portrait-wiring](reference/portrait-wiring.md)。
+样片不是各宿主当前端到端认证；来源/许可与披露逐段登记在 [samples/README.md](samples/README.md) 与 `samples/manifest.json`。六个独立包均附 19 段套餐样片与 3 段历史配方样片。原生竖屏接线见 [portrait-wiring](reference/portrait-wiring.md)。
 
 历史代码样片见 [examples](examples/)。这些早期样片不代表全部新配方都纯代码；新片的素材模式以各自MANIFEST为准。
 
@@ -100,8 +103,11 @@ node scripts/install.mjs doubao-work --export-dir D:/a2v-desktop-packages
 - `scripts/render.mjs`：跨平台Node渲染，Composition规格与声明必须一致，保存ffprobe原始证据。
 - `scripts/check-qc.mjs`：拒绝草稿、片段、未审素材、缺项和旧媒体/源码证据，独立计帧与全片解码；不自动证明艺术质量或实际观看。
 - [导演手册](reference/directing-playbook.md) 与 [生产流程](reference/production-workflow.md)：原因/动作/结果、多点打样、根因修复及真实完整审片。
+- `gallery/`：157 张镜头动效配方卡（video-shotcraft 移植，Apache-2.0，分镜抽卡用）；`audio-engine/`：mgaudio 程序编曲 vendor（MIT+CC0）与 `scripts/bgm_generate.py` 长片适配层。
 - `template/scripts/tts_build.py`：按 project.json 的 slug/fps 生成清洁旁白、时间轴与字幕，同步 totalFrames；旧正本需 --force 才能更新。音频路径逃逸和 config 不一致会拒绝。
 - `template/scripts/mix_audio.py`：不可变旁白正本、可复测重混、音乐压低；默认不注入风格音效。
+- `template/scripts/mix_sfx.py`：钉帧音效通用通道（cues 表 + sfx-mix.json 台账，混音后第三步，防双混）。
+- 三轮验收后加 D 轮独立评分评审（[jury-review](reference/jury-review.md)）：7 维锚点评分，任一维度 <7 阻塞。
 - `probe_av_sync.mjs`：纯旁白首句检查，最终媒体时长另测；不能代表全部字幕逐句对齐。
 - `probe_delivery.py`：实际规格，交付说明不手写分辨率。
 
@@ -122,7 +128,7 @@ node <skill>/scripts/check-qc.mjs <project> qc/final.json
 ## 回归验证
 
 ```powershell
-node --test tests/runtime.test.mjs tests/editions.test.mjs tests/qc.test.mjs
+node --test tests/runtime.test.mjs tests/editions.test.mjs tests/qc.test.mjs tests/source-consistency.test.mjs
 cd template
 uv sync
 uv run python -m unittest discover -s tests -v
@@ -130,7 +136,7 @@ npm install
 npm run typecheck
 ```
 
-测试覆盖运行时、独立包、证据新鲜性、音频正本、真实错位、章表和生成素材合同。测试证明具体工程行为，不证明审美与跨模型等价。优化与实际验证范围见 [v3报告](docs/optimization-v3.md) 与 [v3.1六端扩展](docs/optimization-v3.1.md)，历史 [v2报告](docs/optimization-v2.md) 保留。
+测试覆盖运行时、独立包、证据新鲜性、音频正本、真实错位、章表和生成素材合同，另有真实源一致性门禁（宿主入口版本、包清单、样片哈希、缓存垃圾）。测试证明具体工程行为，不证明审美与跨模型等价。优化与实际验证范围见 [v3报告](docs/optimization-v3.md)、[v3.1六端扩展](docs/optimization-v3.1.md) 与近期 [v3.6](docs/optimization-v3.6.md)、[v3.7](docs/optimization-v3.7.md) 变更记录，历史 [v2报告](docs/optimization-v2.md) 保留。
 
 ## 许可与鸣谢
 

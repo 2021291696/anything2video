@@ -2,6 +2,8 @@
 
 配方说明“这类片怎样讲、怎样看、怎样验收”。工程、音频、素材与证据的共同要求只维护在 `reference/production-contract.md`；生产顺序见 `reference/production-workflow.md`，派单见 `reference/workflow-orchestration.md`。配方不复制另一套运行管线。
 
+> **套餐口径（v3.5.0 起）**：配方（本文档族）管**结构与叙事**——覆盖层集合、验收侧重，随套餐卡的类型而定（宣传→promo、讲解→explainer、史诗→epic）。**视觉一律由套餐卡的风格侧决定**：工程 `config.style` 从 19 张套餐池选皮肤（3 配方正本脸 + 16 SKU），浅合并覆写 palette/chrome。各配方文档中残留的历史视觉描述（黑底MG/深空青/暖纸白等）是 v3.2 前类型绑脸时期的参考，不再构成配方的视觉约束；选型规则与判例见 `reference/style-ledger.md`。
+
 ## 0. 类型与接线
 
 - `recipes/explainer.md`、`promo.md`、`epic.md` 是叙事配方；工程 `project.json.recipe` 与 `src/config.ts` 中的基础配方须一致。

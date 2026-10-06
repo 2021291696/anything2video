@@ -1,4 +1,4 @@
-# SPEC：工程蓝图（blueprint）
+# SPEC：蓝图（blueprint）
 
 **正本源工程**：`blueprint-bridge`（2026-09-27 验证交付）｜**图元库**：`blueprint.tsx` + `icons.ts`（无纹理依赖）
 **风格句**：深蓝晒图底 + 精确网格 + 白色工程线（实线画入/虚线隐藏结构）+ 黄色尺寸标注 + 图框标题栏。

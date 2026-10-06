@@ -12,6 +12,7 @@ audio/cache/
 
 # Python
 __pycache__/
+.pytest_cache/
 *.pyc
 
 # 系统与编辑器

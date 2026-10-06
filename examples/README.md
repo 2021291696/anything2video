@@ -5,9 +5,9 @@
 | 样片 | 配方 | 时长 | 说什么 |
 |---|---|---|---|
 | `promo-echobuds.mp4` | promo（宣传片） | ~30s | 虚构产品 echobuds 的宣传演示：钩子 → 卖点 → 证明 → CTA 骨架，关键词大字 + 品牌色纪律，无字幕带 |
-| `custom-chalk-math.mp4` | custom（粉笔黑板风） | ~90s | 《勾股定理》：黑板/粉笔手绘质感的数学讲解，逐字手写动画 |
-| `custom-blueprint-bridge.mp4` | custom（工程蓝图风） | ~60s | 《一座桥的诞生》：蓝图线稿 + 标注系统的桥梁建造讲解 |
-| `custom-neon-city.mp4` | custom（霓虹夜城风） | ~60s | 《城市不打烊》：霓虹发光夜景的城市主题片 |
+| `custom-chalk-math.mp4` | custom（黑板风） | ~90s | 《勾股定理》：黑板/粉笔手绘质感的数学讲解，逐字手写动画 |
+| `custom-blueprint-bridge.mp4` | custom（蓝图风） | ~60s | 《一座桥的诞生》：蓝图线稿 + 标注系统的桥梁建造讲解 |
+| `custom-neon-city.mp4` | custom（霓虹风） | ~60s | 《城市不打烊》：霓虹发光夜景的城市主题片 |
 
 每条配同名 `.gif` 预览（前 4.5s）。完整讲解片（黑底 MG、配音字幕章节进度条）参考 `reference/explainer/sample-rag/`（含成片参考帧与全套镜头源码）。
 

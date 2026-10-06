@@ -14,6 +14,16 @@
 
 换音轨也改变成片 SHA256。旧 delivery/QC 不能沿用；标准流程在正式源工程重新渲染并审查。纯 remux 比选稿只作为 draft；没有匹配当前媒体与源码的完整证据时不能过最终门禁。
 
+## 程序编曲通道（2026-10-06 全案轴 C 落地）
+
+程序编曲是与曲库**并列**的提名源，不替代圈选定盘：候选与曲库曲**同页进试听页**，用户圈选规矩不变。
+
+- **生成**：`uv run --with numpy --with scipy --with soundfile --with numba --with pedalboard --with pyloudnorm --python 3.12 python <skill>/scripts/bgm_generate.py <工程> --style <卡ID> --variations 2`（依赖集与 Windows 验证记录见 `audio-engine/VENDOR.md`；卡ID→配方映射、章表 spec 格式、落点解析优先级见脚本头注）。候选落 `<工程>/bgm_bakeoff/generated/`。
+- **提名建议按片型**：快节奏宣传/科普（≤40s）程序编曲优先——落点以 beat sheet 为合同、天然卡拍到帧；60s+ 史诗/叙事长片曲库优先（真人录音音乐性上限高）、程序编曲垫选。"不要音乐"/"授权主控选曲"的既有决定纪律不变。
+- **卡片六件照旧**：曲名写 `bgm_generate seed=<N> style=<slug>`；许可栏固定 `CC0（VCSL via mg-styles-15）+ MIT 代码`，免署名；MANIFEST 登记行直接粘 bgm_generate 的 stdout。
+- **落点真值分工（轴 B 定案，禁混用）**：程序编曲以 beat sheet 为合同（beat_grid 不适用）；曲库曲以实测 beat_grid 为真值。试听页两通道卡片混排不加区分标记，圈选落位时才在交付说明声明通道。
+- 单配方贯穿全片（长片形态靠能量曲线+form 分段）；跨章换配方、真人声轨道是已知边界，超出即回曲库通道。
+
 ## 提名纪律（2026-10-02 云开首轮教训，三条全灭实录）
 
 - **按气质提名，不按 tag 提名**：「科技感」≠ DJ/club/EDM——tech house、minimal techno 全被否（"偏 DJ 了"）；「电影氛围」≠ 空旷悲凉——meditation/drone/space 向全被否（"过于空旷悲凉"）。提名前先问用户要"温度与律动形态"，再按描述找曲，别按 genre 标签对号入座。

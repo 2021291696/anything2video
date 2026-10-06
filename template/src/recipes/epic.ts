@@ -57,4 +57,15 @@ export const EPIC: Recipe = {
     pillTextOnAccent: '#FFF6EE', // 红底胶囊文字 = 米白（纸感，accentFromBrand 时随主色明度重估）
     textShadowOnSolid: '0 1px 0 rgba(0,0,0,.4), 0 -1px 0 rgba(0,0,0,.4), 0 0 10px rgba(196,60,46,.45)', // 红系（accent 196,60,46 同源）
   },
+  // 机身件缺省 = v3.2.0 前硬编码字面量（epic 用诗行字幕/无进度条；Ending 渐隐现值 #000000，正本脸 epic-paper 同值保等价）
+  chrome: {
+    subColor: '#FFFFFF',
+    subStroke: '#000000',
+    barFill: 'rgba(190,170,250,0.52)',
+    barTrack: 'rgba(243,243,243,0.32)',
+    barLabel: 'rgba(255,255,255,0.55)',
+    barDivider: 'rgba(255,255,255,0.55)',
+    barGlow: true,
+    endFade: '#000000',
+  },
 };

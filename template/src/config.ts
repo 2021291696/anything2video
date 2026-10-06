@@ -1,4 +1,5 @@
 import type {ReactNode} from 'react';
+import type {StyleId} from './recipes/types';
 
 /**
  * 片子级配置（唯一需要按主题改的文件之一；另一个是 script/narration.txt）。
@@ -16,6 +17,13 @@ export const VIDEO = {
    * 各配方差异与选型详见 skill 的 recipes/ 文档。
    */
   recipe: 'explainer' as 'explainer' | 'promo' | 'epic',
+  /**
+   * 风格（v3.4.0 套餐制风格侧）：视觉皮肤，浅合并覆写配方 palette/chrome（含字幕/进度条/结尾机身件）。
+   * 11 个：deep-space 深空｜mg-purple 夜航｜epic-paper 神话｜sand/chalk/blueprint/neon/
+   * pixel-arcade/paper-collage/swiss-print/crt-terminal（8 SKU）。样片与锁死项见 samples/index.html。
+   * 缺省 undefined = 纯配方视觉（与旧版逐值等价）。选型流程见 SKILL.md「确认与授权」：单问挑一张套餐卡。
+   */
+  style: undefined as StyleId | undefined,
   /**
    * 片子语言：'zh' 中文（默认）｜'en' 英文。
    * 影响 → 配音引擎（tts_build.py 的 TTS_ENGINE=auto 也会自己按解说词判语言）、标题/章节卡是否压窄（拉丁不压）、

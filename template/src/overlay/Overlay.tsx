@@ -37,9 +37,9 @@ export const Title: React.FC = () => {
     <div style={{position: 'absolute', inset: 0, transform: `translateY(${dy}px)`, opacity: op}}>
       <GlitchIn N={N} f0={a + 11} rgbSplit={6} slices={14} seed={3}>
         <div style={{position: 'absolute', left: 0, top: 268, width: 1280, display: 'flex', justifyContent: 'center', alignItems: 'baseline', gap: 26}}>
-          <span style={{fontFamily: FONT_WIDE, fontSize: fitSize(VIDEO.title.big, VIDEO.title.rest ? 620 : 1120, 118, 64, EM_WIDE, 6), color: WHITE, lineHeight: 1, letterSpacing: 6, textShadow: `0 0 ${18 + 14 * glow}px rgba(102,45,248,${0.55 + 0.3 * glow}), 6px 6px 0 ${PURPLE}`}}>{VIDEO.title.big}</span>
+          <span style={{fontFamily: FONT_WIDE, fontSize: fitSize(VIDEO.title.big, VIDEO.title.rest ? 620 : 1120, 118, 64, EM_WIDE, 6), color: getActiveRecipe().chrome.subColor, lineHeight: 1, letterSpacing: 6, textShadow: `0 0 ${18 + 14 * glow}px rgba(${PAL.accentGlowRgb},${0.55 + 0.3 * glow}), 6px 6px 0 ${PURPLE}`}}>{VIDEO.title.big}</span>
           {VIDEO.title.rest ? (
-            <span style={{fontFamily: FONT_HEAVY, fontWeight: 900, fontSize: fitSize(VIDEO.title.rest, 520, 96, 60, 1, 2), color: WHITE, lineHeight: 1, transform: `scaleX(${SQUEEZE})`, transformOrigin: '0 100%', letterSpacing: 2, WebkitTextStroke: '1px #000', paintOrder: 'stroke fill'}}>{VIDEO.title.rest}</span>
+            <span style={{fontFamily: FONT_HEAVY, fontWeight: 900, fontSize: fitSize(VIDEO.title.rest, 520, 96, 60, 1, 2), color: getActiveRecipe().chrome.subColor, lineHeight: 1, transform: `scaleX(${SQUEEZE})`, transformOrigin: '0 100%', letterSpacing: 2, WebkitTextStroke: '1px #000', paintOrder: 'stroke fill'}}>{VIDEO.title.rest}</span>
           ) : null}
         </div>
       </GlitchIn>
@@ -182,13 +182,14 @@ export const Ending: React.FC = () => {
   const N = useCurrentFrame() + ENDING_RANGE[0];
   const n = N - ENDING_RANGE[0];
   const op = fadeIn(n, VIDEO.endingFade);
-  return <div style={{position: 'absolute', inset: 0, background: '#000', opacity: op}} />;
+  // v3.3.0 chrome token：渐隐底色从配方 chrome.endFade 读取（缺省 #000 与旧版逐值等价；暖底/纸底皮肤可覆写）
+  return <div style={{position: 'absolute', inset: 0, background: getActiveRecipe().chrome.endFade, opacity: op}} />;
 };
 export const ENDING_TOP_RANGE: [number, number] = [TOTAL_FRAMES - 30, TOTAL_FRAMES];
 export const EndingTop: React.FC = () => {
   const N = useCurrentFrame() + ENDING_TOP_RANGE[0];
   const op = fadeIn(N - ENDING_TOP_RANGE[0], 20);
-  return <div style={{position: 'absolute', inset: 0, background: '#000', opacity: op}} />;
+  return <div style={{position: 'absolute', inset: 0, background: getActiveRecipe().chrome.endFade, opacity: op}} />;
 };
 
 // ---------- 片尾收束卡（可选，val-pixel 验证片 QC v1 C4 黑尾预案实战验证后回灌） ----------
@@ -268,9 +269,9 @@ export const EndingCard: React.FC<{variant?: 'poster' | 'terminal'}> = ({variant
         <div style={{position: 'absolute', left: 0, top: 168, width: 1280, display: 'flex', justifyContent: 'center'}}>
           <TermBox cols={64} rows={12} progress={clamp01(n / 24)} size={24}>
             <div style={{display: 'flex', justifyContent: 'center', alignItems: 'baseline', gap: 26}}>
-              <span style={{fontFamily: FONT_WIDE, fontSize: fitSize(VIDEO.title.big, VIDEO.title.rest ? 520 : 980, 96, 56, EM_WIDE, 6), color: WHITE, lineHeight: 1, letterSpacing: 6, textShadow: `0 0 ${18 + 14 * glow}px rgba(${PAL.accentGlowRgb},${0.55 + 0.3 * glow})`}}>{VIDEO.title.big}</span>
+              <span style={{fontFamily: FONT_WIDE, fontSize: fitSize(VIDEO.title.big, VIDEO.title.rest ? 520 : 980, 96, 56, EM_WIDE, 6), color: getActiveRecipe().chrome.subColor, lineHeight: 1, letterSpacing: 6, textShadow: `0 0 ${18 + 14 * glow}px rgba(${PAL.accentGlowRgb},${0.55 + 0.3 * glow})`}}>{VIDEO.title.big}</span>
               {VIDEO.title.rest ? (
-                <span style={{fontFamily: FONT_HEAVY, fontWeight: 900, fontSize: fitSize(VIDEO.title.rest, 460, 80, 52, 1, 2), color: WHITE, lineHeight: 1, transform: `scaleX(${SQUEEZE})`, transformOrigin: '0 100%', letterSpacing: 2, WebkitTextStroke: '1px #000', paintOrder: 'stroke fill'}}>{VIDEO.title.rest}</span>
+                <span style={{fontFamily: FONT_HEAVY, fontWeight: 900, fontSize: fitSize(VIDEO.title.rest, 460, 80, 52, 1, 2), color: getActiveRecipe().chrome.subColor, lineHeight: 1, transform: `scaleX(${SQUEEZE})`, transformOrigin: '0 100%', letterSpacing: 2, WebkitTextStroke: '1px #000', paintOrder: 'stroke fill'}}>{VIDEO.title.rest}</span>
               ) : null}
             </div>
           </TermBox>
@@ -284,14 +285,14 @@ export const EndingCard: React.FC<{variant?: 'poster' | 'terminal'}> = ({variant
   return (
     <div style={{position: 'absolute', inset: 0, opacity: op}}>
       <div style={{position: 'absolute', left: 0, top: 268, width: 1280, display: 'flex', justifyContent: 'center', alignItems: 'baseline', gap: 26}}>
-        <span style={{fontFamily: FONT_WIDE, fontSize: fitSize(VIDEO.title.big, VIDEO.title.rest ? 620 : 1120, 118, 64, EM_WIDE, 6), color: WHITE, lineHeight: 1, letterSpacing: 6, textShadow: `0 0 ${18 + 14 * glow}px rgba(102,45,248,${0.55 + 0.3 * glow}), 6px 6px 0 ${PURPLE}`}}>{VIDEO.title.big}</span>
+        <span style={{fontFamily: FONT_WIDE, fontSize: fitSize(VIDEO.title.big, VIDEO.title.rest ? 620 : 1120, 118, 64, EM_WIDE, 6), color: getActiveRecipe().chrome.subColor, lineHeight: 1, letterSpacing: 6, textShadow: `0 0 ${18 + 14 * glow}px rgba(${PAL.accentGlowRgb},${0.55 + 0.3 * glow}), 6px 6px 0 ${PURPLE}`}}>{VIDEO.title.big}</span>
         {VIDEO.title.rest ? (
-          <span style={{fontFamily: FONT_HEAVY, fontWeight: 900, fontSize: fitSize(VIDEO.title.rest, 520, 96, 60, 1, 2), color: WHITE, lineHeight: 1, transform: `scaleX(${SQUEEZE})`, transformOrigin: '0 100%', letterSpacing: 2, WebkitTextStroke: '1px #000', paintOrder: 'stroke fill'}}>{VIDEO.title.rest}</span>
+          <span style={{fontFamily: FONT_HEAVY, fontWeight: 900, fontSize: fitSize(VIDEO.title.rest, 520, 96, 60, 1, 2), color: getActiveRecipe().chrome.subColor, lineHeight: 1, transform: `scaleX(${SQUEEZE})`, transformOrigin: '0 100%', letterSpacing: 2, WebkitTextStroke: '1px #000', paintOrder: 'stroke fill'}}>{VIDEO.title.rest}</span>
         ) : null}
       </div>
       <div style={{position: 'absolute', left: 520, top: 420, width: 240, height: 2, background: arcAccent(N), opacity: 0.85 * fadeIn(n - 6, 12)}} />
       <div style={{position: 'absolute', opacity: fadeIn(n - 10, 14)}}>
-        <CText cx={640} cy={470} size={34} weight={700} color={WHITE} letterSpacing={8} shadow={`0 0 18px rgba(${PAL.accentGlowRgb},.45)`}>
+        <CText cx={640} cy={470} size={34} weight={700} color={getActiveRecipe().chrome.subColor} letterSpacing={8} shadow={`0 0 18px rgba(${PAL.accentGlowRgb},.45)`}>
           {VIDEO.conclusionLine}
         </CText>
       </div>

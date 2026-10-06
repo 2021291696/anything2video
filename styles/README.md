@@ -2,20 +2,32 @@
 
 每个子目录提供图元库、`SPEC.md` 风格约定、`sample.jpg` 静态回归样张和适用资产。目标是复用已有笔触、材质和组件，同时为本片重新解决内容、画幅、动作与声音。样张存在和风格组件可用，不等于新视频已通过完整验证。
 
+> **套餐口径（v3.5.0 起）**：本目录 16 个 SKU + 3 张配方正本脸（deep-space 深空 / mg-purple 夜航 / epic-paper 神话，值=原配方正本）= 套餐池 19 张（卡=类型+风格，一张卡一次定盘；画幅是卡属性非第三筛选轴）。工程 `config.style` 选皮肤（token 级：调色板 + 字幕/进度条/结尾机身件）；**笔触与图元语言仍走本目录复用流程**——皮肤管 token，不管图元重画。选型先查 `reference/style-ledger.md`（口味锚、判例与新旧名映射表）。
+
 ## 当前 SKU
 
 | 目录 | 风格 | 历史源工程/样片 | 纹理或字体 |
 |---|---|---|---|
-| `sand/` | 灯箱沙画 | usa250-sand | grain.png |
-| `chalk/` | 粉笔黑板 | chalk-math | dust.png |
-| `blueprint/` | 工程蓝图 | blueprint-bridge | 无 |
-| `neon/` | 霓虹夜城 | neon-city | 无 |
-| `pixel-arcade/` | 像素街机 | style-samples《午夜游戏厅》 | PressStart2P ttf |
-| `paper-collage/` | 剪纸拼贴 | style-samples《拼贴世界》 | 无 |
-| `swiss-print/` | 瑞士版式 | style-samples《少即是多》 | 系统字体栈 |
-| `crt-terminal/` | CRT终端 | style-samples《终端唤醒》 | 系统字体栈 |
+| `sand/` | 沙画 | usa250-sand | grain.png |
+| `chalk/` | 黑板 | chalk-math | dust.png |
+| `blueprint/` | 蓝图 | blueprint-bridge | 无 |
+| `neon/` | 霓虹 | neon-city | 无 |
+| `pixel-arcade/` | 街机 | style-samples《午夜游戏厅》 | PressStart2P ttf |
+| `paper-collage/` | 拼贴 | style-samples《拼贴世界》 | 无 |
+| `swiss-print/` | 版式 | style-samples《少即是多》 | 系统字体栈 |
+| `crt-terminal/` | 终端 | style-samples《终端唤醒》 | 系统字体栈 |
+| `guofeng-scroll/` | 敦煌月窗（v3.5.0 轴 D） | samples-d8《公元366年·一点金光》 | 无（纯代码 SVG） |
+| `paperclip-sticker/` | 贴纸人科普（v3.5.0 轴 D） | samples-d8《心跳的一天》 | 无（纯代码，Noto Sans SC） |
+| `hanazi-916/` | 综艺花字（v3.5.0 轴 D，9:16 卡属性） | samples-d8《猫主子的四种喜欢信号》 | 无（纯代码，Noto Sans SC） |
+| `aurora-glass/` | 玻璃拟态（v3.5.0 轴 D） | samples-d8《深夜的专注》 | 无（纯代码，噪点用模板 GRAIN_URL） |
+| `line-art/` | 线条动画（v3.5.0 轴 D） | samples-d8《一座桥的受力》 | 无（纯代码，Noto Serif SC 标题） |
+| `isometric-city/` | 等轴 2.5D（v3.5.0 轴 D） | samples-d8《一条视频的渲染小城》 | 无（纯 CSS SSR 等轴，禁 3D 库） |
+| `morph/` | 形变动画（v3.5.0 轴 D） | samples-d8《形态的旅行》 | 无（纯代码，手写路径插值器） |
+| `liquid-flow/` | 液态流动（v3.5.0 轴 D） | samples-d8《一盏茶汤》 | 无（纯代码 SVG goo 滤镜） |
 
 `ink-tea` 水墨在历史记录中未过关，不作为稳定SKU。后四风格历史上以用户确认的12秒小样入库；本包保留静态样张与组件，未附等价的完整运动/声音审查证据，不能称为当前版本整片认证。每种字体和纹理检查实际随附许可，缺少许可时补证据或换资产。
+
+2026-10-06：guofeng-scroll（敦煌月窗）以 13.5s 全音频样片入库（v3.5.0 轴 D 批 1，源工程 `科普视频/samples-d8/s34-guofeng`：TTS 旁白+程序编曲 BGM（15-guochao，-14.1 LUFS）+SFX 钉帧 3 点，typecheck/check-plan 绿，ffprobe 实测过）；paperclip-sticker（贴纸人科普）同批入库（源工程 `科普视频/samples-d8/s34-paperclip`：13.8s，TTS+程序编曲 BGM（19-paperclip 引擎原生 slug，-14.0 LUFS）+SFX，typecheck/check-plan 绿）；hanazi-916（综艺花字，首个 9:16 竖屏原生卡，画幅=卡属性）同批入库（源工程 `科普视频/samples-d8/s34-hanazi`：12.6s 1080×1920，TTS+程序编曲 BGM（18-hanazi，-14.1 LUFS）+SFX 19 点钉帧，claims 带 Nature/iCatCare 等已核验 URL）；aurora-glass（玻璃拟态，批 2 首卡）入库（源工程 `科普视频/samples-d8/s34-aurora`：14.4s，TTS+程序编曲 BGM（12-aurora-glass，-14.0 LUFS）+SFX 5 钉帧，backdrop-filter 无头渲染实证生效）。各卡均尚未进套餐池——套餐池 11→19 在 8 卡全验收后统一改版。批 3 补记：line-art（线条动画）入库（源工程 `科普视频/samples-d8/s34-lineart`：13.8s，一笔画 16 段预连通+7 处无缝续接，TTS+程序编曲 BGM（02-line-art，-14.0 LUFS）+SFX 4 点台账，check-plan 3 镜头无缝）。批 2 补记：isometric-city（等轴 2.5D）入库（源工程 `科普视频/samples-d8/s34-iso`：13.0s，SSR 三面矩阵数值验证<0.001 误差、189 瓦片+11 栋几何建筑，TTS+程序编曲 BGM（03-isometric，-14.1 LUFS）+SFX 8 点台账；口径裁量：真等轴 30° 与 2:1 dimetric 不可兼得，取 30° 已登记 claims）；morph（形变动画）入库（源工程 `科普视频/samples-d8/s34-morph`：13.8s，5 形状 120 顶点对齐+中介圆点三段式+手写插值器无 SMIL，形变链咖啡杯→落日→城市窗灯→圆点→地图钉，TTS+程序编曲 BGM（08-morph，-14.0 LUFS）+SFX 6 点，worker 自抓 OKLab 白化 roundtrip 假绿等 4 真 bug 修复）；liquid-flow（液态流动）入库（源工程 `科普视频/samples-d8/s34-liquid`：13.8s，goo 滤镜 metaball 四处融合+多瓣错相波浪前沿+细颈断裂回弹，TTS+程序编曲 BGM（07-liquid，-14.0 LUFS）+SFX 6 点，迭代 5 轮 30+ 帧判读）。**轴 D 8 卡全部验收入库并已进套餐池（2026-10-06 改版 11→19，`samples/` 与放映页 `index.html` 已带 19 卡真样片；逐卡短板见 `reference/style-ledger.md` 短板登记节）。**
 
 ## 同风格复用
 
