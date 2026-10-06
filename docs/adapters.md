@@ -24,7 +24,7 @@ v3.1 专属名称为 anything2video-doubao-work、anything2video-workbuddy、any
 
 ## WorkBuddy（重点平台）
 
-专属包 `anything2video-workbuddy` 直接 `install.mjs workbuddy` 安装到 `~/.workbuddy/skills/`（本机实证的桌面版技能发现目录，依据见 `reference/desktop-hosts.md`），重启后在技能列表核对；入口含官方开放平台列出的 description_zh/description_en/version/author 字段。跨机分发用 `--export-dir` 导出，或在技能管理/添加技能入口导入完整包，格式与大小限制以该版本界面为准。CodeBuddy IDE/CLI 是另一产品，项目目录 `.codebuddy/skills/anything2video/` 走 generic 包安装（见[官方文档](https://www.workbuddy.cn/docs/ide/Features/Skills)），两种入口不能混称。实测注意（2026-10-05）：任务输入框**回车不一定发送**，确认消息上屏再等回复；开工前先让助手执行 `node --version` 并贴原始输出，作为执行力验证。
+专属包 `anything2video-workbuddy` 直接 `install.mjs workbuddy` 安装到 `~/.workbuddy/skills/`（本机实证的桌面版技能发现目录，依据见 `reference/desktop-hosts.md`），重启后在技能列表核对；入口含官方开放平台列出的 description_zh/description_en/version/author 字段。跨机分发用 `--export-dir` 导出，或在技能管理/添加技能入口导入完整包，格式与大小限制以该版本界面为准。CodeBuddy IDE/CLI 是另一产品，项目目录 `.codebuddy/skills/anything2video/` 走 generic 包安装（见[官方文档](https://www.workbuddy.cn/docs/ide/Features/Skills)），两种入口不能混称。实测注意（2026-10-05）：任务输入框**回车不一定发送**，确认消息上屏再等回复；开工前先让助手执行 `node --version` 并贴原始输出，作为执行力验证。内置生成通道与豆包工作同口径：该版本若提供内置图片/视频/声音生成，产物落盘、登记来源与许可（`--register` 同 `reference/ai-frame-sop.md`）后可作场景素材，**不绕过确定性渲染与 QC**；是否可用以当版实测为准，不按产品名假定，AI 镜头排布仍走统一合同的图像通道能力门。
 
 ## 豆包工作（重点平台）
 

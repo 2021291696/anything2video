@@ -2,7 +2,7 @@
 name: anything2video
 description: Create original teaching videos, explainers, promotional films and brand films from a topic, article or product. Produce researched narration, shot plans, deterministic Remotion animation, licensed or disclosed generated assets, audio, rendered video and measured quality evidence. Works with ZCode, Claude Code, Codex and other agents with file and command access. 给主题、文章、产品生成原创教学视频、科普片、宣传片、品牌片，包含调研、分镜、代码动画、配音、审片和交付。
 metadata:
-  version: "3.7.0"
+  version: "3.7.1"
 ---
 
 # anything2video
@@ -42,7 +42,7 @@ metadata:
 
 ### 0 建工程
 
-根目录未知先问用户片子放哪，把绝对路径保存到 `~/.anything2video/workdir`；已指定就沿用。`node scripts/doctor.mjs` 检查本地命令；`node scripts/init.mjs <slug>` 沿 `A2V_DATA_ROOT` 或持久目录建工程，也可显式 `<工程绝对路径> <slug>`。未知根不退回当前目录。目标非空拒绝，不覆盖、不自动git add/commit；工程位于skill之外。进入工程 `npm install`、`uv sync`；渲染浏览器 `npx remotion browser ensure` 或 `BROWSER_EXECUTABLE`。锁文件与源码版本管理，缓存不入库。
+根目录未知先问用户片子放哪，把绝对路径保存到 `~/.anything2video/workdir`；已指定就沿用。首次使用同一轮加问图像生成通道（可选，持久决策，口径见统一合同「能力与授权」）：有没有生图 API key（MiniMax 或任意 OpenAI 兼容接口）——用途是 AI 材质/世界底生图，**只影响约 5%–10% 的画面效果，不填不影响出片**；决定记入 `~/.anything2video/image-channel`（provider 名或 `none`），key 本身只进环境变量不落盘。`node scripts/doctor.mjs` 检查本地命令与图像通道状态；`node scripts/init.mjs <slug>` 沿 `A2V_DATA_ROOT` 或持久目录建工程，也可显式 `<工程绝对路径> <slug>`。未知根不退回当前目录。目标非空拒绝，不覆盖、不自动git add/commit；工程位于skill之外。进入工程 `npm install`、`uv sync`；渲染浏览器 `npx remotion browser ensure` 或 `BROWSER_EXECUTABLE`。锁文件与源码版本管理，缓存不入库。
 
 ### 1 调研
 

@@ -26,6 +26,7 @@ import re
 import socket
 import ssl
 import sys
+import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -212,6 +213,20 @@ def post_json(url: str, payload: dict, key: str, timeout: int = 180) -> dict:
         return json.loads(resp.read().decode("utf-8"))
 
 
+# 通道调用失败要如实告知用户错在哪、怎么办（统一合同「素材与参考片」错误透传条款）
+_HTTP_HINTS = {
+    401: 'API key 无效或未授权——核对 A2V_IMAGE_API_KEY 与该模型的生图权限',
+    402: '通常是账户余额不足——充值后重跑，或走程序材质/手工生成+--register 降级路线',
+    403: 'key 被拒——常见于欠费、无该模型权限或地区限制',
+    404: '端点或模型名不对——核对 A2V_IMAGE_API_BASE 与 A2V_IMAGE_MODEL',
+    429: '限流——稍后用 --only 重跑失败章',
+}
+
+
+def http_hint(code: int) -> str:
+    return _HTTP_HINTS.get(code, '上游通道错误——核对 BASE/MODEL/余额后重跑')
+
+
 def manifest_append(root: Path, asset: dict) -> None:
     json_path, markdown_path = guard(root, root / 'MANIFEST.json'), guard(root, root / 'MANIFEST.md')
     data = json.loads(json_path.read_text(encoding='utf-8')) if json_path.exists() else {'schemaVersion': 1, 'assets': []}
@@ -374,13 +389,27 @@ def generate_images(project_root: Path, only: list, take: str, overwrite=False) 
             payload.update(n=1, size=size)
             if model.startswith('dall-e'):
                 payload['response_format'] = 'b64_json'
-        data = post_json(url, payload, key)
+        try:
+            data = post_json(url, payload, key)
+        except urllib.error.HTTPError as error:
+            detail = ""
+            try:
+                detail = error.read().decode("utf-8", "replace").strip()[:300]
+            except OSError:
+                pass
+            raise ValueError(f"图像通道 HTTP {error.code} {error.reason}：{http_hint(error.code)}"
+                             + (f" 上游返回：{detail}" if detail else "")) from None
         if not isinstance(data, dict):
             raise ValueError('Image provider response must be an object')
         item = data.get('data')
         if provider == 'minimax':
-            if (data.get('base_resp') or {}).get('status_code', 0) != 0 or not isinstance(item, dict) or not item.get('image_urls'):
-                raise ValueError('MiniMax returned no image candidate')
+            base = data.get('base_resp') or {}
+            if base.get('status_code', 0) != 0 or not isinstance(item, dict) or not item.get('image_urls'):
+                msg = base.get('status_msg') or ('响应缺少 image_urls' if base.get('status_code', 0) == 0 else '无 status_msg')
+                raise ValueError(
+                    f'MiniMax 图像通道失败 status_code={base.get("status_code")} status_msg={msg!r}——'
+                    'status_msg 提示余额/balance → 账户欠费：充值后重跑，或改走程序材质/手工生成+--register 降级；'
+                    '提示鉴权/invalid → 核对 A2V_IMAGE_API_KEY；已落盘候选不受影响，可用 --only 重跑失败章')
             blob, seed = fetch_bytes(item['image_urls'][0]), item.get('seed', 'n/a')
         else:
             entry = item[0] if isinstance(item, list) and item else {}

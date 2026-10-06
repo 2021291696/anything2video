@@ -76,3 +76,34 @@ v3.5.0 池子 11→19 改版只更新了 SKILL.md/style-ledger/samples 资产，
 SKILL.md 按拼合式入口必然仅 frontmatter 差异，见上）。`.claude/skills`、`.codex/skills` 等
 junction 自动跟随。开源仓 fork（2021291696/anything2video）自 v3.1.2 后持续分叉，本轮不同步，
 回灌与 push 另行拍板。
+
+## 七、v3.7.1 补丁：首用图像通道询问与欠费告知（2026-10-06 晚）
+
+用户拍板：首次使用除片子输出位置外，同轮加问**可选的生图 API key**，并如实告知影响边界。
+背景：TTS/音乐主链路零 key 零费用；唯一要 key 的是可选图像通道（A2V_IMAGE_* 三件套，
+provider 可选 openai/minimax），缺口在「配了但没钱」只报泛化错误、不识别欠费。
+
+- SKILL.md §0 + production-contract「能力与授权」：图像通道入持久决策，首用与根目录同轮
+  询问一次；口径写死「只影响约 5%–10% 的画面效果，不填不影响出片」；决定（provider 名或
+  `none`）记 `~/.anything2video/image-channel`，**密钥只走环境变量不落盘**。
+- `scripts/doctor.mjs`：imageChannel 报告升级四态——env 就绪（available）/ 已声明缺 env /
+  首用决定 none（不再重复问）/ 无记录（提示首用询问）；`declared` 字段透出决定，仍不回显密钥。
+- `template/scripts/gen_world_frames.py`：错误透传——HTTP 401/402/403/404/429 各给具体指引
+  （充值/降级/查 key/限流重跑）；MiniMax `base_resp.status_code≠0` 把 status_msg 原样透出并
+  按「余额/balance→充值或降级、鉴权→查 key」解读，替换原「returned no image candidate」泛化报错。
+  post_json 本体不动（SSRF 防线 assert_safe_url 保持），映射在调用侧。
+- `scripts/doctor.mjs --probe-image`（显式 opt-in）：真实调用一次图像生成验证通道可达、鉴权与
+  余额（**计一张图费用，默认不跑**）；stderr 预告计费，stdout 纯 JSON 增加 `imageProbe` 字段；
+  JS 侧同款 URL 防线（http(s)、拒凭据、DNS 解析后拒私网/环回/保留）；显式请求探测却没跑成
+  （缺 env/provider 非法/地址被拒/失败）退出码红。假 key 实测：MiniMax 返回 1004
+  "login fail…"，映射正确指向查 key。
+- production-contract「素材与参考片」：通道调用失败如实向用户透传上游错误与含义，欠费给
+  「充值重跑 / 降级程序材质或手工生成+--register」两条路，禁泛化成"无候选图"。
+- docs/adapters.md WorkBuddy 节补内置生成通道声明（与豆包工作同口径：落盘登记可用作场景
+  素材、不绕过确定性渲染与 QC、可用性以当版实测为准）。
+- 文档同步：README（首用询问、doctor 条目含 --probe-image、v3.7.1）；hosts 六入口 +
+  SKILL.md 3.7.0→3.7.1。
+- 验证：`node --test tests/*.test.mjs` 43/43 全绿；doctor 四态 + 探针三态（无 env 跳过红/
+  假 key 真链路 1004 红/默认绿）实测；gen_world_frames `py_compile` + `http_hint` 单元抽查。
+  两端 edition 同步走「共享文件拷贝 + stamp-editions」，镜像 diff 仅 SKILL.md frontmatter 与
+  edition.json（预期）。开源仓随本补丁回灌并推送（2021291696/anything2video）。

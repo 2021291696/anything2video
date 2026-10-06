@@ -2,7 +2,7 @@
 
 把主题、文章或产品做成原创视频的 Agent Skill。包含调研、稿件、配音、分镜、代码动画、渲染、审片与修复流程，适配 Claude Code、Codex、豆包工作、WorkBuddy、ZCode 和 MiniMax Code 等具备文件与命令执行能力的助手。
 
-**提供豆包工作、WorkBuddy、Claude Code、Codex、ZCode、MiniMax Code 六份专属版（当前 v3.7.0），前四个为重点平台。** 各自适配加载与编排，共用相同的配方、图元、模板和生产脚本。豆包工作与 WorkBuddy 是桌面手工导入包，接入边界与未知项见 [reference/desktop-hosts.md](reference/desktop-hosts.md)。导演方法、原生画幅、多点打样与证据门禁帮助稳定制作；Skill 不改变模型权重，不承诺全面等价于 Opus 或一次提示生成精品。代码承担精确信息，审核后的生成素材承担场景，逐件登记来源和披露。
+**提供豆包工作、WorkBuddy、Claude Code、Codex、ZCode、MiniMax Code 六份专属版（当前 v3.7.1），前四个为重点平台。** 各自适配加载与编排，共用相同的配方、图元、模板和生产脚本。豆包工作与 WorkBuddy 是桌面手工导入包，接入边界与未知项见 [reference/desktop-hosts.md](reference/desktop-hosts.md)。导演方法、原生画幅、多点打样与证据门禁帮助稳定制作；Skill 不改变模型权重，不承诺全面等价于 Opus 或一次提示生成精品。代码承担精确信息，审核后的生成素材承担场景，逐件登记来源和披露。
 
 English: A portable agent skill for producing researched, original code-composited videos with narration, shot contracts, deterministic rendering and measured quality evidence. Model capabilities and application support still need real validation.
 
@@ -23,7 +23,7 @@ npx remotion browser ensure
 
 初始化器只建模板工程，不产生完整片子；拒绝覆盖非空目录，不自动暂存/提交。工程必须在skill外。浏览器可用环境变量 `BROWSER_EXECUTABLE` 指向已安装版本。
 
-也支持 `node scripts/init.mjs <slug>`：根目录优先 A2V_DATA_ROOT，再读 ~/.anything2video/workdir 的绝对路径；未知时先询问，不默默落在当前目录。音乐默认试听圈选，已指定无音乐或授权选曲则记录决定；风格拿不准先看 [离线视觉样片](samples/index.html)。
+也支持 `node scripts/init.mjs <slug>`：根目录优先 A2V_DATA_ROOT，再读 ~/.anything2video/workdir 的绝对路径；未知时先询问，不默默落在当前目录。首次使用还会同轮问一次**可选的生图 API key**（MiniMax 或任意 OpenAI 兼容接口）：只用于 AI 材质/世界底画面（主要 epic 配方），**对成片约 5%–10% 的效果影响，不填不影响渲染、配音、音乐与交付**；决定（provider 或 none）存 `~/.anything2video/image-channel`，密钥只走环境变量 `A2V_IMAGE_*`、不落盘。音乐默认试听圈选，已指定无音乐或授权选曲则记录决定；风格拿不准先看 [离线视觉样片](samples/index.html)。
 
 完整教程见[教学仓库](https://github.com/2021291696/anything2video-tutorial)。
 
@@ -98,7 +98,7 @@ node scripts/install.mjs doubao-work --export-dir D:/a2v-desktop-packages
 ```
 
 - `scripts/init.mjs`：安全复制纯模板，无自动git动作。
-- `scripts/doctor.mjs`：本地命令检查；不验证账户或云端额度。
+- `scripts/doctor.mjs`：本地命令检查与图像通道状态（环境三件套 + 首用决定文件，只记 provider、不回显密钥）；不验证账户或云端额度——加 `--probe-image` 可显式做一次真实生成探测（**计一张图费用，默认不跑**），欠费/鉴权失败明确报错并给充值或降级路线。
 - `scripts/check-plan.mjs`：连续帧覆盖、空片、来源、文件和素材哈希；还需核对真实镜头注册与渲染。
 - `scripts/render.mjs`：跨平台Node渲染，Composition规格与声明必须一致，保存ffprobe原始证据。
 - `scripts/check-qc.mjs`：拒绝草稿、片段、未审素材、缺项和旧媒体/源码证据，独立计帧与全片解码；不自动证明艺术质量或实际观看。
