@@ -3,35 +3,175 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>anything2video 风格样片库</title>
+<title>anything2video 套餐池（19）</title>
 <style>
   body {background:#0B0B12; color:#E8E8EC; font-family:"Noto Sans SC","Microsoft YaHei",sans-serif; margin:0; padding:32px;}
-  h1 {font-size:26px; letter-spacing:0;} h1 span {color:#21E6C1;}
-  .sub {color:#8A8A96; font-size:14px; margin-bottom:24px;}
-  .grid {display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr)); gap:20px;}
-  .card {background:#12121C; border:1px solid #23233A; border-radius:8px; overflow:hidden;}
+  h1 {font-size:26px;} h1 span {color:#21E6C1;}
+  .sub {color:#8A8A96; font-size:14px; margin:8px 0 20px; line-height:1.75;}
+  .sub b {color:#C9C9D4;}
+  .filters {display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;}
+  .filters + .filters {margin-bottom:22px;}
+  .filters .lbl {color:#77778A; font-size:12px; line-height:30px; margin-right:4px;}
+  .filters button {background:#12121C; color:#B9B9C6; border:1px solid #2A2A42; border-radius:999px; padding:6px 16px; font-size:13px; cursor:pointer; font-family:inherit;}
+  .filters button.on {background:#21E6C1; color:#06231C; border-color:#21E6C1; font-weight:700;}
+  .grid {display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,380px),1fr)); gap:20px;}
+  .card {background:#12121C; border:1px solid #23233A; border-radius:10px; overflow:hidden; display:flex; flex-direction:column;}
+  .card.hide {display:none;}
   .card video {width:100%; aspect-ratio:16/9; display:block; background:#000;}
-  .meta {padding:12px 14px;}
-  .name {font-weight:700; font-size:16px; overflow-wrap:anywhere;} .name em {font-style:normal; color:#21E6C1; font-size:12px; margin-left:8px; letter-spacing:0;}
-  .desc {color:#9A9AA6; font-size:13px; margin-top:6px; line-height:1.5;}
-  .recipe {border-color:#3A2E1A;} .recipe .name em {color:#C9A86A;}
+  .card.vert video {width:auto; max-width:100%; height:560px; aspect-ratio:9/16; margin:0 auto; display:block;}
+  .tag.vert {border-color:#7A2E5A; color:#E88FC8;}
+  .meta {padding:13px 15px 15px; flex:1;}
+  .tags {display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;}
+  .tag {font-size:11px; letter-spacing:1px; border-radius:4px; padding:2px 8px; border:1px solid #33334E; color:#9A9AB0;}
+  .tag.cool {border-color:#2E6E86; color:#6FD3E8;} .tag.warm {border-color:#7A5A2E; color:#E8B96F;}
+  .tag.retro {border-color:#5A2E7A; color:#C99AE8;} .tag.glow {border-color:#2E7A5A; color:#8FE8C0;}
+  .tag.promo {border-color:#8A5A2E; color:#F0A860;} .tag.explainer {border-color:#2E6E86; color:#7FC8E8;}
+  .tag.epic {border-color:#7A2E3E; color:#E88FA0;}
+  .name {font-weight:700; font-size:16px;} .name em {font-style:normal; color:#21E6C1; font-size:11.5px; margin-left:8px; letter-spacing:1px;}
+  .spec {color:#B9C4CE; font-size:13px; margin-top:7px; line-height:1.65;}
+  .fine {color:#77778A; font-size:12px; margin-top:8px; line-height:1.6;}
 </style>
 </head>
 <body>
-<h1>anything2video <span>风格样片库</span></h1>
-<div class="sub">8 个风格 + 3 个配方历史片段，各 6 秒。无音轨视觉预览；epic 含 AI 生成场景。<a href="README.md">来源与披露</a></div>
-<div class="grid">
-  <div class="card"><video src="sand-sample.mp4" poster="posters/sand-sample.jpg" controls preload="metadata" aria-label="沙画样片"></video><div class="meta"><div class="name">沙画 <em>SAND</em></div><div class="desc">沙粒与轮廓逐步成形</div></div></div>
-  <div class="card"><video src="chalk-sample.mp4" poster="posters/chalk-sample.jpg" controls preload="metadata" aria-label="粉笔黑板样片"></video><div class="meta"><div class="name">粉笔黑板 <em>CHALK</em></div><div class="desc">笔触与几何推导</div></div></div>
-  <div class="card"><video src="blueprint-sample.mp4" poster="posters/blueprint-sample.jpg" controls preload="metadata" aria-label="工程蓝图样片"></video><div class="meta"><div class="name">工程蓝图 <em>BLUEPRINT</em></div><div class="desc">结构线稿与尺寸标注</div></div></div>
-  <div class="card"><video src="neon-sample.mp4" poster="posters/neon-sample.jpg" controls preload="metadata" aria-label="霓虹样片"></video><div class="meta"><div class="name">霓虹夜城 <em>NEON</em></div><div class="desc">辉光与能量路径</div></div></div>
-  <div class="card"><video src="pixel-arcade-sample.mp4" poster="posters/pixel-arcade-sample.jpg" controls preload="metadata" aria-label="像素街机样片"></video><div class="meta"><div class="name">像素街机 <em>PIXEL-ARCADE</em></div><div class="desc">像素图形与游戏机语法</div></div></div>
-  <div class="card"><video src="paper-collage-sample.mp4" poster="posters/paper-collage-sample.jpg" controls preload="metadata" aria-label="剪纸拼贴样片"></video><div class="meta"><div class="name">剪纸拼贴 <em>PAPER-COLLAGE</em></div><div class="desc">撕纸边缘与分层拼贴</div></div></div>
-  <div class="card"><video src="swiss-print-sample.mp4" poster="posters/swiss-print-sample.jpg" controls preload="metadata" aria-label="瑞士版式样片"></video><div class="meta"><div class="name">瑞士版式 <em>SWISS-PRINT</em></div><div class="desc">网格与红黑字形</div></div></div>
-  <div class="card"><video src="crt-terminal-sample.mp4" poster="posters/crt-terminal-sample.jpg" controls preload="metadata" aria-label="CRT 终端样片"></video><div class="meta"><div class="name">CRT 终端 <em>CRT-TERMINAL</em></div><div class="desc">磷光扫描线与命令行</div></div></div>
-  <div class="card recipe"><video src="recipe-promo-sample.mp4" poster="posters/recipe-promo-sample.jpg" controls preload="metadata" aria-label="宣传片样片"></video><div class="meta"><div class="name">promo 宣传片 <em>历史 v3</em></div><div class="desc">功能演示与贯穿线</div></div></div>
-  <div class="card recipe"><video src="recipe-epic-sample.mp4" poster="posters/recipe-epic-sample.jpg" controls preload="metadata" aria-label="史诗品牌片样片"></video><div class="meta"><div class="name">epic 史诗品牌片 <em>AI 场景 + 代码</em></div><div class="desc">生成世界底与年代、诗行字幕</div></div></div>
-  <div class="card recipe"><video src="recipe-explainer-sample.mp4" poster="posters/recipe-explainer-sample.jpg" controls preload="metadata" aria-label="讲解片样片"></video><div class="meta"><div class="name">explainer 讲解片 <em>bowen-daily</em></div><div class="desc">知识讲解与流程轨</div></div></div>
+<h1>anything2video <span>套餐池</span></h1>
+<div class="sub">
+  单问套餐制（v3.5.0）：<b>一张卡 = 类型+风格完整决定</b>——挑一张就是全部选型；画幅是卡属性（花字卡 9:16 原生），不是第三筛选轴。每张卡 12-15 秒真样片，带完整音频（TTS 旁白+音效+BGM，新卡 BGM 为程序编曲 mgaudio 通道）。
+  <a href="README.md" style="color:#21E6C1">来源与披露</a><br>
+  <b>选型口径</b>：口味锚 = <b>冷峻精密、不贴科技标签</b>——产品/品牌向先看冷峻系；判例与规则见 skill 的 <b>reference/style-ledger.md</b>（判例优先于主题隐喻推理）。
+  卡类型或 ⚠ 判例注与需求冲突时开工前确认一次；点名风格+类型自由组合走后门（config.style 不变）。
 </div>
+<div class="filters" id="typeFilters">
+  <span class="lbl">类型</span>
+  <button data-tf="all" class="on">全部</button>
+  <button data-tf="promo">宣传</button>
+  <button data-tf="explainer">讲解</button>
+  <button data-tf="epic">史诗</button>
+</div>
+<div class="filters" id="vibeFilters">
+  <span class="lbl">气质</span>
+  <button data-vf="all" class="on">全部</button>
+  <button data-vf="cool">冷峻系</button>
+  <button data-vf="warm">暖系·手作</button>
+  <button data-vf="retro">复古</button>
+  <button data-vf="glow">辉光系</button>
+</div>
+<div class="grid" id="grid">
+  <div class="card" data-type="promo" data-v="cool"><video src="deep-space-sample.mp4" poster="posters/deep-space-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag promo">宣传</span><span class="tag cool">冷峻系</span></div>
+    <div class="name">深空 <em>DEEP-SPACE</em></div>
+    <div class="spec">深空黑底 #0B0B12 + 电光青强调；冷峻产品向的默认答案，真 UI 截图最出效果。</div>
+    <div class="fine">旧名「深空电光青」；冷峻系首选；也可换类型。</div></div></div>
+  <div class="card" data-type="promo" data-v="glow cool"><video src="neon-sample.mp4" poster="posters/neon-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag promo">宣传</span><span class="tag glow">辉光系</span></div>
+    <div class="name">霓虹 <em>NEON</em></div>
+    <div class="spec">夜幕 + 白芯彩晕霓虹描边 + 雨丝湿地反光，能量感强。</div>
+    <div class="fine">旧名「霓虹夜城」；⚠ 与口味锚「不贴科技标签」相悖，选中开工前确认；也可换类型。</div></div></div>
+  <div class="card" data-type="promo" data-v="cool"><video src="swiss-print-sample.mp4" poster="posters/swiss-print-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag promo">宣传</span><span class="tag cool">冷峻系</span></div>
+    <div class="name">版式 <em>SWISS-PRINT</em></div>
+    <div class="spec">严格四色（白/黑/红/灰）、超大 grotesk 900、12 列网格、大量留白、硬切精确位移。</div>
+    <div class="fine">旧名「瑞士版式」；⚠ 锁死「纯平无回弹」——过冲/落定类动效词汇减半；也可换类型。</div></div></div>
+  <div class="card" data-type="promo" data-v="cool glow"><video src="crt-terminal-sample.mp4" poster="posters/crt-terminal-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag promo">宣传</span><span class="tag cool">冷峻系</span></div>
+    <div class="name">终端 <em>CRT-TERMINAL</em></div>
+    <div class="spec">黑绿磷光 + 等宽字逐字敲入 + 扫描线，CLI 工程美学。</div>
+    <div class="fine">旧名「CRT终端」；开发者向产品、极客叙事；也可换类型。</div></div></div>
+  <div class="card" data-type="explainer" data-v="cool"><video src="mg-purple-sample.mp4" poster="posters/mg-purple-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span><span class="tag cool">冷峻系</span></div>
+    <div class="name">夜航 <em>MG-PURPLE</em></div>
+    <div class="spec">黑底紫调 + HUD/章节卡/流程轨——a2v 出身的讲解脸，知识科普主线。</div>
+    <div class="fine">旧名「紫调黑底MG」；也可换类型。</div></div></div>
+  <div class="card" data-type="explainer" data-v="warm"><video src="chalk-sample.mp4" poster="posters/chalk-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span><span class="tag warm">暖系·手作</span></div>
+    <div class="name">黑板 <em>CHALK</em></div>
+    <div class="spec">深绿黑板 + 白垩压力笔触（颗粒/粉尘/双影）+ 板书字 + 板擦转场。</div>
+    <div class="fine">旧名「粉笔黑板」；推导/教学叙事；也可换类型。</div></div></div>
+  <div class="card" data-type="explainer" data-v="cool"><video src="blueprint-sample.mp4" poster="posters/blueprint-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span><span class="tag cool">冷峻系</span></div>
+    <div class="name">蓝图 <em>BLUEPRINT</em></div>
+    <div class="spec">深蓝晒图底 + 白工程线 + 黄色尺寸标注——「把系统当造物拆解」的精密工程隐喻。</div>
+    <div class="fine">旧名「工程蓝图」；锁死项少，动效词汇可用度高；也可换类型。</div></div></div>
+  <div class="card" data-type="explainer" data-v="retro glow"><video src="pixel-arcade-sample.mp4" poster="posters/pixel-arcade-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span><span class="tag retro">复古</span></div>
+    <div class="name">街机 <em>PIXEL-ARCADE</em></div>
+    <div class="spec">8px 像素网格 + CRT 扫描线 + 品红/荧绿/金有限色；所有"圆"都是方块拼的。</div>
+    <div class="fine">旧名「像素街机」；游戏/怀旧向；也可换类型。</div></div></div>
+  <div class="card" data-type="explainer" data-v="warm"><video src="paper-collage-sample.mp4" poster="posters/paper-collage-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span><span class="tag warm">暖系·手作</span></div>
+    <div class="name">拼贴 <em>PAPER-COLLAGE</em></div>
+    <div class="spec">Vox 式撕纸边缘 + 纸片投影 + 胶带（qr-scan 验证片即此风格全片实作）。</div>
+    <div class="fine">旧名「剪纸拼贴」；⚠ 冷峻产品向不接（用户判例 2026-10-06，选中开工前确认）；日常/大众叙事适用；也可换类型。</div></div></div>
+  <div class="card" data-type="epic" data-v="warm"><video src="epic-paper-sample.mp4" poster="posters/epic-paper-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag epic">史诗</span><span class="tag warm">暖系</span></div>
+    <div class="name">神话 <em>EPIC-PAPER</em></div>
+    <div class="spec">暖纸白信息层 + 印章红 + 描金辅色；年代角标 + 诗行字幕（含 AI 场景登记披露）。</div>
+    <div class="fine">旧名「暖纸白描金」；品牌谱系/历史叙事；也可换类型。</div></div></div>
+  <div class="card" data-type="epic" data-v="warm"><video src="sand-sample.mp4" poster="posters/sand-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag epic">史诗</span><span class="tag warm">暖系·手作</span></div>
+    <div class="name">沙画 <em>SAND</em></div>
+    <div class="spec">暖纸底灯箱、深沙铺层、纸色描边擦出形体，安静的情感叙事。</div>
+    <div class="fine">旧名「灯箱沙画」；开幕/情感向，有沙音效通道；也可换类型。</div></div></div>
+  <div class="card" data-type="epic" data-v="warm"><video src="guofeng-scroll-sample.mp4" poster="posters/guofeng-scroll-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag epic">史诗</span><span class="tag warm">暖系</span></div>
+    <div class="name">月窗 <em>GUOFENG-SCROLL</em></div>
+    <div class="spec">暖黑底描金月窗 + 竖排题跋 + 朱印 + 长卷横移 + 唯一虹彩主角；国风历史叙事。</div>
+    <div class="fine">v3.5.0 新卡；敦煌爆款判例蓝本；呼吸章合法静止；程序编曲国潮配方原生配套。</div></div></div>
+  <div class="card" data-type="explainer" data-v="cool"><video src="paperclip-sticker-sample.mp4" poster="posters/paperclip-sticker-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span><span class="tag cool">冷峻系</span></div>
+    <div class="name">贴纸人 <em>PAPERCLIP-STICKER</em></div>
+    <div class="spec">主体贴纸化粗白描边 + 超宽大画布摄像机串信息点 + 精确图表（count-up/柱状/描边）。</div>
+    <div class="fine">v3.5.0 新卡；回形针/林超知识区范式；蓝灰米白冷静底+唯一橙强调。</div></div></div>
+  <div class="card vert" data-type="explainer" data-v="warm"><video src="hanazi-916-sample.mp4" poster="posters/hanazi-916-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span><span class="tag warm">暖系</span><span class="tag vert">9:16 竖屏</span></div>
+    <div class="name">花字 <em>HANAZI-916</em></div>
+    <div class="spec">综艺花字三层描边 + 弹簧逐字入场 + 爆炸框/闪光/印章符号；9:16 竖屏原生（画幅=卡属性）。</div>
+    <div class="fine">v3.5.0 新卡；抖音原生画幅；萌宠/vlog 情绪叙事；综艺系拟音是风格本体。</div></div></div>
+  <div class="card" data-type="explainer" data-v="cool"><video src="line-art-sample.mp4" poster="posters/line-art-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span><span class="tag cool">冷峻系</span></div>
+    <div class="name">线条 <em>LINE-ART</em></div>
+    <div class="spec">等宽细线一笔画 + draw-on 自我描绘 + 线转面 + 大量负空间；墨+唯一暖金双色。</div>
+    <div class="fine">v3.5.0 新卡；奢侈品/金融/建筑极简叙事；一笔画路径需预先连通。</div></div></div>
+  <div class="card" data-type="promo" data-v="cool"><video src="isometric-city-sample.mp4" poster="posters/isometric-city-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag promo">宣传</span><span class="tag cool">冷峻系</span></div>
+    <div class="name">等轴 <em>ISOMETRIC-CITY</em></div>
+    <div class="spec">30° 等轴微缩世界（SSR 三面纯 CSS）+ 楼体生长 + 整组平移三层视差。</div>
+    <div class="fine">v3.5.0 新卡；架构图/流程导览/科技公司宣传；禁真 3D 库。</div></div></div>
+  <div class="card" data-type="promo" data-v="cool glow"><video src="aurora-glass-sample.mp4" poster="posters/aurora-glass-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag promo">宣传</span><span class="tag glow">辉光系</span></div>
+    <div class="name">玻璃 <em>AURORA-GLASS</em></div>
+    <div class="spec">暗底弥散光斑慢漂 + 磨砂玻璃卡 + 皆慢呼吸节奏；慢、透、高级。</div>
+    <div class="fine">v3.5.0 新卡；AI 产品/品牌情绪 teaser；邻近色禁撞色；一切皆慢是纪律。</div></div></div>
+  <div class="card" data-type="promo" data-v="warm"><video src="liquid-flow-sample.mp4" poster="posters/liquid-flow-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag promo">宣传</span><span class="tag warm">暖系</span></div>
+    <div class="name">液态 <em>LIQUID-FLOW</em></div>
+    <div class="spec">goo 液态融合 + 波浪前沿转场 + 拉丝断裂回弹 + 次级液滴跟随；有机曲线永不直线。</div>
+    <div class="fine">v3.5.0 新卡；食品饮料/解压向；缓动前快后慢「甩出」。</div></div></div>
+  <div class="card" data-type="promo" data-v="cool glow"><video src="morph-sample.mp4" poster="posters/morph-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag promo">宣传</span><span class="tag glow">辉光系</span></div>
+    <div class="name">形变 <em>MORPH</em></div>
+    <div class="spec">图形丝滑互变（中介简形桥接）+ 挤压拉伸 + 位移旋转；图形叙事核心语法。</div>
+    <div class="fine">v3.5.0 新卡；品牌隐喻/发布会动效；顶点对齐路径插值，禁朴素 SMIL。</div></div></div>
+</div>
+<script>
+  let typeF = 'all', vibeF = 'all';
+  function applyFilters() {
+    document.querySelectorAll('#grid .card').forEach(c => {
+      const okT = typeF === 'all' || c.dataset.type === typeF;
+      const okV = vibeF === 'all' || c.dataset.v.split(' ').includes(vibeF);
+      c.classList.toggle('hide', !(okT && okV));
+    });
+  }
+  function wire(groupId, attr, setter) {
+    const btns = document.querySelectorAll('#' + groupId + ' button');
+    btns.forEach(b => b.onclick = () => {
+      btns.forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      setter(b.dataset[attr]);
+      applyFilters();
+    });
+  }
+  wire('typeFilters', 'tf', v => typeF = v);
+  wire('vibeFilters', 'vf', v => vibeF = v);
+</script>
 </body>
 </html>
