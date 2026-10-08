@@ -41,7 +41,7 @@
 | vhs-outrun（vhs-outrun） | 镀铬字与源码档差；VHS 链是近似而非 YIQ 域；世界密度低于源码 | 科普视频/samples-v4/vhs-outrun/report.md 自陈三弱点 | 待首部正片复验 |
 | soft-jelly（soft-jelly） | 糖果材质「七折近似」且透明感缺位；克隆阵列无「抛飞冠」；床毯是「糖珠垫」非「软胶板」 | 科普视频/samples-v4/soft-jelly/report.md 自陈三弱点 | 待首部正片复验 |
 | target-lock（target-lock） | 全息球是 2D 近似而非真 3D；reink 线性矩阵保不了热白；微 glitch 是全帧行条带近似 | 科普视频/samples-v4/target-lock/report.md 自陈三弱点 | 待首部正片复验 |
-| ink-tea（ink-tea，v4.0.0 重做） | 虾仍是「可读的齐白石习作」而非「乱真的齐白石」；构图编舞密度低于 huashu 原版；帧差均值 2.65% 未达 brief 3% 线 | 科普视频/samples-v4/ink-tea/report.md 自陈三弱点 | 待首部正片复验 |
+| ink-tea（ink-tea，v4.0.0 重做） | 虾仍是「可读的齐白石习作」而非「乱真的齐白石」；构图编舞密度低于 huashu 原版；帧差均值 2.65% 未达 brief 3% 线 | 科普视频/samples-v4/ink-tea/report.md 自陈三弱点 | 待首部正片复验；BGM 已换 12-aurora-glass（总验收裁决 2026-10-08，重混音重渲，画面 387f 逐帧零差异） |
 | swirl-oil（swirl-oil） | 灯塌「星」塌「灯」；海岸线与屋顶的矢量感残留；叙事容量被签名挤占 | 科普视频/samples-v4/swirl-oil/report.md 自陈三弱点 | 待首部正片复验 |
 | cave-wall（cave-wall） | 牛犊体型偏「豆」；吹颜料喷锥偏「粒子雾」；火光只改亮度不改阴影方向 | 科普视频/samples-v4/cave-wall/report.md 自陈三弱点 | 待首部正片复验 |
 | tomb-wall（tomb-wall） | 人物手臂读形偏弱；HERO 冲击幅度受「无笔触」纪律约束；SC03 画幅下半近半为深蓝纯色 | 科普视频/samples-v4/tomb-wall/report.md 自陈三弱点 | 待首部正片复验 |
@@ -69,7 +69,7 @@
 | cumulus-light（cumulus-light） | 角色是「干净」而非「新海诚」；光柱是「叠出来」而非「体积」；英雄拍三件同框依赖观众注意 | 科普视频/samples-v4/cumulus-light/report.md 自陈三弱点 | 待首部正片复验 |
 | blue-period（blue-period） | 人物是「写意」而非「造型」级；拉长是「时刻」不是「语言」；猫的纹理碎 | 科普视频/samples-v4/blue-period/report.md 自陈三弱点 | 待首部正片复验 |
 | whiteboard（whiteboard） | 手写感是「字体+抖动」而非真笔迹；铺色是排线近似非墨区渗透；擦除语法缺席 | 科普视频/samples-v4/whiteboard/report.md 自陈三弱点 | 待首部正片复验 |
-| kinetic-type（kinetic-type） | 词性分级靠字号/透明度、色相只有一档强调；信息密度低是领地代价；定帧段探针天然红 | 科普视频/samples-v4/kinetic-type/report.md 自陈三弱点 | 待首部正片复验 |
+| kinetic-type（kinetic-type） | 词性分级靠字号/透明度、色相只有一档强调；信息密度低是领地代价；定帧段探针天然红 | 科普视频/samples-v4/kinetic-type/report.md 自陈三弱点 | 待首部正片复验（探针双红已裁决豁免：大面积实底+定帧微呼吸=签名本体，总验收 2026-10-08） |
 | riso-print（riso-print） | 印刷不匀的表现深度有限；版纸翻动是形制简化；构图全程单机位固定 | 科普视频/samples-v4/riso-print/report.md 自陈三弱点 | 待首部正片复验 |
 | math-lab（math-lab） | 「平方」一幕 1:4:9 依赖柱高读数而非面积直觉；SC01 释放段运动密度偏低；SC02 秒刻度只到 t=2s | 科普视频/samples-v4/math-lab/report.md 自陈三弱点 | 待首部正片复验 |
 | hypnotic（hypnotic） | 万花筒楔内容偏「十字花」而非有机曼陀罗；隧道段信息量平；眼/隧道/万花筒三段过渡全靠 opacity 包络 | 科普视频/samples-v4/hypnotic/report.md 自陈三弱点 | 待首部正片复验 |
