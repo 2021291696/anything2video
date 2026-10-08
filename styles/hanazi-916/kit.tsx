@@ -2,6 +2,7 @@ import React from 'react';
 import {AbsoluteFill, useCurrentFrame} from 'remotion';
 import {FONT_HEAVY, W, clamp, textEm} from '../common';
 import {SUBS} from '../common/subs';
+import {beatHopWave, huaZiCharLayers} from './hzcore';
 
 /**
  * hanazi-916 综艺花字 · 风格图元库（本卡唯一视觉正本，规格见 skill-intake/SPEC.md）。
@@ -71,6 +72,10 @@ let gradSeq = 0;
  * 层序（下→上）：挤出投影（deep）→ 彩色外描边 → 粗白描边 → 渐变填充 → 顶部高光。
  * 每字弹簧 pop（0→1.15→1 约 8 帧），逐字错帧 stagger=2，交替 ±rot 入场旋转；驻留期 holdWiggle 保活；
  * until 帧后 pop-out 退场。文字布局用 textEm 确定性测宽（与模板 textfit 同表），无 DOM 测量。
+ * v4.0 opt-in（默认不传=旧行为逐值一致）：
+ *   ext / extColor —— 双层挤出（dy=ext 与 ext/2，同色 stroke 宽同外描边；色缺省=deep）；
+ *   gloss —— 源码式顶部垂直渐变白（顶 gloss→0@46%，源码 demo 0.55），传数值启用；
+ *   hopBeats —— 节拍 hop 波（全局帧时刻表，每 beat 每字错 2 帧：蹲→抛物线跳 40px→落地回弹）。
  */
 export const HuaZi: React.FC<{
   text: string;
@@ -89,6 +94,10 @@ export const HuaZi: React.FC<{
   until?: number; // 全局帧：pop-out 起点
   skew?: number; // 手写歪斜 skewX（deg）
   gap?: number; // 额外字距 px
+  ext?: number; // v4.0 opt-in：双层挤出深度 px
+  extColor?: string; // v4.0 opt-in：挤出色（缺省 deep）
+  gloss?: number; // v4.0 opt-in：顶部渐变白峰值透明度（0-1）
+  hopBeats?: number[]; // v4.0 opt-in：节拍 hop 波的全局帧时刻表
 }> = ({
   text,
   f0,
@@ -106,6 +115,10 @@ export const HuaZi: React.FC<{
   until,
   skew = 0,
   gap = 0,
+  ext,
+  extColor,
+  gloss,
+  hopBeats,
 }) => {
   const N = useGlobalFrame();
   const gid = React.useMemo(() => `hzg${gradSeq++}`, []);
@@ -115,6 +128,7 @@ export const HuaZi: React.FC<{
   const total = widths.reduce((a, b) => a + b, 0) + (gap || autoGap) * Math.max(0, chars.length - 1);
   const ww = whiteW ?? size * 0.07;
   const ow = outerW ?? size * 0.12;
+  const layers = huaZiCharLayers({size, ww, ow, deep, outer, ext, extColor, gloss});
   const startX = W / 2 - total / 2;
   let cx = startX;
   const els: React.ReactNode[] = [];
@@ -132,6 +146,14 @@ export const HuaZi: React.FC<{
       dy += hw.y;
       s *= hw.s;
     }
+    // v4.0 opt-in：节拍 hop 波（不传 hopBeats 恒为 0，输出与旧行为一致）
+    let hopY = 0;
+    let sq = 0;
+    if (hopBeats) {
+      const hop = beatHopWave(N, hopBeats, i);
+      hopY = -hop.hy + (size / 2) * hop.sq;
+      sq = hop.sq;
+    }
     let op = 1;
     if (until !== undefined && N >= until) {
       const k = (N - until) / 6;
@@ -148,28 +170,34 @@ export const HuaZi: React.FC<{
       strokeLinejoin: 'round' as const,
       strokeLinecap: 'round' as const,
     };
+    const grad = (f: string) =>
+      f === '#grad:fill' ? `url(#${gid})` : f === '#grad:gloss' ? `url(#${gid}-gloss)` : f === '#grad:glossP' ? `url(#${gid}-glossP)` : f;
     els.push(
       <g
         key={i}
-        transform={`translate(${mid.toFixed(1)} ${(y + dy).toFixed(1)}) rotate(${r.toFixed(2)}) scale(${s.toFixed(4)})`}
+        transform={
+          hopBeats
+            ? `translate(${mid.toFixed(1)} ${(y + dy + hopY).toFixed(1)}) rotate(${r.toFixed(2)}) scale(${(s * (1 + sq)).toFixed(4)} ${(
+                s * (1 - sq)
+              ).toFixed(4)})`
+            : `translate(${mid.toFixed(1)} ${(y + dy).toFixed(1)}) rotate(${r.toFixed(2)}) scale(${s.toFixed(4)})`
+        }
         opacity={op}
       >
         <g transform={skew ? `skewX(${skew})` : undefined}>
-          <text {...common} y={size * 0.09} fill={deep} stroke={deep} strokeWidth={2 * (ww + ow)}>
-            {ch}
-          </text>
-          <text {...common} fill={outer} stroke={outer} strokeWidth={2 * (ww + ow)}>
-            {ch}
-          </text>
-          <text {...common} fill={HZ.white} stroke={HZ.white} strokeWidth={2 * ww}>
-            {ch}
-          </text>
-          <text {...common} fill={`url(#${gid})`}>
-            {ch}
-          </text>
-          <text {...common} fill={`url(#${gid}-gloss)`} opacity={0.5}>
-            {ch}
-          </text>
+          {layers.map((L) => (
+            <text
+              key={L.id}
+              {...common}
+              y={L.dy || undefined}
+              fill={grad(L.fill)}
+              stroke={L.stroke}
+              strokeWidth={L.strokeWidth}
+              opacity={L.opacity}
+            >
+              {ch}
+            </text>
+          ))}
         </g>
       </g>,
     );
@@ -186,6 +214,13 @@ export const HuaZi: React.FC<{
           <stop offset="0.42" stopColor="#fff" stopOpacity={0} />
           <stop offset="1" stopColor="#fff" stopOpacity={0} />
         </linearGradient>
+        {gloss !== undefined && gloss > 0 ? (
+          <linearGradient id={`${gid}-glossP`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#fff" stopOpacity={gloss} />
+            <stop offset="0.46" stopColor="#fff" stopOpacity={0} />
+            <stop offset="1" stopColor="#fff" stopOpacity={0} />
+          </linearGradient>
+        ) : null}
       </defs>
       {els}
     </svg>

@@ -70,7 +70,7 @@ node scripts/install.mjs doubao-work --export-dir D:/a2v-desktop-packages
 
 ### 风格样片：点缩略图直接播放
 
-每段 12-15 秒、1280×720、30fps、带完整音频（TTS 旁白+音效+BGM），为 v3.4.0 套餐制重制的逐卡样片——卡的类型骨架 × 卡的风格视觉（封面为各片第 2 帧实测抽取）。点击缩略图在 GitHub 内嵌播放器中播放；clone 后也可打开离线放映页 [samples/index.html](samples/index.html)。
+每段 12-20 秒（史诗双卡为 20 秒三幕旗舰）、1280×720（花字卡竖屏）、30fps、带完整音频（TTS 旁白+音效+BGM），套餐制逐卡样片——卡的类型骨架 × 卡的风格视觉（封面为各片第 2 帧实测抽取）。点击缩略图在 GitHub 内嵌播放器中播放；clone 后也可打开离线放映页 [samples/index.html](samples/index.html) 与全量页 [samples/all.html](samples/all.html)。
 
 |  |  |  |  |
 | :---: | :---: | :---: | :---: |

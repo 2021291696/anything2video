@@ -1,7 +1,7 @@
 import React from 'react';
 import {SUBS} from '../common/subs';
-import {camPan, LAYER_SPEED, STOX, STOY, U, C30, S30, EASE} from './world';
-import {ISO, MiniCube} from './kit';
+import {LAYER_SPEED, STOX, STOY, U, C30, S30, EASE} from './world';
+import {ISO, MiniCube, camPan} from './kit';
 
 /**
  * chrome.tsx — s34-iso 镜头覆盖层件（全部接收绝对帧号 f，由镜头组件传 Sequence.from+n）：

@@ -1,17 +1,19 @@
 import React from 'react';
 import {useCurrentFrame} from 'remotion';
-import {camPan, LAYER_SPEED, MID_TREES, STOX, STOY, EASE, FRONT_PROPS, BOXES} from './world';
-import {ISO, Tiles, IsoBox, TreeIso, CarIso} from './kit';
+import {LAYER_SPEED, MID_TREES, STOX, STOY, EASE, FRONT_PROPS, BOXES} from './world';
+import {ISO, Tiles, IsoBox, TreeIso, CarIso, camPan, camPunch} from './kit';
 
 /**
- * City.tsx — 等轴小城三层舞台（签名特征 4：运镜=整组平移（无旋转），前中后景 1:0.8:0.6 视差速度）。
- * 全片常驻（Main 底层），相机 camPan(f) 由 world.ts 给出——镜头组件只做站点局部覆盖层。
+ * City.tsx — 等轴小城三层舞台（签名特征 4：运镜=整组平移（无旋转），前中后景 1:0.8:0.6 视差速度；
+ * v4.0：pan 由 kit.tsx 的 hermite 关键帧表驱动，drop 帧 zoom punch 预备统一绕屏心 scale）。
+ * 全片常驻（Main 底层），镜头组件只做站点局部覆盖层。
  */
 
 /** 远景层（0.6×）：远处剪影楼群 + 缓漂云（天空渐变由 Main 铺）。 */
 export const BackLayer: React.FC = () => {
   const f = useCurrentFrame();
   const pan = camPan(f) * LAYER_SPEED.back;
+  const punch = camPunch(f);
   const clouds = [
     {x: 320, y: 92, s: 1.0, drift: 7},
     {x: 980, y: 148, s: 0.7, drift: -5},
@@ -21,6 +23,7 @@ export const BackLayer: React.FC = () => {
   ];
   return (
     <div style={{position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 1, isolation: 'isolate'}}>
+      <div style={{position: 'absolute', inset: 0, transformOrigin: '640px 360px', transform: `scale(${punch.toFixed(5)})`}}>
       <div style={{position: 'absolute', left: -pan, top: 0, width: 5600, height: '100%'}}>
         {[...Array(46)].map((_, i) => {
           const r = EASE.rng(900 + i)();
@@ -41,16 +44,19 @@ export const BackLayer: React.FC = () => {
           maskImage: 'linear-gradient(to bottom, transparent 6%, #000 32%, #000 55%, transparent 88%)',
           WebkitMaskImage: 'linear-gradient(to bottom, transparent 6%, #000 32%, #000 55%, transparent 88%)'}} />
       </div>
+      </div>
     </div>
   );
 };
 
-/** 中景层（0.8×）：三站地台 + 建筑 + 站内树 + 路车。 */
+/** 中景层（0.8×）：三站地台 + 建筑 + 站内树 + 环路行车。 */
 export const MidLayer: React.FC = () => {
   const f = useCurrentFrame();
   const pan = camPan(f) * LAYER_SPEED.mid;
+  const punch = camPunch(f);
   return (
     <div style={{position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 2, isolation: 'isolate'}}>
+      <div style={{position: 'absolute', inset: 0, transformOrigin: '640px 360px', transform: `scale(${punch.toFixed(5)})`}}>
       <div style={{position: 'absolute', left: -pan, top: 0, width: 5600, height: '100%'}}>
         {(['A', 'B', 'C'] as const).map((st) => (
           <div key={st} style={{position: 'absolute', left: STOX[st] - 320, top: STOY + 150, width: 640, height: 260, borderRadius: '50%', background: 'radial-gradient(closest-side, rgba(103,92,190,0.16), transparent 70%)'}} />
@@ -67,6 +73,7 @@ export const MidLayer: React.FC = () => {
         ))}
         {([0, 1, 2] as const).map((ci) => <CarIso key={ci} f={f} idx={ci} st={['A', 'B', 'C'][ci] as 'A' | 'B' | 'C'} />)}
       </div>
+      </div>
       <IgnitionBeam />
     </div>
   );
@@ -76,12 +83,15 @@ export const MidLayer: React.FC = () => {
 export const FrontLayer: React.FC = () => {
   const f = useCurrentFrame();
   const pan = camPan(f) * LAYER_SPEED.front;
+  const punch = camPunch(f);
   return (
     <div style={{position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 4, isolation: 'isolate'}}>
+      <div style={{position: 'absolute', inset: 0, transformOrigin: '640px 360px', transform: `scale(${punch.toFixed(5)})`}}>
       <div style={{position: 'absolute', left: -pan, top: 0, width: 5600, height: '100%'}}>
         {FRONT_PROPS.map((p, i) => (
           <TreeIso key={i} x={p.x} y={p.y + 46} s={p.s} col={p.col} appear={EASE.easeOutCubic((f - p.t0) / 10)} ground={false} z={5 + (i % 3)} />
         ))}
+      </div>
       </div>
     </div>
   );

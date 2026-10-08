@@ -1,3 +1,4 @@
+// 转角密度 tau 与 monotone 标点休止：技法借鉴 mg-styles-15 demos/02-line-art (MIT, Vincentwei1021), TSX 重写
 import React from 'react';
 import {AbsoluteFill} from 'remotion';
 import {cubicBezier, clamp01} from '../common';
@@ -132,18 +133,174 @@ export const MASTER_PTS = polyPts(SEGS);
 export const MASTER_D = toD(MASTER_PTS);
 export const MASTER_LEN = polyLen(MASTER_PTS);
 
-/** 逐段施加 EASE 的描绘进度：返回已绘弧长（px）。glide 段与既有墨线重合，dash 揭示无新增墨迹。 */
-export const drawnAt = (N: number): number => {
-  let len = 0;
-  for (const s of SEGS) {
-    const segLen = polyLen(s.pts);
-    if (N >= s.f1) { len += segLen; continue; }
-    if (N <= s.f0) break;
-    len += EASE((N - s.f0) / (s.f1 - s.f0)) * segLen;
-    break;
+// ---- 转角密度 tau 重参数化（v4.0 改默认实现）----
+// 原理（源 film.js:129-153 机制，TSX 重写、参数照抄）：对稠密采样的一笔画折线逐点求航向角差
+// TURN → 高斯核卷积成转角密度 CORN → 弧长按 `1 + KCORN·min(CORN, CAP)` 加权累积成笔迹参数 tau；
+// 时间→tau 走 monotone 单调三次样条，标点 cue（段界平台 / 收笔驻留）处速度归零。
+// 取代旧「逐段窗口 EASE」；段表 / 帧号表 / EASE 常量（仍服务标注类笔画）等签名一律不动。
+
+/** 折线稠密采样步长（px）。源 STEP=0.5 为 Canvas 逐帧重绘设；SVG dash 揭示 4px 足够分辨转角，
+ *  高斯核物理宽度仍为源码 7px（σ 随步长换算）。 */
+const LA_STEP = 4;
+const KCORN = 9; // 转角加权系数（源 film.js:139 照抄）
+const CORN_CAP = 0.3; // 转角密度封顶（源照抄；最高权重 1+9×0.3=3.7×）
+const CORN_SIG_PX = 7; // 高斯核物理宽度（源 sig=7/STEP 的 7px）
+
+const densify = (pts: Pt[], step: number): Pt[] => {
+  const out: Pt[] = [pts[0]];
+  for (let i = 1; i < pts.length; i++) {
+    const [ax, ay] = pts[i - 1];
+    const [bx, by] = pts[i];
+    const L = Math.hypot(bx - ax, by - ay);
+    if (L === 0) continue;
+    const n = Math.max(1, Math.round(L / step));
+    for (let k = 1; k <= n; k++) out.push([ax + ((bx - ax) * k) / n, ay + ((by - ay) * k) / n]);
   }
-  return len;
+  return out;
 };
+
+const LA_SAMPLES = densify(MASTER_PTS, LA_STEP);
+const LA_S = cumLen(LA_SAMPLES);
+
+/** 逐点折角 TURN：相邻采样航向角差的绝对值（卷回 ±π）。 */
+const LA_TURN: number[] = (() => {
+  const n = LA_SAMPLES.length;
+  const ang: number[] = [];
+  for (let i = 0; i < n; i++) {
+    const a = Math.max(0, i - 1);
+    const b = Math.min(n - 1, i + 1);
+    ang.push(Math.atan2(LA_SAMPLES[b][1] - LA_SAMPLES[a][1], LA_SAMPLES[b][0] - LA_SAMPLES[a][0]));
+  }
+  const turn: number[] = [0];
+  for (let i = 1; i < n; i++) {
+    let d = ang[i] - ang[i - 1];
+    while (d > Math.PI) d -= 2 * Math.PI;
+    while (d < -Math.PI) d += 2 * Math.PI;
+    turn.push(Math.abs(d));
+  }
+  return turn;
+})();
+
+/** TURN 经高斯核卷积 → 转角密度 CORN（单位 rad/px；σ=CORN_SIG_PX 换算到采样序）。 */
+const LA_CORN: number[] = (() => {
+  const n = LA_SAMPLES.length;
+  const sig = CORN_SIG_PX / LA_STEP;
+  const R = Math.ceil(sig * 3);
+  const ker: number[] = [];
+  for (let k = -R; k <= R; k++) ker.push(Math.exp((-k * k) / (2 * sig * sig)));
+  const ks = ker.reduce((a, b) => a + b, 0);
+  const corn = new Array<number>(n).fill(0);
+  for (let i = 0; i < n; i++) {
+    let acc = 0;
+    for (let k = -R; k <= R; k++) {
+      const j = i + k;
+      if (j >= 0 && j < n) acc += LA_TURN[j] * ker[k + R];
+    }
+    corn[i] = acc / ks / LA_STEP;
+  }
+  return corn;
+})();
+
+/** 转角密度加权弧长（笔迹参数 tau）：直线 1×、弯道最高 3.7×——笔速连续过弯减速的载体。 */
+export const LA_TAU: number[] = (() => {
+  const tau = [0];
+  for (let i = 1; i < LA_SAMPLES.length; i++) {
+    tau.push(tau[i - 1] + (LA_S[i] - LA_S[i - 1]) * (1 + KCORN * Math.min(LA_CORN[i], CORN_CAP)));
+  }
+  return tau;
+})();
+export const LA_TAU_TOTAL = LA_TAU[LA_TAU.length - 1];
+
+const idxAt = (arr: readonly number[], v: number): number => {
+  let lo = 0;
+  let hi = arr.length - 1;
+  while (hi - lo > 1) {
+    const m = (lo + hi) >> 1;
+    if (arr[m] <= v) lo = m;
+    else hi = m;
+  }
+  return lo;
+};
+/** 弧长 s → 笔迹参数 tau（线性内插）。 */
+export const tauAtS = (s: number): number => {
+  const i = idxAt(LA_S, s);
+  const j = Math.min(LA_S.length - 1, i + 1);
+  const f = LA_S[j] > LA_S[i] ? clamp01((s - LA_S[i]) / (LA_S[j] - LA_S[i])) : 0;
+  return LA_TAU[i] + (LA_TAU[j] - LA_TAU[i]) * f;
+};
+/** 笔迹参数 tau → 弧长 s（线性内插；越界钳到两端）。 */
+export const sAtTau = (tau: number): number => {
+  if (tau <= 0) return 0;
+  if (tau >= LA_TAU_TOTAL) return MASTER_LEN;
+  const i = idxAt(LA_TAU, tau);
+  const j = Math.min(LA_TAU.length - 1, i + 1);
+  const f = LA_TAU[j] > LA_TAU[i] ? (tau - LA_TAU[i]) / (LA_TAU[j] - LA_TAU[i]) : 0;
+  return LA_S[i] + (LA_S[j] - LA_S[i]) * f;
+};
+
+/** monotone 单调三次样条（源 film.js:37-51 机制重写）：数据非降则插值非降；相邻斜率异号或
+ *  出现平台（标点休止 cue）处切线归零，速度平滑入出 cue。 */
+export const monotone = (
+  xs: readonly number[],
+  ys: readonly number[],
+  m0Scale = 1,
+  mEnd: number | null = null,
+): ((x: number) => number) => {
+  const n = xs.length;
+  const d: number[] = new Array(Math.max(0, n - 1)).fill(0);
+  const m: number[] = new Array(n).fill(0);
+  for (let i = 0; i < n - 1; i++) d[i] = (ys[i + 1] - ys[i]) / (xs[i + 1] - xs[i]);
+  m[0] = d[0] * m0Scale;
+  m[n - 1] = mEnd === null ? d[n - 2] : mEnd;
+  for (let i = 1; i < n - 1; i++) {
+    if (d[i - 1] * d[i] <= 0) { m[i] = 0; continue; }
+    const h0 = xs[i] - xs[i - 1];
+    const h1 = xs[i + 1] - xs[i];
+    const w1 = 2 * h1 + h0;
+    const w2 = h1 + 2 * h0;
+    m[i] = (w1 + w2) / (w1 / d[i - 1] + w2 / d[i]);
+  }
+  return (x: number): number => {
+    if (x <= xs[0]) return ys[0];
+    if (x >= xs[n - 1]) return ys[n - 1];
+    const k = idxAt(xs, x);
+    const h = xs[k + 1] - xs[k];
+    const s = (x - xs[k]) / h;
+    const s2 = s * s;
+    const s3 = s2 * s;
+    return (
+      (2 * s3 - 3 * s2 + 1) * ys[k] + (s3 - 2 * s2 + s) * h * m[k] +
+      (-2 * s3 + 3 * s2) * ys[k + 1] + (s3 - s2) * h * m[k + 1]
+    );
+  };
+};
+
+// ---- 标点 cue 表（时间→tau 的关键帧；源 cues.draw「repeated markers = 标点休止」机制）----
+// 每段给 [f0→段首 tau, f1→段尾 tau]；相邻段共享边界弧长 → 段界形成 1 帧平台（速度归零=转角
+// 减速的样条化），收笔驻留 hold（f239-244）展开为 6 帧长平台（标点休止）。帧号仍由 T/SEGS 唯一驱动。
+export const DRAW_CUES: Array<readonly [number, number]> = (() => {
+  const cues: Array<readonly [number, number]> = [];
+  let s = 0;
+  for (const seg of SEGS) {
+    const L = polyLen(seg.pts);
+    cues.push([seg.f0, tauAtS(s)]);
+    cues.push([seg.f1, tauAtS(s + L)]);
+    s += L;
+  }
+  cues.push([T.hold[0], tauAtS(s)]);
+  cues.push([T.hold[1], tauAtS(s)]);
+  return cues;
+})();
+
+/** 时间（帧）→ 笔迹参数 tau：monotone 样条（m0Scale=1.3 快起钩子、末端切线 0 减速收笔，源参数）。 */
+export const tauOfT = monotone(DRAW_CUES.map((c) => c[0]), DRAW_CUES.map((c) => c[1]), 1.3, 0);
+
+/**
+ * 描绘进度（v4.0）：帧 N → tauOfT（monotone 样条 × 转角密度）→ sAtTau 已绘弧长（px）。
+ * 段表/帧号表不变：各段 f0/f1 处已绘弧长与旧实现逐帧一致（签名帧位保持）；段内由匀速改为
+ * 「转角密度减速 + 标点休止」的连续速度曲线。glide 段与既有墨线重合，dash 揭示无新增墨迹。
+ */
+export const drawnAt = (N: number): number => sAtTau(tauOfT(N));
 
 // ---- 荷载箭头 / 索力填充路径 ----
 const ARROW_PTS: Pt[] = [[LOAD_X, 318], [LOAD_X, 456]];

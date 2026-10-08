@@ -63,3 +63,15 @@
 | x.com/tvnxty（Firecrawl 宣传片） | `product-card-progressive-assemble`、`research-card-stack-scroll` |
 | 抖音 观机社 | `logo-shrink-wordmark-lockup`、`white-flash-logo-simplify-cut` |
 | 用户参考图定制（brand-scan） | `assemble-then-type-flyin`、`scanline-annotate-focus`、`scanline-assemble-flyin` |
+
+## cinetic 批次（2026-10-08，v4.0.0 战役新增 15 张）
+
+| 研究批次 | 来源 | 类型 | 状态 |
+|---|---|---|---|
+| cinetic（v4.0.0 战役） | https://github.com/Leonxlnx/cinetic （MIT，作者 Leonxlnx/@LexnLin；许可全文见 `LICENSE-THIRDPARTY/MIT-cinetic.txt`） | 开源项目（MIT 代码许可） | 手法参考，重写实现；各卡头部标注"手法研究自 cinetic (MIT, Leonxlnx), 实现重写" |
+
+逐卡来源映射（草稿卡原位于 `科普视频/samples-v4/cinetic-cards/`，文件名 `类目-手法名.md`，收编时去类目前缀按 `标签` 归档；无重名，未启用 -v2 后缀）：
+
+| 来源 | 卡片 |
+|---|---|
+| cinetic | `detail-first-pullback`、`exploded-layer-stack`、`fit-bounds-follow`、`pull-lands-event`（camera）；`area-ratio-compare`、`delta-chip-compare`、`unit-grid-tally`（data）；`accent-on-newest`（effects）；`anticipation-dip-unlock`（interaction）；`result-first-rewind`（opening）；`anchor-overlay-cut`、`scale-through-cut`（transition）；`line-rebreak-glide`、`reading-order-exit`（typography）；`clutter-pileup-strip`（ui-entrance） |

@@ -27,3 +27,12 @@
 ## 样张
 
 `sample.jpg` = f180（aurora 光斑床+磨砂玻璃卡全要素）。源工程 `out/stills/`：f60（光斑床+钩子小字）、f240（三张玻璃卡全要素）、f360（合并玻璃卡+品牌字+NIGHT MODE）为回归三查对照基准。
+
+## v4.0 opt-in 增补：lens / tilt / motes
+
+> 借鉴登记：mg-styles-15 `demos/12-aurora-glass`（MIT, Vincentwei1021）——TSX 重写，非整段拷贝。
+
+- **`GlassLens`**（头号 WOW 件，opt-in）：SVG 近似版 Liquid-Glass 透镜——backdrop 模糊（blur14+饱和1.15+亮度1.04）+ `feDisplacementMap` 边缘扭曲（seeded feTurbulence 驱动，scale 9，近似 bezel refraction，确定性）+ 边框渐变高光（fresnel 近似，0.75/0.12/0.35 三段）+ **速度驱动 squash**（`springSquash`：damped-spring w=2Hz·2π、z=0.3、gain 0.00016、amt 封顶 0.1——**240Hz 固定步长自 t=0 积分，纯 t 函数，帧率确定性**：同帧同参逐位同输出，与渲染帧率无关）+ 收尾 iris 张开成句号环（`ringP` 0→1：外轮廓收至 62%、体变 ~12px 环壁，evenodd 挖孔）+ 环面跑光 `glintP`。**取舍声明：真折射/色散（源 FS_LENS shaders.js:215-356：smin metaball 颈、ior=1.5+dispersion 七采样光谱折射、fresnel、caustic）需 WebGL；SVG 版为近似，观感约七成——需要真色散时上 WebGL 后处理，勿在本卡许诺真色散。**
+- **`TiltGlassCard`**（opt-in）：CSS `perspective(1200)+rotateY(±8–14°)` 倾斜玻璃板 + 顶部高光渐变 + 边缘 1px 白 30% 亮线（顶边另加 0.5 亮线，fresnel 近似）+ 斜向 sheen 带（源 FS_CARD shaders.js:149-210 的 0.045 sheen 近似，峰值 0.12）+ 入场沿 bevel（顶边→右上圆角）跑一道 30% 白高光（伪 catch-light，SVG dash 沿圆角矩形路径 `pathLength=100`，头 7 单位亮 0.85 + 尾 22 单位 0.28）。真 3D 厚度折射与 defocus LOD 做不了——倾斜+glint 已拉开与平面卡的差距。
+- **`Motes`**（opt-in）：尘点微粒层，独立小件，与 `NoiseField`（防 banding 的静态噪点）是两回事；seeded 慢漂（vy −4~−14px/s、vx ±4px/s，双轴 wrap）+ 亮度呼吸（0.35–0.75·tw），screen 混合，默认 26 颗、r 0.6–1.7px。
+- **不动项**：慢/透/贵气质与 **sine/linear 缓动白名单不变**——squash 弹簧是透镜受速度激励的材质响应物理（源 damped-spring），不是运动词汇，文字入场仍只有 opacity+8px；aurora 光斑床/玻璃卡配方/噪点全部默认不变。本节全部 opt-in，不启用时导出与渲染与 v3.5.0 逐值等价。

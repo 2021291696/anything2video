@@ -10,3 +10,8 @@ export * from './Caption';
 export * from './PageCam';
 export * from './ClipCard';
 export * from './VerticalTicker';
+// v3.9.0 配方层四件套（机制借鉴 lanshu-create-ai-presenter-video，MIT——Remotion 重写；各文件头有用法与帧号口径）
+export * from './WordLitCaption';
+export * from './ChapterBadge';
+export * from './GoldenQuote';
+export * from './RecapFrame';

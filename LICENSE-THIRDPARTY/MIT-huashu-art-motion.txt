@@ -1,17 +1,6 @@
 MIT License
 
-Copyright (c) 2026 花叔 Huashu (alchaincyf)
-
-Applies to code and methodology adapted into this skill from:
-https://github.com/alchaincyf/huashu-art-motion
-
-Adapted files:
-- scripts/reference_breakdown.py   (from scripts/analyze/breakdown.py)
-- scripts/probe_motion_quality.py  (judgement criteria from scripts/qa.py)
-- scripts/probe_subtitle_band.py   (from scripts/subzone_gate.py)
-- reference/reference-breakdown.md (from references/01-拆解.md)
-- positive-experience entries in reference/lessons.md (from references/07-正面经验.md,
-  evidence attributed to the original project; local re-verification noted per entry)
+Copyright (c) 2026 alchaincyf (花叔 · 花生)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -30,3 +19,19 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+以上为上游正本 LICENSE 全文（2026-10-08 v4.0.0 战役刷新自
+github.com/alchaincyf/huashu-art-motion）。以下保留本仓既有适配范围登记（lanshu 批次 2026-10-07 起）：
+
+Applies to code and methodology adapted into this skill from:
+https://github.com/alchaincyf/huashu-art-motion
+
+Adapted files:
+- scripts/reference_breakdown.py   (from scripts/analyze/breakdown.py)
+- scripts/probe_motion_quality.py  (judgement criteria from scripts/qa.py)
+- scripts/probe_subtitle_band.py   (from scripts/subzone_gate.py)
+- reference/reference-breakdown.md (from references/01-拆解.md)
+- positive-experience entries in reference/lessons.md (from references/07-正面经验.md,
+  evidence attributed to the original project; local re-verification noted per entry)

@@ -23,6 +23,16 @@
 - BGM 走 `bgm_generate --style liquid-flow`（07-liquid/future_bass 配方）；hero 断裂帧 = `--drop <断裂秒>`（本片 8.4 对位 f251）；SFX 用 Mixkit 本地 fluid/transition 类目钉帧（`mix_sfx` 模式）。
 - 镜头组件演示五镜结构：泼入钩子 → 滴-面融合 → 主体隆起 → 拉丝断裂（hero）→ 入盏定帧，可直接作新片骨架。
 
+## opt-in 增补（2026-10-07，技法借鉴，默认输出不变）
+
+- **体积守恒合并三函数**（opt-in 数学件，借鉴 mg-styles-15 demos/07-liquid `scene.js:200-202`；默认「靠近即粘」GooFilter 行为不变，调用方按需启用）：
+  `wob(t,f,decay)` = exp(−t/decay)·sin(2πf t) 阻尼晃动｜`mergeK(tc,t,pre=0.02,fade=0.16)` = smoothstep 融合进度 0..1（单调、端点收敛、可 seek）｜`massR(r0,parts)` = √(r0²+Σrᵢ²·kᵢ)（kᵢ 传该滴 mergeK——「大滴吃小滴」时长与半径自洽，面积守恒）｜`massShift(moves,t)` = Σ side·amp·wob(t−tc, 2.8, 0.22)（默认 amp 20：并入瞬间主体朝来滴方向晃一下再阻尼回位）。
+  用法：主体半径每帧 = massR(r0, drops.map(d=>({r:d.r, k:mergeK(d.tc,t)})))，主体 cx += massShift(moves,t)；被并滴在 mergeK 升满后移出画面/化入。
+- **`GlossPass`**（opt-in 组件，最廉价升级档）：SurfaceGloss 同族高光椭圆按速度向量偏移——偏移量 = min(1, speed·0.05)·r·0.28 沿速度单位向量，液滴往哪冲高光往哪偏；静止时连续退化为居中高光。画在 goo 组之后 crisp 层；确定性纯几何。
+- 纯函数全部导出（`wob/mergeK/massR/massShift/smooth01`）供数学断言。
+
+> 技法借鉴 mg-styles-15 demos/07-liquid（MIT, Vincentwei1021）——Remotion/TSX 重写，2026-10-07
+
 ## QC 豁免档
 
 - **goo 滤镜吞小件**：r<10 的微滴/溅点在 goo 内不可见（blur+阈值）——这类件走 crisp 层是有意设计，不是 metaball 缺失；主体融合仍全走滤镜。

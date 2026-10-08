@@ -1,5 +1,22 @@
+// 速度方向拉伸 makeM / impact 预备-释放 / smearCap 解析模糊：技法借鉴 mg-styles-15 demos/08-morph (MIT, Vincentwei1021), TSX 重写
 import React from 'react';
-import {oklabLerp, toPath, cityWindows, type Pt, type Win} from './morph';
+import {
+  applyM,
+  cityWindows,
+  impactEvent,
+  morphPose,
+  morphProgress,
+  morphPts,
+  oklabLerp,
+  qbez,
+  shutterFrames,
+  smearCapGeom,
+  toPath,
+  type ImpactEvent,
+  type Pt,
+  type ShapeKey,
+  type Win,
+} from './morph';
 
 /**
  * kit.tsx — MORPH 风格卡图元库（s34-morph 正本）。
@@ -219,4 +236,112 @@ export const popIn = (t: number): number => {
   const c3 = c1 + 1;
   const x = Math.min(1, Math.max(0, t));
   return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+};
+
+// ---------------------------------------------------------------- v4.0（mg 08-morph 技法移植，改默认实现）
+
+/** v4.0 解析运动模糊胶囊（smearCap 渲染层）：smearCapGeom 画成 SVG stadium——round-cap
+ *  粗线 + 沿运动轴 alpha 渐变（两端 0、平台 min(1,2r/L)）；disc（L<1.5px）退化为单圆。
+ *  pA/pB 由快门两端采样（shutterFrames：帧中心 ±0.25 帧，源 tqc±SH/2）。 */
+export const SmearCap: React.FC<{pA: Pt; pB: Pt; r: number; color: string; gid: string}> = ({pA, pB, r, color, gid}) => {
+  const geo = smearCapGeom(pA, pB, r);
+  if (geo.disc) {
+    return (
+      <circle cx={geo.pA[0]} cy={geo.pA[1]} r={geo.r} fill={color} />
+    );
+  }
+  return (
+    <g>
+      <defs>
+        <linearGradient
+          id={gid}
+          gradientUnits="userSpaceOnUse"
+          x1={geo.grad.from[0]}
+          y1={geo.grad.from[1]}
+          x2={geo.grad.to[0]}
+          y2={geo.grad.to[1]}
+        >
+          {geo.grad.stops.map(([off, al], i) => (
+            <stop key={i} offset={off} stopColor={color} stopOpacity={al} />
+          ))}
+        </linearGradient>
+      </defs>
+      <line
+        x1={geo.pA[0]}
+        y1={geo.pA[1]}
+        x2={geo.pB[0]}
+        y2={geo.pB[1]}
+        stroke={`url(#${gid})`}
+        strokeWidth={geo.r * 2}
+        strokeLinecap="round"
+      />
+    </g>
+  );
+};
+
+/**
+ * v4.0 默认形变主体组件（改默认实现）：morphPair 对位插值 × morphPose（速度方向拉伸 +
+ * impact 事件系统）× smearCap（最快运动段解析模糊）。smear 判据与源 drawDecor 同构：
+ * 主体质心（位移贝塞尔轨）在快门窗（±0.25 帧）内位移 L≥1.5px 才画胶囊，半径=主体外接
+ * 半径（局部顶点到质心最大距，源 drawDecor 的 R=max dist 同法）。v3 图元（MorphPath +
+ * morphDeform）保留兼容，新出片默认走本组件。
+ */
+export const MorphHero: React.FC<{
+  a: ShapeKey;
+  b: ShapeKey;
+  f: number; // 绝对帧
+  f0: number;
+  f1: number; // 形变窗口（帧）
+  from: Pt;
+  ctrl: Pt;
+  to: Pt; // 位移贝塞尔轨（与 SHAPES 同局部坐标系）
+  top: string;
+  bottom: string; // 渐变对
+  glow: string;
+  glowSize?: number;
+  dir?: number;
+  piv?: Pt;
+  sc?: number;
+  impactEvents?: ImpactEvent[]; // 卡内镜头表驱动的事件表
+  impactWho?: string; // 本段归属主体键（按 who 过滤事件表）
+  smearColor?: string; // smear 胶囊色（默认 glow）
+  gid: string;
+}> = ({
+  a, b, f, f0, f1, from, ctrl, to,
+  top, bottom, glow, glowSize = 46,
+  dir = 1, piv, sc,
+  impactEvents, impactWho,
+  smearColor,
+  gid,
+}) => {
+  const e = morphProgress(f - f0, f1 - f0);
+  const table = impactEvents && impactWho ? impactEvents.filter((ev) => ev.who === impactWho) : undefined;
+  const im = table && table.length > 0 ? impactEvent(f, table) : {q: 0, uni: 0};
+  const pose = morphPose({from, ctrl, to, e, dir, piv, sc, impact: im});
+  const local = morphPts(a, b, e);
+  const pts = local.map((p) => applyM(pose, p));
+  // 主体外接半径（当帧插值轮廓域；仿射下质心映射质心）
+  let cx = 0;
+  let cy = 0;
+  for (const p of local) {
+    cx += p[0];
+    cy += p[1];
+  }
+  cx /= local.length;
+  cy /= local.length;
+  let R = 0;
+  for (const p of local) R = Math.max(R, Math.hypot(p[0] - cx, p[1] - cy));
+  // 最快运动段：位移轨在快门两端的速度 → 解析胶囊（L<1.5px 自动退化为不画）
+  const span = Math.max(1, f1 - f0);
+  const [fa, fb] = shutterFrames(f);
+  const cl = (u: number): number => Math.min(1, Math.max(0, u));
+  const pa = qbez(from, ctrl, to, cl((fa - f0) / span));
+  const pb = qbez(from, ctrl, to, cl((fb - f0) / span));
+  const geo = smearCapGeom(pa, pb, Math.max(1, R));
+  return (
+    <g>
+      {geo.disc ? null : <SmearCap pA={pa} pB={pb} r={geo.r} color={smearColor ?? glow} gid={`${gid}-smear`} />}
+      <MorphPath pts={pts} top={top} bottom={bottom} glow={glow} glowSize={glowSize} gid={gid} />
+    </g>
+  );
 };

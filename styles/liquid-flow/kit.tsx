@@ -361,3 +361,78 @@ export const LqBackdrop: React.FC = () => (
     <AbsoluteFill style={{background: 'radial-gradient(1200px 800px at 50% 52%, transparent 62%, rgba(58,35,16,0.10) 100%)'}} />
   </AbsoluteFill>
 );
+
+// =====================================================================
+// opt-in 扩展区（2026-10-07 v4.0）：体积守恒合并 + 运动方向高光
+// 技法借鉴 mg-styles-15 demos/07-liquid（MIT, Vincentwei1021）—— TSX 重写。
+// 合并三函数（wob/mergeK/massR/massShift）为 opt-in 数学件：调用方自行驱动
+// 主体半径/位置；默认「靠近即粘」GooFilter 行为完全不变。
+// 全部为新增导出，默认不启用——不改变上方任何既有函数/组件的默认输出。
+// =====================================================================
+
+/** wob 阻尼晃动（07-liquid scene.js 同式）：t≤0 → 0，否则 exp(−t/decay)·sin(2πf t)。 */
+export const wob = (t: number, f: number, decay: number): number =>
+  t <= 0 ? 0 : Math.exp(-t / decay) * Math.sin(2 * Math.PI * f * t);
+
+/** smoothstep 0..1（源 smooth 同式：x²(3−2x)，端点零速）。 */
+export const smooth01 = (t: number): number => {
+  const x = clamp01(t);
+  return x * x * (3 - 2 * x);
+};
+
+/**
+ * mergeK 融合进度 0..1：tc−pre 起 pre+fade 秒内 smoothstep 升满
+ * （源 mergeK = smooth(inv(tc−0.02, tc+0.16, t))，pre 0.02/fade 0.16 与源一致）。
+ * 单调、端点收敛 0/1、可 seek——驱动该滴质量并入主体的门。
+ */
+export const mergeK = (tc: number, t: number, pre = 0.02, fade = 0.16): number =>
+  smooth01((t - (tc - pre)) / (pre + fade));
+
+/**
+ * massR 体积守恒合并半径：√(r0² + Σ rᵢ²·kᵢ)（源 massR 同式；kᵢ 传该滴 mergeK）。
+ * 「大滴吃小滴」时长与半径自洽：未并入（k=0）不增径，并入后主体半径按面积守恒增长。
+ */
+export const massR = (r0: number, parts: Array<{r: number; k: number}>): number => {
+  let a = r0 * r0;
+  for (const p of parts) a += p.r * p.r * clamp01(p.k);
+  return Math.sqrt(a);
+};
+
+/**
+ * massShift 合并质量偏移：Σ side·amp·wob(t−tc, f, decay)（源同式；
+ * 默认 amp 20 / f 2.8 / decay 0.22——并入瞬间主体朝来滴方向晃一下再阻尼回位）。
+ */
+export const massShift = (
+  moves: Array<{side: number; tc: number; amp?: number; f?: number; decay?: number}>,
+  t: number,
+): number => {
+  let s = 0;
+  for (const m of moves) s += m.side * (m.amp ?? 20) * wob(t - m.tc, m.f ?? 2.8, m.decay ?? 0.22);
+  return s;
+};
+
+/**
+ * GlossPass —— 运动方向高光（opt-in，最廉价升级档）。
+ * SurfaceGloss 同族高光椭圆，但按速度向量 (vx,vy) 偏移：偏移量 = min(1, speed·0.05)·r·0.28
+ * 沿速度单位向量——液滴往哪冲，高光往哪偏；静止时居中（speed→0 连续退化）。
+ * 画在 goo 组之后 crisp 层。确定性纯几何，可 seek。
+ */
+export const GlossPass: React.FC<{
+  cx: number; cy: number; r: number; vx: number; vy: number;
+  rx?: number; ry?: number; rot?: number; opacity?: number;
+}> = ({cx, cy, r, vx, vy, rx, ry, rot = -18, opacity = 0.5}) => {
+  const sp = Math.hypot(vx, vy);
+  const k = Math.min(1, sp * 0.05) * r * 0.28;
+  const ux = sp > 1e-6 ? vx / sp : 0;
+  const uy = sp > 1e-6 ? vy / sp : 0;
+  const hx = rx ?? r * 0.62;
+  const hy = ry ?? r * 0.38;
+  return (
+    <div style={{
+      position: 'absolute', left: (cx + ux * k - hx).toFixed(2), top: (cy + uy * k - hy).toFixed(2),
+      width: (hx * 2).toFixed(2), height: (hy * 2).toFixed(2), borderRadius: '50%',
+      background: 'rgba(248,240,220,0.55)', transform: `rotate(${rot}deg)`,
+      filter: 'blur(7px)', opacity, pointerEvents: 'none',
+    }} />
+  );
+};

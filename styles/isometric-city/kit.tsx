@@ -1,5 +1,5 @@
 import React from 'react';
-import {C30, S30, U, EASE, GrowT, TileDef, BOXES, BoxDef, RACK_IGNITE, TILES, CARS, STOX, STOY, HERO_CUBES} from './world';
+import {C30, S30, U, EASE, GrowT, TileDef, BOXES, BoxDef, RACK_IGNITE, TILES, CARS, CAR_LOOP, STOX, STOY, STATION_PAN, DROP_F, HERO_CUBES} from './world';
 
 /**
  * kit.tsx — isometric-city 等轴 2.5D 图元库（纯 CSS transform，禁真 3D 库）。
@@ -12,7 +12,10 @@ import {C30, S30, U, EASE, GrowT, TileDef, BOXES, BoxDef, RACK_IGNITE, TILES, CA
  * 签名特征 2 —— 无灭点处处等比：沿等轴网格平移保持 30° 恒定斜率、零透视缩放；
  *   假 3D 前后关系全靠 zIndex=画面 y 坐标（z=(u+v)，画得越靠下越在前）。
  * 签名特征 3 —— 楼房生长：底面先落位 → 立面 scaleY 0→1 弹簧拉起（w14.8 z0.61：峰值≈8帧、9%过冲）→ 顶面延迟 3 帧盖上。
- * （特征 4 运镜视差在 world.ts/City.tsx；特征 5 高密度几何化小件即本库 prop 族。）
+ * （特征 4 运镜在下方相机轨段与 City.tsx：hermite 关键帧 pan + zoom punch 预备 + 1:0.8:0.6 视差；
+ *   特征 5 高密度几何化小件即本库 prop 族。）
+ *
+ * // hermite 相机轨与 loopPath 环路：技法借鉴 mg-styles-15 demos/03-isometric (MIT, Vincentwei1021), TSX 重写
  */
 
 export const ISO = {
@@ -225,25 +228,113 @@ export const TreeIso: React.FC<{x: number; y: number; s: number; col: number; ap
   );
 };
 
-// ---------------------------------------------------------------- 小车（三面微盒沿路带行驶）
+// ---------------------------------------------------------------- 相机轨（v4.0 升级：hermite 关键帧表 + zoom punch 预备）
+// hermite 相机轨与 loopPath 环路：技法借鉴 mg-styles-15 demos/03-isometric (MIT, Vincentwei1021), TSX 重写
+/** 关键帧：[t, v] 恒值外推｜[t, v, 'e'] 零斜率端点｜[t, v, m] 显式切线（单位 v/t）。 */
+export type HermiteKey = readonly [number, number] | readonly [number, number, 'e'] | readonly [number, number, number];
+
+/** Catmull-Rom 式 hermite 关键帧轨：内点切线=邻域中心差分（C1 连续），'e' 强制零斜率，m= 显式切线；段内三次 hermite。 */
+export const hermite = (keys: HermiteKey[], t: number): number => {
+  if (t <= keys[0][0]) return keys[0][1];
+  const n = keys.length;
+  if (t >= keys[n - 1][0]) return keys[n - 1][1];
+  let i = 0;
+  while (t > keys[i + 1][0]) i++;
+  const slope = (k: number): number => {
+    const [, , tail] = keys[k];
+    if (tail === 'e') return 0;
+    if (typeof tail === 'number') return tail;
+    if (k === 0 || k === n - 1) return 0;
+    return (keys[k + 1][1] - keys[k - 1][1]) / (keys[k + 1][0] - keys[k - 1][0]);
+  };
+  const t0 = keys[i][0], v0 = keys[i][1], t1 = keys[i + 1][0], v1 = keys[i + 1][1];
+  const h = t1 - t0, u = (t - t0) / h;
+  const m0 = slope(i) * h, m1 = slope(i + 1) * h;
+  const u2 = u * u, u3 = u2 * u;
+  return (2 * u3 - 3 * u2 + 1) * v0 + (u3 - 2 * u2 + u) * m0 + (-2 * u3 + 3 * u2) * v1 + (u3 - u2) * m1;
+};
+
+/** pan 关键帧表（中景层 px）：A 站定场 → f158-180 滑至 B（hold）→ f291-312 滑至 C；'e' 双端=段内 smoothstep、全程 C1。 */
+const CAM_PAN: HermiteKey[] = [
+  [0, 0, 'e'], [158, 0, 'e'], [180, STATION_PAN.B, 'e'], [291, STATION_PAN.B, 'e'], [312, STATION_PAN.C, 'e'],
+];
+/** 整组平移相机（无旋转），替代旧 easeInOutPow 分段；三层视差系数 1:0.8:0.6（LAYER_SPEED）不变。 */
+export const camPan = (f: number): number => hermite(CAM_PAN, f);
+
+/** drop 帧 zoom punch（借 03-isometric main.js：预备 −2% 缓入后撤 → 1.00→1.06 两帧打出 → easeOutExpo 12 帧回落 1）。 */
+export const camPunch = (f: number): number => {
+  if (f < DROP_F - 6 || f > DROP_F + 16) return 1;
+  const ig = DROP_F - 0.45; // punch 起帧（先于 drop 半帧；预备撤在 drop 前 1 帧收口）
+  const pre = f < ig ? -0.02 * EASE.smooth((f - (DROP_F - 3)) / 2) : 0; // f232-234 缓入 −2%，ig 处后撤
+  const v = f - ig;
+  const w = v / 2; // 两帧打出（30fps 0.067s）
+  const kick = v >= 0 ? (v < 2 ? 0.06 * (1 - (1 - w) * (1 - w)) : 0.06 * (1 - EASE.easeOutExpo((v - 2) / 12))) : 0;
+  return 1 + pre + kick;
+};
+
+// ---------------------------------------------------------------- 圆角矩形环路参数路径（v4.0 升级：环路行车）
+/** 环路：at(s) → {u, v, ang}（ang=atan2(Δu,Δv) 主值；s 按周长取模，天然闭环；位置与朝向逐帧连续）。 */
+export type LoopPath = {L: number; at: (s: number) => {u: number; v: number; ang: number}};
+/** 半宽 au/半深 av、圆角 rc 的圆角矩形轨（俯视逆时针：起于 (au, −(av−rc)) 朝 +v）。 */
+export const loopPath = (au: number, av: number, rc: number): LoopPath => {
+  const su = 2 * (au - rc), sv = 2 * (av - rc), arc = (Math.PI / 2) * rc;
+  const segLen = [sv, su, sv, su]; // 右边(v 向)→顶边(u 向)→左边→底边
+  const cum = [0, sv + arc, su + sv + 2 * arc, su + 2 * sv + 3 * arc];
+  const L = 2 * su + 2 * sv + 4 * arc;
+  const starts: Array<[number, number]> = [[au, -(av - rc)], [au - rc, av], [-au, av - rc], [-(au - rc), -av]];
+  const dirs: Array<[number, number]> = [[0, 1], [-1, 0], [0, -1], [1, 0]];
+  const centers: Array<[number, number]> = [[au - rc, av - rc], [-(au - rc), av - rc], [-(au - rc), -(av - rc)], [au - rc, -(av - rc)]];
+  const a0 = [0, Math.PI / 2, Math.PI, -Math.PI / 2]; // 各圆角起始角（自 +u 轴向 +v 轴）
+  return {
+    L,
+    at(s: number) {
+      s = ((s % L) + L) % L;
+      let k = 0;
+      while (k < 3 && s >= cum[k] + segLen[k] + arc) k++;
+      const r = s - cum[k];
+      if (r < segLen[k]) {
+        const [du, dv] = dirs[k];
+        return {u: starts[k][0] + du * r, v: starts[k][1] + dv * r, ang: Math.atan2(du, dv)};
+      }
+      const th = a0[k] + (r - segLen[k]) / rc; // 圆角上行角
+      return {
+        u: centers[k][0] + rc * Math.cos(th),
+        v: centers[k][1] + rc * Math.sin(th),
+        ang: Math.atan2(-Math.sin(th), Math.cos(th)), // 切向 = 圆心指向位置的 90° 前方
+      };
+    },
+  };
+};
+
+// ---------------------------------------------------------------- 小车（v4.0 升级：环路行车——弯道车头按 ang 转向、圆角过弯）
 const CAR_COLS = ['#FF9E86', '#FBFAFF', '#74A9F2', '#FFE6A1'];
 export const CarIso: React.FC<{st: 'A' | 'B' | 'C'; f: number; idx: number}> = ({st, f, idx}) => {
   const car = CARS[idx];
   if (!car || car.st !== st) return null;
-  const p = EASE.clamp01((f - car.f0) / (car.f1 - car.f0));
+  const p = (f - car.f0) / (car.f1 - car.f0);
   if (p <= 0.001 || p >= 0.999) return null;
-  const u = car.u0 + p * 12;
-  const X = STOX[st] + (u - car.v) * C30 * U;
-  const Y = STOY + (u + car.v) * S30 * U;
+  const loop = CAR_LOOP[st];
+  const lp = loopPath(loop.au, loop.av, loop.rc);
+  const q = lp.at((car.s0 + p * 0.5) * lp.L); // 半圈/站：站访期间绕行 180°（行程≈旧直线档）
+  const gu = loop.cu + q.u, gv = loop.cv + q.v;
+  const X = STOX[st] + (gu - gv) * C30 * U;
+  const Y = STOY + (gu + gv) * S30 * U;
+  const du = Math.sin(q.ang), dv = Math.cos(q.ang); // 由 ang=atan2(Δu,Δv) 反解切向 → 屏幕角
+  const rot = (Math.atan2((du + dv) * S30, (du - dv) * C30) * 180) / Math.PI - 150; // 车体长轴沿 v（屏角 150°）归零
   const col = CAR_COLS[car.col];
   const s = 0.85;
-  const fade = p > 0.88 ? 1 - (p - 0.88) / 0.12 : 1; // 驶出地台前淡出
+  const fade = Math.min(1, p / 0.05, (1 - p) / 0.1); // 进出站窗淡入淡出
+  const cx = 0.29 * s * U, cy = 0.36 * s * U; // 车身着地中心（顶面菱形心附近），先平移到原点再旋转
   return (
-    <div style={{position: 'absolute', left: 0, top: 0, zIndex: Math.round((u + car.v) * 10) + 1, opacity: fade}}>
+    <div style={{position: 'absolute', left: 0, top: 0, zIndex: Math.round((gu + gv) * 10) + 1, opacity: fade}}>
       <div style={{position: 'absolute', left: X, top: Y}}>
-        <TopFace x={-(0.34 * s * U) / 2} y={-(0.34 + 0.62) * s * S30 * U - 0.16 * U * s} wu={0.34 * s} du={0.62 * s} bg={shade(col, 1.05)} radius={4} />
-        <div style={faceDiv(FACE_RIGHT, 0.62 * s * U, 0.16 * U * s, shade(col, 0.8), {borderRadius: 2})} />
-        <div style={faceDiv(FACE_LEFT, 0.34 * s * U, 0.16 * U * s, col, {borderRadius: 2})} />
+        <div style={{transformOrigin: '0 0', transform: `rotate(${rot.toFixed(2)}deg)`}}>
+          <div style={{transformOrigin: '0 0', transform: `translate(${cx}px, ${cy}px)`}}>
+            <TopFace x={-(0.34 * s * U) / 2} y={-(0.34 + 0.62) * s * S30 * U - 0.16 * U * s} wu={0.34 * s} du={0.62 * s} bg={shade(col, 1.05)} radius={4} />
+            <div style={faceDiv(FACE_RIGHT, 0.62 * s * U, 0.16 * U * s, shade(col, 0.8), {borderRadius: 2})} />
+            <div style={faceDiv(FACE_LEFT, 0.34 * s * U, 0.16 * U * s, col, {borderRadius: 2})} />
+          </div>
+        </div>
       </div>
     </div>
   );

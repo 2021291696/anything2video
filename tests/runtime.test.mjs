@@ -1,6 +1,8 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {validatePlan, checkPlan} from '../scripts/check-plan.mjs';
+import {computeState, syncState, STATES} from '../scripts/check_state.mjs';
+import {parseLoudnormReport, loudnessPassed, countEvents} from '../scripts/finalize_delivery.mjs';
 import {renderOptions, assertOutput, renderProject} from '../scripts/render.mjs';
 import {sha256File, snapshotSources} from '../scripts/runtime-lib.mjs';
 import fs from 'node:fs';
@@ -44,6 +46,64 @@ test('empty film, one-frame hole, overlap and duplicate ids fail', () => {
   assert.ok(validatePlan(project, {shots: [{...shot, from: 2}]}).some(x => x.includes('Gap')));
   assert.ok(validatePlan(project, {shots: [{...shot, to: 50}, {...shot, from: 50}]}).length);
 });
+test('evidence ladder computes state, overclaim and missing list', async () => {
+  const fake = files => ({
+    io: {
+      exists: rel => rel in files && files[rel] !== undefined,
+      readJson: rel => files[rel] ?? null,
+      readText: rel => files[rel] ?? null,
+      probeMedia: async () => null,
+      checkPlan: () => ({pass: true, errors: []}),
+      listDir: rel => files[`§dir:${rel}`] ?? [],
+    },
+    readProject: async () => files['project.json'] ?? null,
+  });
+  const project = {slug: 'film'};
+  const onlyIntake = await computeState('root', fake({'project.json': project}));
+  assert.equal(onlyIntake.evidenced, 'intake');
+  assert.equal(onlyIntake.next, 'scripted');
+  assert.ok(onlyIntake.missing_for_next[0].includes('narration.txt'));
+  const voiced = await computeState('root', fake({
+    'project.json': project,
+    'script/narration.txt': '一句',
+    [path.join('public', 'assets', 'film', 'audio_narration.wav')]: 'x',
+    'script/timeline.json': {fps: 30},
+  }));
+  assert.equal(voiced.evidenced, 'voiced');
+  assert.equal(voiced.next, 'planned');
+  const full = await computeState('root', fake({
+    'project.json': {slug: 'film', status: 'draft'},
+    'script/narration.txt': 'x', [path.join('public', 'assets', 'film', 'audio_narration.wav')]: 'x', 'script/timeline.json': {},
+    'script/storyboard.json': {}, 'qc/final.json': {checks: {}},
+    '§dir:renders': ['film_v2.mp4', 'film_v1.mp4', 'other_v1.mp4'],
+    '§dir:delivery': ['film_v2-delivery-report.json'],
+    [path.join('delivery', 'film_v2-delivery-report.json')]: {status: 'verified', loudness_passed: true},
+  }));
+  assert.equal(full.evidenced, 'delivered');
+  assert.equal(full.next, null);
+  assert.ok(full.notes.some(n => n.includes('status 仍是 draft')));
+  const over = await computeState('root', fake({'project.json': {slug: 'film', state: 'rendered'}}));
+  assert.equal(over.evidenced, 'intake');
+  assert.equal(over.overclaim, true);
+  assert.equal(over.consistent, false);
+  const lagging = await computeState('root', fake({'project.json': {slug: 'film', state: 'intake'}, 'script/narration.txt': 'x'}));
+  assert.equal(lagging.evidenced, 'scripted');
+  assert.equal(lagging.overclaim, false);
+  assert.equal(STATES.length, 7);
+  assert.deepEqual(syncState({slug: 'film', state: 'rendered'}, 'voiced'), {slug: 'film', state: 'voiced'});
+});
+test('finalize loudness helpers parse reports and gate delivery', () => {
+  const sample = '[Parsed_loudnorm_0 @ 0x0]\n{\n\t"input_i" : "-14.23",\n\t"input_tp" : "-1.52",\n\t"input_lra" : "8.10",\n\t"input_thresh" : "-24.50",\n\t"output_i" : "0.00",\n\t"offset" : "0.11"\n}';
+  const parsed = parseLoudnormReport(sample);
+  assert.deepEqual(parsed, {input_i: -14.23, input_tp: -1.52, input_lra: 8.1, input_thresh: -24.5, offset: 0.11});
+  assert.equal(parseLoudnormReport('no json here'), null);
+  assert.equal(loudnessPassed(-16.4, -1.5, -16), true);
+  assert.equal(loudnessPassed(-17.0, -1.5, -16), false);
+  assert.equal(loudnessPassed(-16.0, -0.5, -16), false);
+  assert.equal(loudnessPassed(null, -1.5, -16), false);
+  assert.equal(countEvents('[blackdetect] black_start:1 black_end:2\n[freezedetect] freeze_start:3\n[blackdetect] black_start:5', 'black_start:'), 2);
+  assert.equal(countEvents('[freezedetect] freeze_start:3', 'freeze_start:'), 1);
+});
 test('malformed storyboard inputs return diagnostics without throwing', () => {
   for (const bad of [undefined, null, false, 5, 'text', [], {}, {shots: null}, {shots: [null, [], 'x']}, {shots: [shot], claims: {}}, {shots: [shot], assets: 'x'}, {shots: [shot], claims: [null], assets: [null]}]) {
     assert.doesNotThrow(() => assert.ok(validatePlan(null, bad).length));
@@ -59,6 +119,16 @@ test('claim text/source and complete AI provenance are required', () => {
     assert.ok(validatePlan(project, {shots: [shot], assets: [incomplete]}).length, key);
   }
   assert.ok(validatePlan(project, {shots: [shot], assets: [{...asset, ai: 'false'}]}).length);
+});
+test('shot fact bindings must be valid indices into declared claims', () => {
+  const claims = [{text: 'Fact', source: 'local:e.md'}];
+  assert.deepEqual(validatePlan(project, {shots: [{...shot, facts: [0]}], claims}), []);
+  assert.deepEqual(validatePlan(project, {shots: [{...shot, facts: []}], claims}), []);
+  assert.ok(validatePlan(project, {shots: [{...shot, facts: [1]}], claims}).some(x => x.includes('out of range')));
+  assert.ok(validatePlan(project, {shots: [{...shot, facts: [-1]}], claims}).some(x => x.includes('array of claim indices')));
+  assert.ok(validatePlan(project, {shots: [{...shot, facts: 'x'}], claims}).some(x => x.includes('array of claim indices')));
+  assert.ok(validatePlan(project, {shots: [{...shot, facts: [0]}]}).some(x => x.includes('out of range')));
+  assert.ok(validatePlan(project, {shots: [{...shot, facts: {}}]}).some(x => x.includes('array of claim indices')));
 });
 test('file gate returns diagnostics for malformed JSON and hashes', () => {
   const base = fixture();

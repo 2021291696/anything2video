@@ -108,6 +108,9 @@ export const SPRITE_COLORS: Record<string, string> = {
   e: GRAY.d,
 };
 
+// v4.0 opt-in props（不传=旧行为逐值一致）：
+//   outline —— per-part 1px 描边（huashu 14_8bit 契约：空格块 4 邻域有实块即涂边色，每个连通部件各自出边）；
+//   palette —— 色板数组，所有颜色经 paletteQuantize 最近色量化（14 色角色板可传入）。
 export const PixelSprite: React.FC<{
   rows: string[];
   px: number;
@@ -116,10 +119,46 @@ export const PixelSprite: React.FC<{
   y?: number;
   opacity?: number;
   flip?: boolean;
+  outline?: string;
+  palette?: string[];
   style?: React.CSSProperties;
-}> = ({rows, px, colors = SPRITE_COLORS, x = 0, y = 0, opacity = 1, flip, style}) => {
+}> = ({rows, px, colors = SPRITE_COLORS, x = 0, y = 0, opacity = 1, flip, outline, palette, style}) => {
   const width = Math.max(...rows.map((r) => r.length));
+  const resolve = (c: string) => (palette && palette.length > 0 ? paletteQuantize(c, palette) : c);
+  const isFilled = (ch: string) => ch !== '.' && ch !== ' ' && !!colors[ch];
   const cells: React.ReactNode[] = [];
+  if (outline) {
+    const filled: boolean[][] = rows.map((row) => [...row].map(isFilled));
+    const nb = (cx: number, cy: number) =>
+      (cx > 0 && filled[cy][cx - 1]) ||
+      (cx < filled[cy].length - 1 && filled[cy][cx + 1]) ||
+      (cy > 0 && cx < filled[cy - 1].length && filled[cy - 1][cx]) ||
+      (cy < filled.length - 1 && cx < filled[cy + 1].length && filled[cy + 1][cx]);
+    rows.forEach((row, ry) => {
+      let rx = 0;
+      while (rx < row.length) {
+        if (filled[ry][rx]) {
+          rx++;
+          continue;
+        }
+        let x = rx;
+        while (x < row.length && !filled[ry][x]) {
+          let k = x;
+          while (k < row.length && !filled[ry][k] && nb(k, ry)) k++;
+          if (k > x) {
+            cells.push(
+              <div
+                key={`o${ry}-${x}`}
+                style={{position: 'absolute', left: x * px, top: ry * px, width: (k - x) * px, height: px, backgroundColor: outline}}
+              />,
+            );
+            x = k;
+          } else x++;
+        }
+        rx = Math.max(rx + 1, x);
+      }
+    });
+  }
   rows.forEach((row, ry) => {
     let rx = 0;
     while (rx < row.length) {
@@ -135,7 +174,7 @@ export const PixelSprite: React.FC<{
         cells.push(
           <div
             key={`${ry}-${rx}`}
-            style={{position: 'absolute', left: rx * px, top: ry * px, width: run * px, height: px, backgroundColor: color}}
+            style={{position: 'absolute', left: rx * px, top: ry * px, width: run * px, height: px, backgroundColor: resolve(color)}}
           />,
         );
       rx += run;
@@ -509,5 +548,443 @@ export const CrtPost: React.FC<{N: number}> = ({N}) => {
       />
       <div style={{position: 'absolute', inset: 0, pointerEvents: 'none', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.5)'}} />
     </>
+  );
+};
+
+// ======================================================================
+// v4.0 opt-in 增强（技法借鉴 mg-styles-15 demos/20-pixel (MIT, Vincentwei1021)
+// 与 huashu-art-motion 14_8bit (MIT, alchaincyf), TSX 重写；登记见 SPEC「v4.0 opt-in」节）
+// 本节全部为新增组件/纯函数，不触碰上方既有组件的默认行为。
+// ======================================================================
+
+/** PixelTextCJK 默认字体（项目 public/fonts 需有对应 ttf；borrow 系工程自带 NotoSansSC.ttf）。 */
+export const PIXEL_CJK_FONT_FAMILY = 'Noto Sans SC';
+
+export type GlyphMask = {w: number; h: number; m: Uint8Array; adv: number; size: number};
+
+/** 灰度/alpha → 1bit 掩膜（两态 0/1，阈值默认 110 照抄源码 glyph()）。 */
+export const maskFromAlpha = (alpha: ArrayLike<number>, threshold = 110): Uint8Array => {
+  const m = new Uint8Array(alpha.length);
+  for (let i = 0; i < alpha.length; i++) m[i] = alpha[i] > threshold ? 1 : 0;
+  return m;
+};
+
+/** 掩膜 → 水平同值 run 列表（块阵渲染控 DOM 用）。 */
+export const maskToRuns = (m: Uint8Array, w: number, h: number): Array<{x: number; y: number; run: number}> => {
+  const runs: Array<{x: number; y: number; run: number}> = [];
+  for (let y = 0; y < h; y++) {
+    let x = 0;
+    while (x < w) {
+      if (!m[y * w + x]) {
+        x++;
+        continue;
+      }
+      let run = 1;
+      while (x + run < w && m[y * w + x + run]) run++;
+      runs.push({x, y, run});
+      x += run;
+    }
+  }
+  return runs;
+};
+
+type Ctx2DLike = {
+  font: string;
+  fillStyle: string;
+  textBaseline: string;
+  fillText: (s: string, x: number, y: number) => void;
+  measureText: (s: string) => {width: number};
+  getImageData: (x: number, y: number, w: number, h: number) => {data: Uint8ClampedArray};
+};
+type CanvasFactoryResult = {ctx: Ctx2DLike};
+// canvas 工厂：默认 DOM；node 单测注入 @napi-rs/canvas（setCanvasFactoryForTest）。
+let canvasFactory: (w: number, h: number) => CanvasFactoryResult = (w, h) => {
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  return {ctx: c.getContext('2d') as unknown as Ctx2DLike};
+};
+/** 仅测试环境用：替换栅格化 canvas 工厂。生产代码禁止调用。 */
+export const setCanvasFactoryForTest = (f: (w: number, h: number) => CanvasFactoryResult) => {
+  canvasFactory = f;
+};
+
+const cjkGlyphCache = new Map<string, GlyphMask>();
+/** 清空字形掩膜缓存（仅测试用——验证同输入两次计算逐像素一致，而非命中缓存）。 */
+export const clearCjkGlyphCache = () => cjkGlyphCache.clear();
+
+/** 单字 → 1bit 掩膜（确定性：字体已加载前提下同字符同帧同输出；含 adv 步进宽）。 */
+export const glyphMask = (ch: string, family: string, size: number, threshold = 110): GlyphMask => {
+  const key = `${family}|${size}|${threshold}|${ch}`;
+  const hit = cjkGlyphCache.get(key);
+  if (hit) return hit;
+  const S2 = size * 2; // 画布 2× 字号：容纳全高 CJK 字形（源码同款）
+  const {ctx} = canvasFactory(S2, S2);
+  ctx.font = `900 ${size}px "${family}"`;
+  ctx.fillStyle = '#fff';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText(ch, 0, size);
+  const data = ctx.getImageData(0, 0, S2, S2).data;
+  const alpha = new Uint8ClampedArray(S2 * S2);
+  for (let i = 0; i < alpha.length; i++) alpha[i] = data[i * 4 + 3];
+  const g: GlyphMask = {w: S2, h: S2, m: maskFromAlpha(alpha, threshold), adv: Math.round(ctx.measureText(ch).width), size};
+  cjkGlyphCache.set(key, g);
+  return g;
+};
+
+/** 渲染期字体加载断言：未加载直接 throw（回退字体=不确定位图，禁静默降级）。 */
+export const assertCjkFontLoaded = (family = PIXEL_CJK_FONT_FAMILY, size = 64) => {
+  if (typeof document === 'undefined' || !document.fonts) {
+    throw new Error(`PixelTextCJK: document.fonts 不可用，无法断言 "${family}"（测试环境请注入 canvas 工厂并直接调 glyphMask）`);
+  }
+  if (!document.fonts.check(`900 ${size}px "${family}"`)) {
+    throw new Error(`PixelTextCJK: 字体 "${family}" 未加载——先挂 <PixelCjkFont/>（delayRender 合同），否则栅格化不确定`);
+  }
+};
+
+/** CJK 字体加载器（delayRender/continueRender 合同，同 PixelFont 模式）。 */
+export const PixelCjkFont: React.FC<{family?: string; src?: string}> = ({family = PIXEL_CJK_FONT_FAMILY, src = 'fonts/NotoSansSC.ttf'}) => {
+  const [handle] = React.useState(() => delayRender('pixel-arcade-cjk-font'));
+  React.useEffect(() => {
+    const ff = new FontFace(family, `url(${staticFile(src)})`);
+    ff.load()
+      .then((f) => {
+        (document.fonts as unknown as {add: (f: FontFace) => void}).add(f);
+        continueRender(handle);
+      })
+      .catch(() => continueRender(handle));
+  }, [handle, family, src]);
+  return null;
+};
+
+/** 像素中文（补「Press Start 2P 无 CJK」已知缺口）：任意中文字符串 → canvas 栅格化 → 阈值 → 块阵。
+ * block（块径）/threshold（灰度阈值）props 化；shadow 传 1 块右下阴影 pass（null 关闭）。
+ * 确定性合同：必须先挂 <PixelCjkFont/>，组件渲染时字体断言不过会 throw。 */
+export const PixelTextCJK: React.FC<{
+  text: string;
+  size?: number;
+  block?: number;
+  threshold?: number;
+  family?: string;
+  color?: string;
+  shadow?: string | null;
+  x?: number;
+  y?: number;
+  opacity?: number;
+  spacing?: number;
+  style?: React.CSSProperties;
+}> = ({
+  text,
+  size = 48,
+  block = 2,
+  threshold = 110,
+  family = PIXEL_CJK_FONT_FAMILY,
+  color = PIXEL_TOKENS.white,
+  shadow = '#000000',
+  x = 0,
+  y = 0,
+  opacity = 1,
+  spacing = 0,
+  style,
+}) => {
+  assertCjkFontLoaded(family, size);
+  const cells: React.ReactNode[] = [];
+  let ox = 0;
+  for (const ch of text) {
+    const g = glyphMask(ch, family, size, threshold);
+    const runs = maskToRuns(g.m, g.w, g.h);
+    if (shadow)
+      for (const r of runs)
+        cells.push(
+          <div
+            key={`s${ox}-${r.x}-${r.y}`}
+            style={{position: 'absolute', left: x + ox + (r.x + 1) * block, top: y + (r.y + 1) * block, width: r.run * block, height: block, backgroundColor: shadow}}
+          />,
+        );
+    for (const r of runs)
+      cells.push(
+        <div
+          key={`c${ox}-${r.x}-${r.y}`}
+          style={{position: 'absolute', left: x + ox + r.x * block, top: y + r.y * block, width: r.run * block, height: block, backgroundColor: color}}
+        />,
+      );
+    ox += g.adv + spacing;
+  }
+  return (
+    <div style={{position: 'absolute', left: 0, top: 0, width: 1, height: 1, opacity, pointerEvents: 'none', ...style}}>
+      {cells}
+    </div>
+  );
+};
+
+const hex2rgb = (hex: string): [number, number, number] => {
+  let h = hex.replace('#', '');
+  if (h.length === 3) h = h.split('').map((c) => c + c).join('');
+  if (h.length !== 6 || Number.isNaN(parseInt(h, 16))) return [0, 0, 0];
+  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+};
+
+/** 最近色量化契约（加权 0.3/0.59/0.11 照抄源码 nearest()）：huashu 14 色角色板等可传入。 */
+export const paletteQuantize = (color: string, palette: string[]): string => {
+  const [r, g, b] = hex2rgb(color);
+  let best = palette[0];
+  let bd = Infinity;
+  for (const p of palette) {
+    const [pr, pg, pb] = hex2rgb(p);
+    const d = 0.3 * (pr - r) ** 2 + 0.59 * (pg - g) ** 2 + 0.11 * (pb - b) ** 2;
+    if (d < bd) {
+      bd = d;
+      best = p;
+    }
+  }
+  return best;
+};
+
+/** 棋盘 (x+y)%2 抖动判定：u=by/(rows-1) 量化到 bands 档，档内以棋盘半档过渡（NES 唯一渐变法）。 */
+export const ditherBandOn = (bx: number, by: number, rows: number, bands = 4): boolean => {
+  if (rows < 2) return false;
+  const t = (by / (rows - 1)) * bands;
+  const thr = ((bx + by) & 1) === 0 ? 0.25 : 0.75;
+  return t > thr;
+};
+
+/** 棋盘抖动渐变带（NES 味两色渐变）：容器铺 top 色，(x+y)%2 抖动出的 bottom 色块按行合并 run。 */
+export const DitherBand: React.FC<{
+  x?: number;
+  y?: number;
+  w: number;
+  h: number;
+  block?: number;
+  top?: string;
+  bottom?: string;
+  bands?: number;
+  opacity?: number;
+}> = ({x = 0, y = 0, w, h, block = 4, top = PIXEL_TOKENS.bg, bottom = PIXEL_TOKENS.panel, bands = 4, opacity = 1}) => {
+  const cols = Math.ceil(w / block);
+  const rows = Math.ceil(h / block);
+  const cells: React.ReactNode[] = [];
+  for (let by = 0; by < rows; by++) {
+    let bx = 0;
+    while (bx < cols) {
+      if (!ditherBandOn(bx, by, rows, bands)) {
+        bx++;
+        continue;
+      }
+      let run = 1;
+      while (bx + run < cols && ditherBandOn(bx + run, by, rows, bands)) run++;
+      cells.push(
+        <div
+          key={`${by}-${bx}`}
+          style={{position: 'absolute', left: x + bx * block, top: y + by * block, width: run * block, height: block, backgroundColor: bottom}}
+        />,
+      );
+      bx += run;
+    }
+  }
+  return (
+    <div style={{position: 'absolute', left: x, top: y, width: cols * block, height: rows * block, backgroundColor: top, opacity, pointerEvents: 'none'}}>
+      {cells}
+    </div>
+  );
+};
+
+// ---- PixelLogo 块字构造器（行深浅 + 4 cell 挤出 + 角部 glint；参数照抄源码 buildLogo5）----
+export type LogoColors = {
+  hi: string; // 顶缘提亮 / ramp 最亮档
+  up: string; // ramp 次亮档
+  mid: string; // ramp 中档
+  low: string; // ramp 最深档
+  ext: string; // 挤出柱色
+  extTip: string; // 挤出尖端色
+  outline: string; // 1 cell 外描边
+  glint: string; // glint 星芒臂色
+  glintCore: string; // glint 星芒芯色
+};
+/** 默认色照抄 QUEST-32 ramp（源码 M15/M14/M13/M12/M26/M9/M0/M7/白）——仅本组件使用，见 SPEC 声明。 */
+export const LOGO_COLORS: LogoColors = {
+  hi: '#fff3b0',
+  up: '#ffd166',
+  mid: '#f59a4a',
+  low: '#e8665a',
+  ext: '#7a1f2e',
+  extTip: '#3b1f47',
+  outline: '#0d0b1a',
+  glint: '#c8ecff',
+  glintCore: '#ffffff',
+};
+/** 行深浅 ramp（r=行位×28/墨高 归一化，阈值 2/10/14/21/24 与棋盘混色照抄源码）。 */
+export const logoRowColor = (r: number, x: number, y: number, C: LogoColors): string => {
+  if (r < 2) return C.hi;
+  if (r < 10) return C.up;
+  if (r < 14) return (x + y) & 1 ? C.up : C.mid;
+  if (r < 21) return C.mid;
+  if (r < 24) return (x + y) & 1 ? C.mid : C.low;
+  return C.low;
+};
+
+export type PixelLogoGrid = {
+  w: number;
+  h: number;
+  grid: (string | null)[]; // 每 cell 颜色（null=空）
+  glints: Array<{x: number; y: number}>; // 角部 glint 点（cell 坐标，已按 x 排序取分位）
+};
+
+/** 块字栅格构造：文字→字形掩膜→cell 块阵→行深浅 ramp→顶/左缘提亮→挤出→外描边→glint 角收集。纯函数（字形缓存共享）。 */
+export const buildPixelLogoGrid = (
+  text: string,
+  opts: {cell?: number; ext?: number; gap?: number; size?: number; threshold?: number; family?: string; colors?: LogoColors} = {},
+): PixelLogoGrid => {
+  const cell = opts.cell ?? 4;
+  const ext = opts.ext ?? 4;
+  const gapCells = opts.gap ?? 2;
+  const size = opts.size ?? 48;
+  const C = opts.colors ?? LOGO_COLORS;
+  const family = opts.family ?? PIXEL_CJK_FONT_FAMILY;
+  const gs = [...text].map((ch) => glyphMask(ch, family, size, opts.threshold ?? 110));
+  const cols: Array<[number, number]> = [];
+  let top = 1e9;
+  let bot = -1;
+  for (const g of gs) {
+    let l = 1e9;
+    let r = -1;
+    for (let y = 0; y < g.h; y++)
+      for (let x = 0; x < g.w; x++)
+        if (g.m[y * g.w + x]) {
+          top = Math.min(top, y);
+          bot = Math.max(bot, y);
+          l = Math.min(l, x);
+          r = Math.max(r, x);
+        }
+    cols.push([l, r]);
+  }
+  const inkH = bot - top + 1;
+  const gw = cols.map(([l, r]) => (r - l + 1) * cell);
+  const w = gw.reduce((a, c) => a + c, 0) + Math.max(0, gs.length - 1) * (1 + gapCells) * cell + 2;
+  const h = inkH * cell + ext + 2;
+  const mask = new Uint8Array(w * h);
+  const rowN = new Int16Array(w * h).fill(-1);
+  let ox = 1;
+  const sc = 28 / inkH; // 归一化到源码 28 行参照
+  gs.forEach((g, gi) => {
+    const [l, r] = cols[gi];
+    for (let j = top; j <= bot; j++)
+      for (let i = l; i <= r; i++)
+        if (g.m[j * g.w + i])
+          for (let yy = 0; yy < cell; yy++)
+            for (let xx = 0; xx < cell; xx++) {
+              const p = (1 + (j - top) * cell + yy) * w + ox + (i - l) * cell + xx;
+              mask[p] = 1;
+              rowN[p] = (j - top) * cell + yy;
+            }
+    ox += gw[gi] + (1 + gapCells) * cell;
+  });
+  const grid: (string | null)[] = new Array(w * h).fill(null);
+  const at = (x: number, y: number) => x >= 0 && y >= 0 && x < w && y < h && !!mask[y * w + x];
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      if (!mask[y * w + x]) continue;
+      const r = rowN[y * w + x] * sc;
+      let c = logoRowColor(r, x, y, C);
+      if (!at(x, y - 1)) c = C.hi;
+      else if (!at(x - 1, y) && r < 16) c = C.hi;
+      grid[y * w + x] = c;
+    }
+  for (let y = h - 1; y >= 0; y--)
+    for (let x = 0; x < w; x++)
+      if (mask[y * w + x])
+        for (let d = 1; d <= ext; d++) {
+          const yy = y + d;
+          if (yy < h && !mask[yy * w + x] && !grid[yy * w + x]) grid[yy * w + x] = d < ext ? C.ext : C.extTip;
+        }
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++)
+      if (!grid[y * w + x]) {
+        const n = (xx: number, yy: number) => xx >= 0 && yy >= 0 && xx < w && yy < h && !!grid[yy * w + xx];
+        if (n(x - 1, y) || n(x + 1, y) || n(x, y - 1) || n(x, y + 1)) grid[y * w + x] = C.outline;
+      }
+  // 角部 glint：左上笔画角（无上邻且无左邻的墨点）按 x 排序取 5 分位（源码分位数照抄）
+  const cn: Array<{x: number; y: number}> = [];
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) if (mask[y * w + x] && !at(x, y - 1) && !at(x - 1, y)) cn.push({x, y});
+  cn.sort((a, b) => a.x - b.x);
+  const glints = [0.04, 0.78, 0.36, 0.96, 0.58].map((u) => cn[Math.min(cn.length - 1, Math.floor(u * cn.length))]);
+  return {w, h, grid, glints};
+};
+
+// glint 星芒三档（cell 阵，u=臂色 w=芯色；9f 周期 轮换角点，a<6 可见——源码 spark 节奏照抄）
+const GLINT_SPARKS = [
+  {rows: ['.u.', 'uwu', '.u.']},
+  {rows: ['..w..', '..u..', 'wuwuw', '..u..', '..w..']},
+  {rows: ['...w...', '...u...', '...u...', 'wuuwuuw', '...u...', '...u...', '...w...']},
+];
+
+/** 块字 LOGO：行深浅 + 挤出 + 角部闪光。N 提供时 glint 星芒按 9f 周期轮换（确定性，禁随机）。 */
+export const PixelLogo: React.FC<{
+  text: string;
+  N?: number;
+  glintFrom?: number;
+  x?: number;
+  y?: number;
+  cell?: number;
+  ext?: number;
+  gap?: number;
+  size?: number;
+  threshold?: number;
+  family?: string;
+  colors?: Partial<LogoColors>;
+  opacity?: number;
+}> = ({text, N, glintFrom = 0, x = 0, y = 0, cell = 4, ext = 4, gap = 2, size = 48, threshold = 110, family, colors, opacity = 1}) => {
+  const C: LogoColors = {...LOGO_COLORS, ...colors};
+  const logo = React.useMemo(() => buildPixelLogoGrid(text, {cell, ext, gap, size, threshold, family, colors: C}), [text, cell, ext, gap, size, threshold, family, C]);
+  const cells: React.ReactNode[] = [];
+  for (let ry = 0; ry < logo.h; ry++) {
+    let rx = 0;
+    while (rx < logo.w) {
+      const col = logo.grid[ry * logo.w + rx];
+      if (!col) {
+        rx++;
+        continue;
+      }
+      let run = 1;
+      while (rx + run < logo.w && logo.grid[ry * logo.w + rx + run] === col) run++;
+      cells.push(
+        <div key={`${ry}-${rx}`} style={{position: 'absolute', left: rx * cell, top: ry * cell, width: run * cell, height: cell, backgroundColor: col}} />,
+      );
+      rx += run;
+    }
+  }
+  const sparks: React.ReactNode[] = [];
+  if (N !== undefined && N >= glintFrom) {
+    const k = N - glintFrom;
+    const g = Math.floor(k / 9) % Math.max(1, logo.glints.length);
+    const a = k % 9;
+    if (a < 6 && logo.glints.length > 0) {
+      const sp = GLINT_SPARKS[a < 2 ? 0 : a < 4 ? 2 : 1].rows;
+      const pt = logo.glints[g];
+      sp.forEach((row, sy) => {
+        [...row].forEach((ch, sx) => {
+          if (ch === '.') return;
+          sparks.push(
+            <div
+              key={`g${sy}-${sx}`}
+              style={{
+                position: 'absolute',
+                left: x + pt.x * cell + (sx - (row.length - 1) / 2) * cell,
+                top: y + pt.y * cell + (sy - (sp.length - 1) / 2) * cell,
+                width: cell,
+                height: cell,
+                backgroundColor: ch === 'w' ? C.glintCore : C.glint,
+              }}
+            />,
+          );
+        });
+      });
+    }
+  }
+  return (
+    <div style={{position: 'absolute', left: x, top: y, width: logo.w * cell, height: logo.h * cell, opacity, pointerEvents: 'none'}}>
+      {cells}
+      {sparks.length > 0 ? <div style={{position: 'absolute', left: 0, top: 0}}>{sparks}</div> : null}
+    </div>
   );
 };

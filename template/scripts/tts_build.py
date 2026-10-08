@@ -164,7 +164,9 @@ async def synth_edge(text, retries=None, base_delay=None):
     last = None
     for attempt in range(retries):
         try:
-            comm = edge_tts.Communicate(text, VOICE, rate=RATE)
+            # boundary 必须显式传 'WordBoundary'：edge-tts 7.2.8 默认 SentenceBoundary（整句一条事件、零词边界），
+            # 词级点亮的 chars 会退化成块起始帧平铺（2026-10-07 live 复验实锤，见 docs/optimization-v3.9.md）
+            comm = edge_tts.Communicate(text, VOICE, rate=RATE, boundary='WordBoundary')
             audio = bytearray(); words = []
             async for ch in comm.stream():
                 if ch['type'] == 'audio':
@@ -235,8 +237,9 @@ def trim_edges(x, thr=0.004):
 
 
 def chunk_starts(tts_text, chunks, words, lead_cut, dur, sep=''):
-    """按 | 切出的字幕短句 → 每块在句内的起始秒。word 边界按字符游标对到原句。
-    tts_text == sep.join(chunks)：英文 sep=' '，游标要跳过块间的那个空格。"""
+    """按 | 切出的字幕短句 → (每块起始秒, 每块逐字符起始秒)。word 边界按字符游标对到原句。
+    tts_text == sep.join(chunks)：英文 sep=' '，游标要跳过块间的那个空格。
+    逐字符秒（词级点亮字幕 SubEntry.chars 的底料）：无词边界的字符（标点/未匹配）继承前一个有边界字符。"""
     # 每个字符的起始时间（按 word 边界填充）
     char_t = [None] * len(tts_text)
     cur = 0
@@ -269,19 +272,33 @@ def chunk_starts(tts_text, chunks, words, lead_cut, dur, sep=''):
             prev = starts[i - 1] if i > 0 and starts[i - 1] is not None else 0.0
             starts[i] = prev + dur * len(chunks[i - 1]) / max(1, len(tts_text)) if i > 0 else 0.0
     starts[0] = 0.0
-    return [max(0.0, s) for s in starts]
+    starts = [max(0.0, s) for s in starts]
+    # 逐字符秒：继承链从块起始秒出发，块内跟最近的词边界
+    char_secs = []
+    pos = 0
+    for ci, c in enumerate(chunks):
+        prev = starts[ci]
+        frames = []
+        for i in range(pos, pos + len(c)):
+            if i < len(char_t) and char_t[i] is not None:
+                prev = char_t[i][0]
+            frames.append(prev)
+        pos += len(c) + len(sep)
+        char_secs.append(frames)
+    return starts, char_secs
 
 
 async def synth_sentence(chunks, sep=''):
-    """一句 → (音频 float32 单声道, 每个字幕块在句内的起始秒, 句长秒)。sep 是块之间的连接符（英文 ' '，中文 ''）。
-    edge：整句合成一次，块起点按词边界对齐（最准）。
-    kokoro：无词边界 → 逐字幕块分别合成再拼接，块起点因此是精确的，代价是块界断句略生硬。"""
+    """一句 → (音频 float32 单声道, 每块起始秒, 每块逐字符起始秒, 句长秒)。sep 是块之间的连接符（英文 ' '，中文 ''）。
+    edge：整句合成一次，块起点与逐字符时间都按词边界对齐（最准）。
+    kokoro：无词边界 → 逐字幕块分别合成再拼接，块起点因此是精确的（块内字符按位置线性铺开=估计计时），代价是块界断句略生硬。"""
     text = sep.join(chunks)
     if ENGINE == 'edge':
         au, words = await synth_edge(text)
         x, lead_cut = trim_edges(decode(au))
         dur = len(x) / SR
-        return x, chunk_starts(text, chunks, words, lead_cut, dur, sep), dur
+        starts, char_secs = chunk_starts(text, chunks, words, lead_cut, dur, sep)
+        return x, starts, char_secs, dur
     pad = np.zeros(int(CHUNK_PAD * SR), dtype=np.float32)
     parts = []; starts = []; pos = 0.0
     for i, c in enumerate(chunks):
@@ -291,7 +308,13 @@ async def synth_sentence(chunks, sep=''):
         starts.append(pos)
         parts.append(xi); pos += len(xi) / SR
     x = np.concatenate(parts) if parts else np.zeros(0, dtype=np.float32)
-    return x, starts, len(x) / SR
+    dur = len(x) / SR
+    char_secs = []
+    for i, c in enumerate(chunks):
+        a = starts[i]; b = starts[i + 1] if i + 1 < len(starts) else dur
+        n = max(1, len(c))
+        char_secs.append([a + (b - a) * j / n for j in range(len(c))])
+    return x, starts, char_secs, dur
 
 
 async def main(narr=None, *, force=False, legacy_config=False, fps=None):
@@ -357,11 +380,13 @@ async def main(narr=None, *, force=False, legacy_config=False, fps=None):
         if not chunks:
             continue
         tts_text = sep.join(chunks)
-        x, starts, dur = await synth_sentence(chunks, sep)
+        x, starts, char_secs, dur = await synth_sentence(chunks, sep)
         if (x.ndim != 1 or len(x) == 0 or not np.all(np.isfinite(x))
                 or not np.isfinite(dur) or abs(dur - len(x) / SR) > 1 / SR
                 or len(starts) != len(chunks) or starts != sorted(starts)
-                or any(not np.isfinite(start) or start < 0 or start >= dur for start in starts)):
+                or any(not np.isfinite(start) or start < 0 or start >= dur for start in starts)
+                or len(char_secs) != len(chunks) or any(len(fc) != len(c) for fc, c in zip(char_secs, chunks))
+                or any(not np.isfinite(cs) for fc in char_secs for cs in fc)):
             raise ValueError('Synthesized samples/duration/subtitle boundaries are inconsistent')
         # edge-tts 云端限流：句间留间隔（缓存命中的句子在上面已提前返回）
         if ENGINE == 'edge' and EDGE_DELAY > 0:
@@ -370,7 +395,9 @@ async def main(narr=None, *, force=False, legacy_config=False, fps=None):
         subs = [(t + starts[i], t + (starts[i + 1] if i + 1 < len(starts) else dur)) for i in range(len(chunks))]
         f0 = int(round(t * FPS)) + 1; f1 = int(round((t + dur) * FPS))
         rec = {'id': f'S{sid:02d}', 'chapter': it['chapter'], 'from': f0, 'to': f1, 'text': tts_text,
-               'subs': [{'from': int(round(a * FPS)) + 1, 'to': int(round(b * FPS)), 'text': c} for c, (a, b) in zip(chunks, subs)]}
+               'subs': [{'from': int(round(a * FPS)) + 1, 'to': int(round(b * FPS)), 'text': c,
+                         'chars': [int(round((t + cs) * FPS)) + 1 for cs in fc]}
+                        for c, (a, b), fc in zip(chunks, subs, char_secs)]}
         for k in ('en', 'cn'):
             if it.get(k):
                 rec[k] = it[k]
@@ -442,10 +469,14 @@ async def main(narr=None, *, force=False, legacy_config=False, fps=None):
     def lit(s):
         return json.dumps(s, ensure_ascii=False)
     ts = ['// 自动生成：scripts/tts_build.py（词边界 / 逐块合成 → 字幕块）。手改请改 script/narration.txt 后重跑。\n',
-          "export type SubEntry = {from: number; to: number; text: string; en?: string; cn?: string; emphasis?: boolean};\nexport const SUBS: SubEntry[] = [\n"]
+          "export type SubEntry = {from: number; to: number; text: string; en?: string; cn?: string; emphasis?: boolean;\n"
+          "  /** 逐字符起始帧（词级点亮字幕 WordLitCaption 的底料，1 起含端点，长度==text 字符数；无词边界字符继承前字符）。\n"
+          "   *  edge 引擎为实测词边界；kokoro 为块内线性估计。缺省（旧数据）时 WordLitCaption 退化为整块淡入，与旧渲染逐值等价。 */\n"
+          "  chars?: number[]};\nexport const SUBS: SubEntry[] = [\n"]
     for sb in all_subs:
         alt = ''.join(f", {k}: {lit(sb[k])}" for k in ('en', 'cn') if sb.get(k))
-        ts.append(f"  {{from: {sb['from']}, to: {sb['to']}, text: {lit(sb['text'])}{alt}}},\n")
+        ch = f", chars: [{','.join(str(x) for x in sb['chars'])}]" if sb.get('chars') else ''
+        ts.append(f"  {{from: {sb['from']}, to: {sb['to']}, text: {lit(sb['text'])}{alt}{ch}}},\n")
     ts.append('];\n')
     Path(PROJECT.path('src/common/subs.ts')).write_text(''.join(ts), encoding='utf-8')
     tl_ts = ['// 自动生成：scripts/tts_build.py。帧号 1 起含端点。\n',

@@ -23,7 +23,8 @@ Skill 是制作流程，不是模型权重。宿主至少需读写文件、运�
 ```json
 {
   "shots": [
-    {"id":"S01","from":1,"to":180,"group":"G1","component":"src/shots/Intro.tsx","purpose":"建立问题","action":"光标选择视频生产链"}
+    {"id":"S01","from":1,"to":180,"group":"G1","component":"src/shots/Intro.tsx","purpose":"建立问题","action":"光标选择视频生产链"},
+    {"id":"S02","from":181,"to":300,"group":"G1","component":"src/shots/Proof.tsx","purpose":"给出证据","action":"逐项亮出实测数据","facts":[0,1]}
   ],
   "claims": [{"text":"工程可逐帧渲染","source":"https://www.remotion.dev/docs/"}],
   "assets": []
@@ -31,6 +32,8 @@ Skill 是制作流程，不是模型权重。宿主至少需读写文件、运�
 ```
 
 镜头表 1 起含端点，覆盖每帧，无洞无重叠。Remotion frame 0 起；`Sequence from = shot.from - 1`，duration = to-from+1，本地帧加 shot.from 转全局 N。清单存在不证明镜头真的挂载：必须核对注册表并实渲染。
+
+**facts 绑定（v3.9.0，反幻觉白名单的机器可读层）**：镜头可选 `facts: number[]`——指向 `claims` 数组下标，声明"本镜头画面演绎的事实以这几条登记为准"。check-plan 校验索引必须落在 claims 范围内（越界/负数/非整数即红）；空数组合法（纯装饰/过渡镜头显式声明无事实）。绑定把"画面只演登记过的事实"从 C 轮散文审查升级为分镜层结构化声明：C 轮反审逐镜头读 facts 绑定核对画面内容，**机器只验"绑没绑对"，内容是否越界仍靠人审**（代码画面的文字/数字可 grep 对账，AI 素材镜头按素材三查）。讲解配方建议事实镜头全绑定（见 recipes/explainer.md）。
 
 字幕、指示线与对象应说明同一个因果关系。镜头合同必须包含 purpose 和 action，禁止以“文字入场”代替全部镜头设计。默认不要求每 45 帧乱动：有意静止与持续环境镜头可以成立，需记录具体理由。
 

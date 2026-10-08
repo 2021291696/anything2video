@@ -1,3 +1,4 @@
+// 速度方向拉伸 makeM / impact 预备-释放事件 / smearCap 解析模糊：技法借鉴 mg-styles-15 demos/08-morph (MIT, Vincentwei1021), TSX 重写
 /**
  * morph.ts — MORPH 风格卡核心数学库（s34-morph 样片正本，可整库拷入 styles/<sku>/）。
  *
@@ -5,11 +6,16 @@
  *  1. 路径对齐：所有互变形状 resample 成同一顶点数 N，统一绕向（normWinding），
  *     首顶点方位对应（orientTop 统一 12 点钟起步）+ 逐对最优循环对位（alignStart，防打结）。
  *  2. 复杂 A→B 走中介简形：城市→圆点→地图钉（M3a/M3b，各 12f）三段式。
- *  3. 形变全程 squash & stretch（10%/12%，morphDeform）+ 轻微旋转（±5°）+ 伴随位移。
+ *  3. 形变全程 squash & stretch（v4.0 起默认走速度方向拉伸 morphPose/makeM，10-15% 带内）
+ *     + 轻微旋转（±5°）+ 伴随位移（二次贝塞尔轨）。
  *  4. 速度曲线 cubic-bezier(0.7,0,0.3,1)（中段最快），起止各留 3 帧缓冲（morphProgress）。
  *  5. 轮廓连续过渡：弧长均匀重采样保证顶点沿轮廓等距分布，逐帧位移由缓动函数约束，无跳变。
+ *  6. v4.0 新增：impact 事件系统（阻尼正弦冲击 + 预备压 0.3s→释放 0.12s）、smearCap 解析
+ *     运动模糊（帧中心 ± 半快门两端采样的 alpha 渐变胶囊）——机制移植自 mg demos/08-morph。
  */
 export type Pt = [number, number];
+
+const clamp01 = (v: number): number => Math.min(1, Math.max(0, v));
 
 export const N_VERTS = 120; // 全部互变形状统一顶点数（签名特征1）
 
@@ -140,6 +146,10 @@ export function cubicBezier(x1: number, y1: number, x2: number, y2: number): (x:
 
 /** 风格锁死：中段最快的形变速度曲线。 */
 export const MORPH_EASE = cubicBezier(0.7, 0, 0.3, 1);
+/** impact 预备压入曲线（源 EIO = bez(0.45,0,0.55,1)）。 */
+export const EASE_PRESS_IN = cubicBezier(0.45, 0, 0.55, 1);
+/** impact 释放曲线（源 EO = bez(0.16,1,0.3,1)）。 */
+export const EASE_RELEASE = cubicBezier(0.16, 1, 0.3, 1);
 
 /** 形变进度：lf = 局部帧（1..dur）；起止各留 3 帧缓冲（签名特征4）。 */
 export function morphProgress(lf: number, dur: number): number {
@@ -149,9 +159,9 @@ export function morphProgress(lf: number, dur: number): number {
 }
 
 /**
- * 形变全程挤压拉伸 + 旋转 + 位移（签名特征3）：
- * e = 已缓动进度 0..1；bulge 在中段达峰。
- * scaleX +10% / scaleY −12%（落在 10–15% 带内）、旋转 ±5°·dir、横向漂移 12px。
+ * v3 兼容视图：固定轴向（x/y）挤压拉伸 + 旋转 + 位移。v4.0 起默认形变变换走
+ * morphPose/makeM——同一组幅值（10-15% 带）改骑在速度方向 phi 上；本函数保留旧调用面
+ * 与数值（sx +10% / sy −12%、rot ±5°·dir、dx 12px、dy −6px），不再被默认链路使用。
  */
 export function morphDeform(e: number, dir = 1): {sx: number; sy: number; rot: number; dx: number; dy: number} {
   const bulge = Math.sin(Math.PI * e);
@@ -161,6 +171,195 @@ export function morphDeform(e: number, dir = 1): {sx: number; sy: number; rot: n
     rot: 5 * dir * bulge,
     dx: 12 * dir * bulge,
     dy: -6 * bulge,
+  };
+}
+
+// ---------------------------------------------------------------- v4.0 速度方向拉伸（mg 08-morph 移植）
+
+export type Mat2 = [number, number, number, number]; // 行主序 [a,b,c,d]：x'=a·x+b·y, y'=c·x+d·y
+export interface Xform { A: Mat2; b: [number, number] }
+
+const mul2 = (a: Mat2, b: Mat2): Mat2 => [
+  a[0] * b[0] + a[1] * b[2], a[0] * b[1] + a[1] * b[3],
+  a[2] * b[0] + a[3] * b[2], a[2] * b[1] + a[3] * b[3],
+];
+
+/** 应用仿射变换（矩阵 + 平移）到一点。 */
+export const applyM = (m: Xform, p: Pt): Pt => [
+  m.A[0] * p[0] + m.A[1] * p[1] + m.b[0],
+  m.A[2] * p[0] + m.A[3] * p[1] + m.b[1],
+];
+
+/**
+ * makeM —— v4.0 默认形变变换（源 08-morph index.html:329-339 机制重写）：
+ * Q（沿速度方向 phi 拉伸 k、垂直向 1/k）× R（旋转 rot、整体缩放 sc）× D（绕局部支点 piv
+ * 压扁 (1+q, 1−q)），平移至 pos 且支点仿射不变（piv 映射到 pos + QR·piv）。
+ * k=1 时 Q 恒为单位阵（与 phi 无关）——速度为 0 时整体退化为纯压扁（q≠0）或恒等（q=0）。
+ */
+export function makeM(pos: [number, number], rot: number, sc: number, phi: number, k: number, q: number, piv: Pt): Xform {
+  const c = Math.cos(rot);
+  const s = Math.sin(rot);
+  const R: Mat2 = [c * sc, -s * sc, s * sc, c * sc];
+  const D: Mat2 = [1 + q, 0, 0, 1 - q];
+  const cp = Math.cos(phi);
+  const sp = Math.sin(phi);
+  const ik = 1 / k;
+  const Q: Mat2 = [cp * cp * k + sp * sp * ik, cp * sp * (k - ik), cp * sp * (k - ik), sp * sp * k + cp * cp * ik];
+  const QR = mul2(Q, R);
+  const A = mul2(QR, D);
+  const dp: [number, number] = [piv[0] - D[0] * piv[0], piv[1] - D[3] * piv[1]];
+  return {
+    A,
+    b: [pos[0] + QR[0] * dp[0] + QR[1] * dp[1], pos[1] + QR[2] * dp[0] + QR[3] * dp[1]],
+  };
+}
+
+/** 二次贝塞尔插值（形变伴随位移轨：from → ctrl → to）。 */
+export const qbez = (a: Pt, c: Pt, b: Pt, t: number): Pt => {
+  const u = 1 - t;
+  return [u * u * a[0] + 2 * u * t * c[0] + t * t * b[0], u * u * a[1] + 2 * u * t * c[1] + t * t * b[1]];
+};
+
+/** 位移轨速度方向 phi：中心差分 g±0.02（源 heroAt 同参）；速度过小（<0.5px）回退竖直向下。 */
+export const phiAlong = (a: Pt, c: Pt, b: Pt, t: number, eps = 0.02): number => {
+  const p2 = qbez(a, c, b, Math.min(1, t + eps));
+  const p1 = qbez(a, c, b, Math.max(0, t - eps));
+  const dx = p2[0] - p1[0];
+  const dy = p2[1] - p1[1];
+  return Math.hypot(dx, dy) > 0.5 ? Math.atan2(dy, dx) : Math.PI / 2;
+};
+
+/** 沿速度方向拉伸幅（SPEC 锁死 10-15% 带中值；v3 的 +10%/−12% 幅值带宽不变，载体换向）。 */
+export const STRETCH = 0.12;
+/** 旋转摆幅 ±5°（SPEC 锁死）。 */
+export const SWING = (5 * Math.PI) / 180;
+
+export interface MorphPoseInput {
+  from: Pt;
+  ctrl: Pt;
+  to: Pt; // 位移二次贝塞尔（形状锚定位置间）
+  e: number; // 已缓动进度 0..1（morphProgress 输出）
+  dir?: number; // 旋转方向（逐段交替，默认 1）
+  piv?: Pt; // 压扁支点（局部坐标；默认钉尖类 [0,150]）
+  sc?: number; // 主体基准缩放（默认 1）
+  impact?: {q: number; uni: number}; // impactEvent 输出（可省）
+}
+
+/** v4.0 默认形变位姿：速度方向拉伸 k=1+STRETCH·sin(πe) + 旋转 ±5°·dir + impact 切向压扁/
+ *  均匀脉冲，位移走贝塞尔轨。与 makeM 同返回面并附 pos/phi/k 供 smear 复用。 */
+export function morphPose(o: MorphPoseInput): Xform & {pos: Pt; phi: number; k: number} {
+  const t = clamp01(o.e);
+  const bulge = Math.sin(Math.PI * t);
+  const dir = o.dir ?? 1;
+  const pos = qbez(o.from, o.ctrl, o.to, t);
+  const phi = phiAlong(o.from, o.ctrl, o.to, t);
+  const im = o.impact ?? {q: 0, uni: 0};
+  const k = 1 + STRETCH * bulge;
+  const sc = (o.sc ?? 1) * (1 + im.uni);
+  return {...makeM(pos, SWING * dir * bulge, sc, phi, k, im.q, o.piv ?? [0, 150]), pos, phi, k};
+}
+
+// ---------------------------------------------------------------- v4.0 impact 事件系统（mg 08-morph 移植）
+
+export interface ImpactHit {
+  kind: 'hit';
+  t: number; // 冲击时刻（帧）
+  a: number; // 幅度
+  who: string; // 主体键（卡内镜头表按 who 过滤后传入）
+  uni?: boolean; // true = 均匀缩放脉冲（整体膨胀），否则切向压扁
+}
+export interface ImpactPress {
+  kind: 'press';
+  t: number; // 预备-释放所服务的节拍时刻（帧；预备压自 t−0.3s 起）
+  a: number; // 预备压幅度
+  who: string;
+}
+export type ImpactEvent = ImpactHit | ImpactPress;
+
+/**
+ * impact 事件求值（源 08-morph impact() 机制重写，参数照抄；tFrame 帧号，fps 默认 30）：
+ * - hit  阻尼正弦冲击：起于冲击时刻前 2 帧，τ 秒内 v = a·sin(2π·τ/0.28)·e^(−7.5τ)，1.2s 窗。
+ * - press 形变预备-释放：t 前 0.3s 开始压（前 0.2s easeInOut 压满）→ 后 0.12s 释放
+ *   （easeOut 回零并带 −0.35·a·sin(π·u) 下冲回弹）。
+ * 返回 {q, uni}：直接喂 morphPose 的 impact。事件表由卡内镜头表驱动（按 who 预过滤）。
+ */
+export function impactEvent(tFrame: number, table: readonly ImpactEvent[], fps = 30): {q: number; uni: number} {
+  const t = tFrame / fps;
+  let q = 0;
+  let uni = 0;
+  for (const ev of table) {
+    if (ev.kind === 'hit') {
+      const tau = t - (ev.t / fps - 2 / fps);
+      if (tau < 0 || tau > 1.2) continue;
+      const v = ev.a * Math.sin((2 * Math.PI * tau) / 0.28) * Math.exp(-tau * 7.5);
+      if (ev.uni) uni += v;
+      else q += v;
+    } else {
+      const tau = t - (ev.t / fps - 0.3);
+      if (tau <= 0 || tau >= 0.42) continue;
+      if (tau < 0.3) q += ev.a * EASE_PRESS_IN(clamp01(tau / 0.2));
+      else {
+        const u = (tau - 0.3) / 0.12;
+        q += ev.a * (1 - EASE_RELEASE(clamp01(u))) - 0.35 * ev.a * Math.sin(Math.PI * clamp01(u));
+      }
+    }
+  }
+  return {q, uni};
+}
+
+// ---------------------------------------------------------------- v4.0 smearCap 解析运动模糊（mg 08-morph 移植）
+
+/** 帧率（源 FPS=30）与半快门（源 SH = 0.5/FPS 秒 = 0.5 帧）。 */
+export const FPS = 30;
+export const SHUTTER = 0.5 / FPS;
+
+/** 快门两端采样（帧号域）：帧中心量化后 ±0.25 帧（源 tqc ± SH/2）。 */
+export const shutterFrames = (f: number): [number, number] => {
+  const q = Math.round(f);
+  return [q - 0.25, q + 0.25];
+};
+
+export interface SmearGeom {
+  pA: Pt;
+  pB: Pt;
+  r: number; // 胶囊两端圆心与半径
+  disc: boolean; // true = 速度过低（L<1.5px），按单圆盘处理
+  grad: {
+    from: Pt;
+    to: Pt; // 线性渐变轴（沿运动方向，长 T=L+2r）
+    stops: Array<readonly [number, number]>; // [offset, alpha] 停靠：两端 0，平台 min(1, 2r/L)
+  };
+}
+
+/**
+ * smearCap 解析运动模糊几何（源 08-morph index.html:604-611 机制重写，参数照抄）：
+ * 快件在快门窗内自 pA 移动到 pB，画一枚 alpha 渐变 stadium（胶囊）——运动模糊不靠帧累积。
+ * 渐变停靠：0→0，o1=min(2r,L)/T→am=min(1,2r/L)，1−o1→am，1→0。
+ */
+export function smearCapGeom(pA: Pt, pB: Pt, r: number): SmearGeom {
+  const dx = pB[0] - pA[0];
+  const dy = pB[1] - pA[1];
+  const L = Math.hypot(dx, dy);
+  const mx = (pA[0] + pB[0]) / 2;
+  const my = (pA[1] + pB[1]) / 2;
+  if (L < 1.5) {
+    return {pA, pB, r, disc: true, grad: {from: [mx, my], to: [mx, my], stops: [[0, 1], [1, 1]]}};
+  }
+  const ux = dx / L;
+  const uy = dy / L;
+  const T = L + 2 * r;
+  const am = Math.min(1, (2 * r) / L);
+  const o1 = Math.min(2 * r, L) / T;
+  return {
+    pA,
+    pB,
+    r,
+    disc: false,
+    grad: {
+      from: [mx - (ux * T) / 2, my - (uy * T) / 2],
+      to: [mx + (ux * T) / 2, my + (uy * T) / 2],
+      stops: [[0, 0], [o1, am], [1 - o1, am], [1, 0]],
+    },
   };
 }
 

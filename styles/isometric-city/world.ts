@@ -17,6 +17,16 @@ export const EASE = {
     t = Math.min(1, Math.max(0, t));
     return t < 0.5 ? 0.5 * Math.pow(2 * t, p) : 1 - 0.5 * Math.pow(2 - 2 * t, p);
   },
+  /** smoothstep（zoom punch 预备段的缓入核）。 */
+  smooth: (t: number) => {
+    t = Math.min(1, Math.max(0, t));
+    return t * t * (3 - 2 * t);
+  },
+  /** easeOutExpo（zoom punch 打出后的回落，12 帧）。 */
+  easeOutExpo: (t: number) => {
+    t = Math.min(1, Math.max(0, t));
+    return t >= 1 ? 1 : 1 - Math.pow(2, -10 * t);
+  },
   /** 阻尼弹簧 0→1（借 03-isometric demo 参数：w14.8 z0.61 ≈ 峰值 8 帧、9% 过冲）。tau 单位=秒。 */
   spring: (tau: number, w = 14.8, z = 0.61, v0 = 0) => {
     if (tau <= 0) return 0;
@@ -47,17 +57,11 @@ export const EASE = {
   },
 };
 
-// ---------------------------------------------------------------- 相机（整组平移，无旋转）
-// pan=前景层位移 px；中景 0.8×、远景 0.6×（签名特征 4：前中后 1:0.8:0.6 视差速度）。
-const PAN_B = 1250 / 0.8; // 站 B 居中
-const PAN_C = 2500 / 0.8; // 站 C 居中
-export const camPan = (f: number): number => {
-  if (f < 158) return 0;
-  if (f < 180) return PAN_B * EASE.easeInOutPow((f - 158) / 22, 2.6);
-  if (f < 291) return PAN_B;
-  if (f < 312) return PAN_B + (PAN_C - PAN_B) * EASE.easeInOutPow((f - 291) / 21, 2.6);
-  return PAN_C;
-};
+// ---------------------------------------------------------------- 相机常量（v4.0：pan 轨与 punch 在 kit.tsx 的 hermite 表里，此处只留层数与站点常量）
+/** 站 B/C 居中所需 pan（中景层 px）——关键帧表的目标值，数值与旧 PAN_B/PAN_C 一致。 */
+export const STATION_PAN = { B: 1250 / 0.8, C: 2500 / 0.8 };
+/** hero 点亮扫掠起帧（zoom punch 预备的对位帧，BGM drop 对位）。 */
+export const DROP_F = 235;
 export const LAYER_SPEED = { back: 0.6, mid: 0.8, front: 1.0 };
 
 // ---------------------------------------------------------------- 建筑生长时刻表（签名特征 3：底面→立面拉起→顶面延迟 2-3 帧）
@@ -150,11 +154,18 @@ export const MID_TREES: Array<{ st: 'A' | 'B' | 'C'; u: number; v: number; s: nu
   { st: 'C', u: 0.8, v: 1.0, s: 0.95, col: 2, t0: 306 },
   { st: 'C', u: 7.6, v: 1.2, s: 0.8, col: 0, t0: 312 },
 ];
-// 小车（沿 v=5.5 路带行驶，u0 起点 → 终点）
-export const CARS: Array<{ st: 'A' | 'B' | 'C'; u0: number; v: number; f0: number; f1: number; col: number }> = [
-  { st: 'A', u0: -1.5, v: 5.5, f0: 64, f1: 130, col: 0 },
-  { st: 'B', u0: -1.5, v: 5.5, f0: 186, f1: 252, col: 2 },
-  { st: 'C', u0: -1.5, v: 5.5, f0: 314, f1: 380, col: 3 },
+// 小车（v4.0：环路行车——每站一条 loopPath 圆角矩形轨，轨几何须包住本站建筑且落在瓦片台内）
+export type CarDef = { st: 'A' | 'B' | 'C'; f0: number; f1: number; col: number; s0: number };
+/** 逐站环路（网格坐标，中心 cu/cv + 半宽 au/半深 av + 圆角 rc；轨在 kit.tsx loopPath 上取值）。 */
+export const CAR_LOOP: Record<'A' | 'B' | 'C', {cu: number; cv: number; au: number; av: number; rc: number}> = {
+  A: {cu: 4.0, cv: 4.0, au: 3.3, av: 3.3, rc: 1.0}, // 包住 doc(2.4-4.8, 2.2-4.6)，台 8×8
+  B: {cu: 5.15, cv: 3.15, au: 4.45, av: 1.8, rc: 0.85}, // 包住 rack1-4(1.1-9.2, 2.3-4.0)，台 10×8（车身包络圈 r≈0.35 净距）
+  C: {cu: 4.45, cv: 3.3, au: 3.0, av: 1.75, rc: 0.8}, // 包住 cine+booth(2.0-6.9, 2.2-4.4)，台 9×8
+};
+export const CARS: CarDef[] = [
+  { st: 'A', f0: 64, f1: 130, col: 0, s0: 0.0 },
+  { st: 'B', f0: 186, f1: 252, col: 2, s0: 0.375 },
+  { st: 'C', f0: 314, f1: 380, col: 3, s0: 0.75 },
 ];
 
 // ---------------------------------------------------------------- hero 进度粒（上浮方块，f240-285）

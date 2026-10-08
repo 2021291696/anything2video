@@ -48,6 +48,52 @@ STYLE_MAP = {
     'hanazi-916': '18-hanazi',     # variety bouncy
     'line-art': '02-line-art',
     'morph': '08-morph',           # future_bass
+    # 轴 L 新卡（lanshu 技法吸收，2026-10-07）
+    'pop-comic': '01-flat-vector',      # pop
+    'popup-book': '19-paperclip',       # explainer marimba
+    'clay-town': '03-isometric',        # explainer bed
+    'studio-oneshot': '10-synthwave',   # cinematic
+    # v4.0.0 战役新卡（2026-10-08，值逐卡实测自 科普视频/samples-v4/<slug>/research/audio-notes.md
+    # 的 BGM-GENERATED 登记行与 --style 命令行，双源一致）
+    'pop-dot': '01-flat-vector',
+    'ink-boil': '05-cel-boil',
+    'ink-plate': '09-bauhaus',
+    'vhs-outrun': '10-synthwave',
+    'soft-jelly': '12-aurora-glass',
+    'target-lock': '22-hud',
+    'ink-tea': '15-guochao',
+    'swirl-oil': '12-aurora-glass',
+    'cave-wall': '06-collage',
+    'tomb-wall': '12-aurora-glass',
+    'amphora': '12-aurora-glass',
+    'mosaic': '12-aurora-glass',
+    'gold-leaf': '12-aurora-glass',
+    'whiplash-line': '12-aurora-glass',
+    'grain-flat': '01-flat-vector',
+    'gold-robe': '12-aurora-glass',
+    'dot-infinity': '07-liquid',
+    'hard-light': '12-aurora-glass',
+    'dance-line': '18-hanazi',
+    'rubberhose': '05-cel-boil',
+    'shadow-play': '15-guochao',
+    'sfumato': '12-aurora-glass',
+    # light-dabs：audio-notes 因会话中断缺失，--style 值按战役派工单（CAMPAIGN-4 §3.2 D4-1 任务书）回填
+    'light-dabs': '12-aurora-glass',
+    'facets': '12-aurora-glass',
+    'chrome-ball': '10-synthwave',
+    'scream-warp': '12-aurora-glass',
+    'soft-clock': '12-aurora-glass',
+    'watercolor-cel': '12-aurora-glass',
+    'lily-pond': '12-aurora-glass',
+    'optical-dots': '12-aurora-glass',
+    'candle-light': '12-aurora-glass',
+    'cumulus-light': '12-aurora-glass',
+    'blue-period': '12-aurora-glass',
+    'whiteboard': '19-paperclip',
+    'kinetic-type': '18-hanazi',
+    'riso-print': '06-collage',
+    'math-lab': '12-aurora-glass',
+    'hypnotic': '07-liquid',
 }
 
 

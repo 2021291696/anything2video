@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>anything2video 套餐池（19）</title>
+<title>anything2video 套餐池（61）</title>
 <style>
   body {background:#0B0B12; color:#E8E8EC; font-family:"Noto Sans SC","Microsoft YaHei",sans-serif; margin:0; padding:32px;}
   h1 {font-size:26px;} h1 span {color:#21E6C1;}
@@ -35,7 +35,7 @@
 <body>
 <h1>anything2video <span>套餐池</span></h1>
 <div class="sub">
-  单问套餐制（v3.5.0）：<b>一张卡 = 类型+风格完整决定</b>——挑一张就是全部选型；画幅是卡属性（花字卡 9:16 原生），不是第三筛选轴。每张卡 12-15 秒真样片，带完整音频（TTS 旁白+音效+BGM，新卡 BGM 为程序编曲 mgaudio 通道）。
+  单问套餐制（v3.5.0）：<b>一张卡 = 类型+风格完整决定</b>——挑一张就是全部选型；画幅是卡属性（花字卡 9:16 原生），不是第三筛选轴。每张卡 12-20 秒真样片（史诗双卡为 20 秒三幕旗舰），带完整音频（TTS 旁白+音效+BGM，新卡 BGM 为程序编曲 mgaudio 通道）。
   <a href="README.md" style="color:#21E6C1">来源与披露</a><br>
   <b>选型口径</b>：口味锚 = <b>冷峻精密、不贴科技标签</b>——产品/品牌向先看冷峻系；判例与规则见 skill 的 <b>reference/style-ledger.md</b>（判例优先于主题隐喻推理）。
   卡类型或 ⚠ 判例注与需求冲突时开工前确认一次；点名风格+类型自由组合走后门（config.style 不变）。
@@ -104,13 +104,13 @@
   <div class="card" data-type="epic" data-v="warm"><video src="epic-paper-sample.mp4" poster="posters/epic-paper-sample.jpg" controls preload="metadata"></video>
     <div class="meta"><div class="tags"><span class="tag epic">史诗</span><span class="tag warm">暖系</span></div>
     <div class="name">神话 <em>EPIC-PAPER</em></div>
-    <div class="spec">暖纸白信息层 + 印章红 + 描金辅色；年代角标 + 诗行字幕（含 AI 场景登记披露）。</div>
-    <div class="fine">旧名「暖纸白描金」；品牌谱系/历史叙事；也可换类型。</div></div></div>
+    <div class="spec">暖纸白信息层 + 印章红 + 描金辅色；三幕旗舰：雾山世界叶落 → 描金年代轴穿越 → 俯视茶碗印章钤落。</div>
+    <div class="fine">旧名「暖纸白描金」；品牌谱系/历史叙事；20 秒三幕旗舰；也可换类型。</div></div></div>
   <div class="card" data-type="epic" data-v="warm"><video src="sand-sample.mp4" poster="posters/sand-sample.jpg" controls preload="metadata"></video>
     <div class="meta"><div class="tags"><span class="tag epic">史诗</span><span class="tag warm">暖系·手作</span></div>
     <div class="name">沙画 <em>SAND</em></div>
-    <div class="spec">暖纸底灯箱、深沙铺层、纸色描边擦出形体，安静的情感叙事。</div>
-    <div class="fine">旧名「灯箱沙画」；开幕/情感向，有沙音效通道；也可换类型。</div></div></div>
+    <div class="spec">灯箱沙画全工艺：手影铺沙显影 → 抹沙破晓出海（碎金光路）→ 体积光落窗台。</div>
+    <div class="fine">旧名「灯箱沙画」；开幕/情感向，沙音三态签名通道；20 秒三幕旗舰；也可换类型。</div></div></div>
   <div class="card" data-type="epic" data-v="warm"><video src="guofeng-scroll-sample.mp4" poster="posters/guofeng-scroll-sample.jpg" controls preload="metadata"></video>
     <div class="meta"><div class="tags"><span class="tag epic">史诗</span><span class="tag warm">暖系</span></div>
     <div class="name">月窗 <em>GUOFENG-SCROLL</em></div>
@@ -131,6 +131,26 @@
     <div class="name">线条 <em>LINE-ART</em></div>
     <div class="spec">等宽细线一笔画 + draw-on 自我描绘 + 线转面 + 大量负空间；墨+唯一暖金双色。</div>
     <div class="fine">v3.5.0 新卡；奢侈品/金融/建筑极简叙事；一笔画路径需预先连通。</div></div></div>
+  <div class="card" data-type="promo" data-v="warm retro"><video src="pop-comic-sample.mp4" poster="posters/pop-comic-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag promo">宣传</span><span class="tag warm">暖系</span></div>
+    <div class="name">波普 <em>POP-COMIC</em></div>
+    <div class="spec">粗黑描边硬错位阴影 + 半调网点 + 拟声词爆炸星 + 贴纸拍入（0.16s 砸落）；高饱和有限色。</div>
+    <div class="fine">v3.8.0 新卡（lanshu 领地重写）；快节奏观点/辟谣/热点；与 paperclip-sticker 边界：波普全语言 vs 冷静办公贴纸。</div></div></div>
+  <div class="card" data-type="explainer" data-v="warm"><video src="popup-book-sample.mp4" poster="posters/popup-book-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span><span class="tag warm">暖系</span></div>
+    <div class="name">立体书 <em>POPUP-BOOK</em></div>
+    <div class="spec">牛皮纸立体书 + rotateX 铰链翻折（地影随折角）+ 三层视差 + 拉页转场。</div>
+    <div class="fine">v3.8.0 新卡（lanshu 领地重写）；温暖故事/流程讲解；与 paper-collage 边界：折起纵深 vs 平面拼贴。</div></div></div>
+  <div class="card" data-type="explainer" data-v="warm"><video src="clay-town-sample.mp4" poster="posters/clay-town-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span><span class="tag warm">暖系</span></div>
+    <div class="name">黏土 <em>CLAY-TOWN</em></div>
+    <div class="spec">等轴黏土小镇（软材质手捏感 + kawaii 拟人件）+ 双层标注（白话比喻+真实术语）。</div>
+    <div class="fine">v3.8.0 新卡（lanshu 领地重写）；讲给外行的比喻科普；与 isometric-city 分工：自然生活 vs 城建设施。</div></div></div>
+  <div class="card" data-type="epic" data-v="cool glow"><video src="studio-oneshot-sample.mp4" poster="posters/studio-oneshot-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag epic">史诗</span><span class="tag glow">辉光系</span></div>
+    <div class="name">一镜 <em>STUDIO-ONESHOT</em></div>
+    <div class="spec">three.js 石墨影棚一镜到底 + 瓷质道具 + 双色 rim + 假景深；Hermite 相机禁停泊。</div>
+    <div class="fine">v3.8.0 新卡（lanshu 领地重写）；旗舰发布/大概念；专有依赖 three+@remotion/three（消费工程需安装）；实测 70-77ms/帧。</div></div></div>
   <div class="card" data-type="promo" data-v="cool"><video src="isometric-city-sample.mp4" poster="posters/isometric-city-sample.jpg" controls preload="metadata"></video>
     <div class="meta"><div class="tags"><span class="tag promo">宣传</span><span class="tag cool">冷峻系</span></div>
     <div class="name">等轴 <em>ISOMETRIC-CITY</em></div>
@@ -151,6 +171,196 @@
     <div class="name">形变 <em>MORPH</em></div>
     <div class="spec">图形丝滑互变（中介简形桥接）+ 挤压拉伸 + 位移旋转；图形叙事核心语法。</div>
     <div class="fine">v3.5.0 新卡；品牌隐喻/发布会动效；顶点对齐路径插值，禁朴素 SMIL。</div></div></div>
+  <div class="card" data-type="explainer" data-v="warm"><video src="pop-dot-sample.mp4" poster="posters/pop-dot-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">弹点 <em>POP-DOT</em></div>
+    <div class="spec">六色平涂 + SHADE 自明暗对 + 弹簧物理三段 + 色块擦除转场；企业 explainer 弹性 MG。</div>
+    <div class="fine">v4.0.0 新卡（mg15 移植）；与 pop-comic 边界：克制理性平涂 vs 波普情绪外露。</div></div></div>
+  <div class="card" data-type="explainer" data-v="warm"><video src="ink-boil-sample.mp4" poster="posters/ink-boil-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">线沸 <em>INK-BOIL</em></div>
+    <div class="spec">逐帧线沸腾：变宽笔刷 + 错位填色 + 低帧率打帧时基；手绘动画的生命感。</div>
+    <div class="fine">v4.0.0 新卡（mg15 移植）。</div></div></div>
+  <div class="card" data-type="explainer" data-v="retro"><video src="ink-plate-sample.mp4" poster="posters/ink-plate-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">墨版 <em>INK-PLATE</em></div>
+    <div class="spec">包豪斯丝印：几何编舞 + 双版错位 + 十字规线；印刷秩序感。</div>
+    <div class="fine">v4.0.0 新卡（mg15 移植）；协议/工序/节拍类讲解。</div></div></div>
+  <div class="card" data-type="explainer" data-v="glow"><video src="soft-jelly-sample.mp4" poster="posters/soft-jelly-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">软糖 <em>SOFT-JELLY</em></div>
+    <div class="spec">C4D 软渲染：SSS 软胶材质 + 克隆阵列波；治愈系 3D。</div>
+    <div class="fine">v4.0.0 新卡（mg15 移植）；frame_cost 前置门（实测 196ms/帧）。</div></div></div>
+  <div class="card" data-type="promo" data-v="retro glow"><video src="vhs-outrun-sample.mp4" poster="posters/vhs-outrun-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag promo">宣传</span></div>
+    <div class="name">公路夜 <em>VHS-OUTRUN</em></div>
+    <div class="spec">合成波 VHS：网格地平线 + 切缝日落 + rgbSplit/扫描线。</div>
+    <div class="fine">v4.0.0 新卡（mg15 移植）；VHS 三件套全检签名。</div></div></div>
+  <div class="card" data-type="explainer" data-v="cool glow"><video src="target-lock-sample.mp4" poster="posters/target-lock-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">锁定 <em>TARGET-LOCK</em></div>
+    <div class="spec">赛博 HUD/FUI：锁定编排 + 数据位流 + 空间化 UI；雷达扫描叙事。</div>
+    <div class="fine">v4.0.0 新卡（mg15 移植）。</div></div></div>
+  <div class="card" data-type="explainer" data-v="warm"><video src="swirl-oil-sample.mp4" poster="posters/swirl-oil-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">星涡 <em>SWIRL-OIL</em></div>
+    <div class="spec">梵高后印象派：流场长笔触三遍分区 + 区域色板 + 星空漩涡转场。</div>
+    <div class="fine">v4.0.0 新卡；油画族共享 strokes 底座标杆；性能门 <50ms/帧。</div></div></div>
+  <div class="card" data-type="explainer" data-v="warm retro"><video src="cave-wall-sample.mp4" poster="posters/cave-wall-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">岩壁 <em>CAVE-WALL</em></div>
+    <div class="spec">史前岩壁画：赭红手印 + 粗粝矿彩 + 火光摇曳。</div>
+    <div class="fine">v4.0.0 新卡；两万年前的叙事墙。</div></div></div>
+  <div class="card" data-type="explainer" data-v="warm retro"><video src="tomb-wall-sample.mp4" poster="posters/tomb-wall-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">墓室 <em>TOMB-WALL</em></div>
+    <div class="spec">古埃及墓室壁画：正面律人物 + 象形注记 + 圣甲虫推日轮。</div>
+    <div class="fine">v4.0.0 新卡。</div></div></div>
+  <div class="card" data-type="explainer" data-v="retro"><video src="amphora-sample.mp4" poster="posters/amphora-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">陶瓶 <em>AMPHORA</em></div>
+    <div class="spec">希腊黑绘陶瓶：黑釉剪影 + 橙红陶底 + 环形叙事带。</div>
+    <div class="fine">v4.0.0 新卡。</div></div></div>
+  <div class="card" data-type="explainer" data-v="retro"><video src="mosaic-sample.mp4" poster="posters/mosaic-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">马赛克 <em>MOSAIC</em></div>
+    <div class="spec">庞贝马赛克：万块石子拼图 + 逐块震颤 + 镶边警句。</div>
+    <div class="fine">v4.0.0 新卡；样片 1920x1080。</div></div></div>
+  <div class="card" data-type="explainer" data-v="warm glow"><video src="gold-leaf-sample.mp4" poster="posters/gold-leaf-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">金箔 <em>GOLD-LEAF</em></div>
+    <div class="spec">哥特金箔手抄本：贴金菱格 + 泥金首字母 + 抄写员夜灯。</div>
+    <div class="fine">v4.0.0 新卡。</div></div></div>
+  <div class="card" data-type="explainer" data-v="warm"><video src="whiplash-line-sample.mp4" poster="posters/whiplash-line-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">鞭线 <em>WHIPLASH-LINE</em></div>
+    <div class="spec">慕夏新艺术：鞭线生长 + 粗细呼吸 + 海报藤蔓框。</div>
+    <div class="fine">v4.0.0 新卡。</div></div></div>
+  <div class="card" data-type="explainer" data-v="warm"><video src="grain-flat-sample.mp4" poster="posters/grain-flat-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">颗粒扁平 <em>GRAIN-FLAT</em></div>
+    <div class="spec">当代扁平插画：噪点颗粒 + 姿势库表演 + 挤压拉伸。</div>
+    <div class="fine">v4.0.0 新卡；拟人短剧/生活流科普。</div></div></div>
+  <div class="card" data-type="explainer" data-v="warm glow"><video src="gold-robe-sample.mp4" poster="posters/gold-robe-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">金袍 <em>GOLD-ROBE</em></div>
+    <div class="spec">克里姆特：金袍图案裹身 + 写实脸孔 + 马赛克金纹。</div>
+    <div class="fine">v4.0.0 新卡；「图案穿在形体上」。</div></div></div>
+  <div class="card" data-type="explainer" data-v="retro"><video src="dot-infinity-sample.mp4" poster="posters/dot-infinity-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">波点 <em>DOT-INFINITY</em></div>
+    <div class="spec">草间弥生：波点铺满一切 + 南瓜阵 + 点阵呼吸。</div>
+    <div class="fine">v4.0.0 新卡；艺术科普/沉浸体验。</div></div></div>
+  <div class="card" data-type="explainer" data-v="warm"><video src="hard-light-sample.mp4" poster="posters/hard-light-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">硬光 <em>HARD-LIGHT</em></div>
+    <div class="spec">霍珀式硬边光：光斑斜切房间 + 长影 + 城市孤独。</div>
+    <div class="fine">v4.0.0 新卡。</div></div></div>
+  <div class="card" data-type="explainer" data-v="warm glow"><video src="dance-line-sample.mp4" poster="posters/dance-line-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">舞线 <em>DANCE-LINE</em></div>
+    <div class="spec">凯斯·哈林：街头小人 + 全局 BPM 弹跳 + 涂鸦能量。</div>
+    <div class="fine">v4.0.0 新卡；beat-sheet 节拍驱动。</div></div></div>
+  <div class="card" data-type="explainer" data-v="warm retro"><video src="rubberhose-sample.mp4" poster="posters/rubberhose-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">橡皮管 <em>RUBBERHOSE</em></div>
+    <div class="spec">1930s 橡皮管动画：无关节软肢 + 摆线波动 + 复古晨曲。</div>
+    <div class="fine">v4.0.0 新卡。</div></div></div>
+  <div class="card" data-type="explainer" data-v="warm retro"><video src="shadow-play-sample.mp4" poster="posters/shadow-play-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">皮影 <em>SHADOW-PLAY</em></div>
+    <div class="spec">中国皮影：刀刻镂空 + 关节杆件 + 油灯白布影窗。</div>
+    <div class="fine">v4.0.0 新卡。</div></div></div>
+  <div class="card" data-type="explainer" data-v="warm"><video src="sfumato-sample.mp4" poster="posters/sfumato-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">晕涂 <em>SFUMATO</em></div>
+    <div class="spec">达·芬奇晕涂法：轮廓溶进光雾 + 层层罩染。</div>
+    <div class="fine">v4.0.0 新卡。</div></div></div>
+  <div class="card" data-type="explainer" data-v="warm glow"><video src="light-dabs-sample.mp4" poster="posters/light-dabs-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">光斑 <em>LIGHT-DABS</em></div>
+    <div class="spec">莫奈印象派：碎笔光斑 + 颜色换班 + stable() 防重洗。</div>
+    <div class="fine">v4.0.0 新卡。</div></div></div>
+  <div class="card" data-type="explainer" data-v="cool"><video src="facets-sample.mp4" poster="posters/facets-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">切面 <em>FACETS</em></div>
+    <div class="spec">立体主义：形体拆成切面 + 多视角并置。</div>
+    <div class="fine">v4.0.0 新卡。</div></div></div>
+  <div class="card" data-type="explainer" data-v="cool"><video src="chrome-ball-sample.mp4" poster="posters/chrome-ball-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">铬球 <em>CHROME-BALL</em></div>
+    <div class="spec">早期光追：铬球 + 棋盘房间 + 无限反射；90 年代 CG 崇拜。</div>
+    <div class="fine">v4.0.0 新卡。</div></div></div>
+  <div class="card" data-type="explainer" data-v="glow"><video src="scream-warp-sample.mp4" poster="posters/scream-warp-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">呐喊 <em>SCREAM-WARP</em></div>
+    <div class="spec">蒙克：世界随呐喊扭曲 + 血色天空 + 桥上不安身影。</div>
+    <div class="fine">v4.0.0 新卡。</div></div></div>
+  <div class="card" data-type="explainer" data-v="retro"><video src="soft-clock-sample.mp4" poster="posters/soft-clock-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">软钟 <em>SOFT-CLOCK</em></div>
+    <div class="spec">达利超现实：软钟挂枝滴淌 + 荒漠长影。</div>
+    <div class="fine">v4.0.0 新卡。</div></div></div>
+  <div class="card" data-type="explainer" data-v="warm"><video src="watercolor-cel-sample.mp4" poster="posters/watercolor-cel-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">水彩赛璐璐 <em>WATERCOLOR-CEL</em></div>
+    <div class="spec">吉卜力式水彩赛璐璐：水彩底 + 赛璐璐角色 + 风的层次。</div>
+    <div class="fine">v4.0.0 新卡。</div></div></div>
+  <div class="card" data-type="explainer" data-v="warm glow"><video src="lily-pond-sample.mp4" poster="posters/lily-pond-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">睡莲 <em>LILY-POND</em></div>
+    <div class="spec">莫奈睡莲：水面记光 + 莲叶漂移 + 柳影摇晃。</div>
+    <div class="fine">v4.0.0 新卡。</div></div></div>
+  <div class="card" data-type="explainer" data-v="glow"><video src="optical-dots-sample.mp4" poster="posters/optical-dots-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">点彩 <em>OPTICAL-DOTS</em></div>
+    <div class="spec">修拉点彩：纯色圆点并置 + 视觉混色。</div>
+    <div class="fine">v4.0.0 新卡。</div></div></div>
+  <div class="card" data-type="explainer" data-v="warm glow"><video src="candle-light-sample.mp4" poster="posters/candle-light-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">烛光 <em>CANDLE-LIGHT</em></div>
+    <div class="spec">伦勃朗明暗：单烛光源 + 暗部吞没 + 光照处才存在。</div>
+    <div class="fine">v4.0.0 新卡。</div></div></div>
+  <div class="card" data-type="explainer" data-v="warm glow"><video src="cumulus-light-sample.mp4" poster="posters/cumulus-light-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">积雨云 <em>CUMULUS-LIGHT</em></div>
+    <div class="spec">新海诚式天光：积雨云 + 丁达尔光柱 + 高饱和渐变。</div>
+    <div class="fine">v4.0.0 新卡。</div></div></div>
+  <div class="card" data-type="explainer" data-v="cool"><video src="blue-period-sample.mp4" poster="posters/blue-period-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">蓝时期 <em>BLUE-PERIOD</em></div>
+    <div class="spec">毕加索蓝时期：整片蓝调 + 慢半拍的情绪。</div>
+    <div class="fine">v4.0.0 新卡。</div></div></div>
+  <div class="card" data-type="promo" data-v="cool"><video src="whiteboard-sample.mp4" poster="posters/whiteboard-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag promo">宣传</span></div>
+    <div class="name">白板 <em>WHITEBOARD</em></div>
+    <div class="spec">白板马克笔：讲一句画一句 + 笔尖跟随 + 多色批注墨水分工。</div>
+    <div class="fine">v4.0.0 新卡（prompt-motion 手法重写）；与 chalk 媒介反转分家。</div></div></div>
+  <div class="card" data-type="explainer" data-v="glow"><video src="kinetic-type-sample.mp4" poster="posters/kinetic-type-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">字动 <em>KINETIC-TYPE</em></div>
+    <div class="spec">动态文字排版：重点词砸进重音 + 词位编排。</div>
+    <div class="fine">v4.0.0 新卡；与 hanazi 分工=结构信息 vs 情绪花字。</div></div></div>
+  <div class="card" data-type="explainer" data-v="retro"><video src="riso-print-sample.mp4" poster="posters/riso-print-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">孔版 <em>RISO-PRINT</em></div>
+    <div class="spec">Risograph 孔版印刷：双色版叠印 + 网点质感 + 套准偏移。</div>
+    <div class="fine">v4.0.0 新卡。</div></div></div>
+  <div class="card" data-type="explainer" data-v="cool"><video src="math-lab-sample.mp4" poster="posters/math-lab-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">数学屋 <em>MATH-LAB</em></div>
+    <div class="spec">数学可视化小屋：规律演示图形化 + 直觉先行。</div>
+    <div class="fine">v4.0.0 新卡。</div></div></div>
+  <div class="card" data-type="explainer" data-v="glow"><video src="hypnotic-sample.mp4" poster="posters/hypnotic-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">催眠 <em>HYPNOTIC</em></div>
+    <div class="spec">迷幻催眠：同心圈漩涡 + 视觉后效 + 节律牵引。</div>
+    <div class="fine">v4.0.0 新卡。</div></div></div>
+  <div class="card" data-type="explainer" data-v="warm"><video src="ink-tea-sample.mp4" poster="posters/ink-tea-sample.jpg" controls preload="metadata"></video>
+    <div class="meta"><div class="tags"><span class="tag explainer">讲解</span></div>
+    <div class="name">水墨 <em>INK-TEA</em></div>
+    <div class="spec">中国水墨写意：淡墨洇开 + 留白呼吸 + 浓淡五色。</div>
+    <div class="fine">v4.0.0 复活卡；齐白石母题样片《墨虾》。</div></div></div>
 </div>
 <script>
   let typeF = 'all', vibeF = 'all';

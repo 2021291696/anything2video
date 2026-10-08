@@ -22,6 +22,13 @@ export function validatePlan(project, plan) {
     if (!integer(shot.from) || !integer(shot.to) || shot.to < shot.from) errors.push(`Invalid inclusive frame range: ${label}`);
     else ranges.push(shot);
     if (![shot.group, shot.component, shot.action, shot.purpose].every(nonempty)) errors.push(`Incomplete production contract: ${label}`);
+    if (shot.facts !== undefined) {
+      if (!Array.isArray(shot.facts) || shot.facts.some(f => !Number.isInteger(f) || f < 0)) errors.push(`Shot facts must be an array of claim indices: ${label}`);
+      else {
+        const nClaims = Array.isArray(plan.claims) ? plan.claims.length : 0;
+        for (const f of new Set(shot.facts)) if (f >= nClaims) errors.push(`Shot fact binding out of range: ${label} #${f} (claims: ${nClaims})`);
+      }
+    }
   }
   let next = 1;
   for (const shot of ranges.sort((a, b) => a.from - b.from)) {

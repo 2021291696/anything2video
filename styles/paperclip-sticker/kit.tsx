@@ -7,6 +7,8 @@ import {cubicBezier, clamp01} from '../common/easing';
 // 风格句：蓝灰米白冷静底 + 主体贴纸化粗白描边 + 扁平图标与精确数据图表 + 超宽大画布摄像机平移。
 // 层结构参考 _oss/mg-styles-15/demos/19-paperclip（只借参数与机制：cam 关键帧/log-z 插值/slap 贴纸拍落），
 // 全部图形为纯代码绘制，无外部素材。坐标：world px；画布 1280×720@30。
+// v4.0：fly/pull 段换 van Wijk interpolateZoom 曲线飞行——
+//   // van Wijk 曲线飞行（zoomFly）：技法借鉴 mg-styles-15 demos/19-paperclip (MIT, Vincentwei1021) index.html:80-88 的 d3.interpolateZoom 用法，纯数学 TS 重写、零 d3 依赖
 // ============================================================================
 
 /** 锁死色板：米白蓝灰系 + 墨色 + 唯一强调橙（只给重点） */
@@ -64,7 +66,7 @@ export const slapStyle = (sl: Slap, cx: number, cy: number, baseR = 0): React.CS
   filter: STK.shadow(sl.lift),
 });
 
-// ---- 摄像机层（借 19-paperclip 的 cam 关键帧机制：x/y 线性 + log-z 插值 + 每 move 独立长曲线 ease） ----
+// ---- 摄像机层（借 19-paperclip 的 cam 关键帧机制；v4.0：fly/pull 段换 van Wijk 曲线飞行，drift/hold 保持线性 + log-z） ----
 export type CamKey = {t: number; x: number; y: number; z: number; r?: number; move?: 'drift' | 'fly' | 'pull' | 'hold'};
 export const CAM_EASE = {
   drift: cubicBezier(0.45, 0, 0.55, 1),
@@ -72,6 +74,37 @@ export const CAM_EASE = {
   pull: cubicBezier(0.42, 0, 0.22, 1), // 收束拉远
   hold: cubicBezier(0.4, 0, 0.6, 1),
 };
+
+// van Wijk 曲线飞行（技法借鉴 mg-styles-15 demos/19-paperclip index.html:80-88 d3.interpolateZoom rho 0.85/1.25，纯数学 TS 重写、零 d3 依赖）
+/** 视口 [cx, cy, w]：w=屏宽对应的世界 px 宽（= SCREEN_W / z）。 */
+export type ZoomView = [number, number, number];
+/** 屏宽基准（世界 px 可视宽 = SCREEN_W / z，与 CamStage 的 scale(z) 严格互逆）。 */
+export const SCREEN_W = 1280;
+const cs = (x: number) => { const e = Math.exp(x); return (e + 1 / e) / 2; };
+const sn = (x: number) => { const e = Math.exp(x); return (e - 1 / e) / 2; };
+const asinh = (x: number) => Math.log(x + Math.sqrt(x * x + 1));
+/**
+ * zoom-pan 曲线航迹：视口 v0→v1 之间「放大-飞越-缩小」（放大倍率随行程自洽）。
+ * rho=曲率（小=弯得更高更飘），t∈[0,1] 处处过 v0/v1（u(t) 单调、宽度不低于两端较小者）。
+ */
+export const zoomFly = (v0: ZoomView, v1: ZoomView, t: number, rho = 0.85): ZoomView => {
+  const r = Math.max(rho, 1e-3), r2 = r * r, r4 = r2 * r2;
+  const [x0, y0, w0] = v0, [x1, y1, w1] = v1;
+  const dx = x1 - x0, dy = y1 - y0, d2 = dx * dx + dy * dy;
+  if (d2 < 1e-12) { // 近同心：纯缩放（log 直线）
+    const S = Math.log(w1 / w0) / r;
+    return [x0 + t * dx, y0 + t * dy, w0 * Math.exp(r * t * S)];
+  }
+  const d = Math.sqrt(d2);
+  const b0 = (w1 * w1 - w0 * w0 + r4 * d2) / (2 * w0 * r2 * d);
+  const b1 = (w1 * w1 - w0 * w0 - r4 * d2) / (2 * w1 * r2 * d);
+  const q0 = -asinh(b0), q1 = -asinh(b1);
+  const S = (q1 - q0) / r;
+  const s = t * S, c0 = cs(q0);
+  const u = (w0 / (r2 * d)) * (c0 * Math.tanh(r * s + q0) - sn(q0)); // 沿直线已行进的比例（0→1 单调）
+  return [x0 + u * dx, y0 + u * dy, (w0 * c0) / cs(r * s + q0)];
+};
+
 export const camAt = (cam: CamKey[], t: number): {x: number; y: number; z: number; r: number} => {
   const first = cam[0];
   if (t <= first.t) return {x: first.x, y: first.y, z: first.z, r: first.r ?? 0};
@@ -81,11 +114,17 @@ export const camAt = (cam: CamKey[], t: number): {x: number; y: number; z: numbe
     if (t <= b.t) {
       const u = (t - a.t) / (b.t - a.t);
       const e = (CAM_EASE[b.move ?? 'drift'] ?? CAM_EASE.drift)(clamp01(u));
+      const r = (a.r ?? 0) + ((b.r ?? 0) - (a.r ?? 0)) * e;
+      if (b.move === 'fly' || b.move === 'pull') { // 曲线航迹段（rho 照抄源码：fly 0.85 / pull 1.25）
+        const rho = b.move === 'pull' ? 1.25 : 0.85;
+        const v = zoomFly([a.x, a.y, SCREEN_W / a.z], [b.x, b.y, SCREEN_W / b.z], e, rho);
+        return {x: v[0], y: v[1], z: SCREEN_W / v[2], r};
+      }
       return {
         x: a.x + (b.x - a.x) * e,
         y: a.y + (b.y - a.y) * e,
         z: Math.exp(Math.log(a.z) + (Math.log(b.z) - Math.log(a.z)) * e),
-        r: (a.r ?? 0) + ((b.r ?? 0) - (a.r ?? 0)) * e,
+        r,
       };
     }
   }

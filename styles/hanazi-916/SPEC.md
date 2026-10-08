@@ -25,3 +25,12 @@
 
 ## 样张
 `sample.jpg` = f160（蹭头花字+盖章隐喻+竖屏安全区全要素）。源工程 `out/stills/frame-254.png` = 正片 f254（hero 爆炸框+花字全态+禁摸手，回归三查对照基准）；辅样张 `frame-40`（钩子）、`frame-105`（慢眨眼+歪斜字幕）、`frame-310`（朱红印章定帧）。
+
+## v4.0 opt-in 增强（2026-10-07 Wave B2）
+**技法借鉴 mg-styles-15 demos/18-hanazi (MIT, Vincentwei1021), TSX 重写。** 本节全部 opt-in：不传新 prop 时 HuaZi 层栈与旧版逐值一致（纯函数核 `hzcore.ts` 单测钉死），默认输出不变。
+- **`HuaZi` 新 props**：
+  - `ext` / `extColor`——双层挤出（dy=ext 与 ext/2，同色 stroke 宽同外描边 2×(whiteW+outerW)——源码 HZ() 的 sp.ext 两遍画法）；`extColor` 缺省=deep。层序最底（deep 之下）。
+  - `gloss`——源码式顶部垂直渐变白（顶 gloss→0@46%→0，源码 demo 值 0.55），传数值启用；不传=旧行为（既有固定 0.85→0@42% 渐变 × 0.5 透明度高光层不变）。这是「胖体立体感」的最后两成（ext 挤出 + gloss 高光）。
+  - `hopBeats`——节拍驱动 squash-and-hop 波（全局帧时刻表；有 BGM 对位点时效果拔群）。
+- **`beatHopWave(N, beats, charIndex)`**（`hzcore.ts` 纯函数）：每 beat 每字错 2 帧（charIndex×2f，源码 i*2*FR）：预备蹲 0.07s（压扁 +0.11 线性爬升）→ 抛物线跳 40px（air 0.24s，峰值 k=0.5）+ 飞行拉伸 −0.07·sin(πk)（前 0.05s 释放预备压扁）→ 落地指数回弹 0.13·e^(−3w)·cos(7.5w)（0.16s）。接线：y += −hy + (size/2)·sq（半字号脚底锚定，压扁不浮脚），scale (1+sq, 1−sq)；与 pop-out 相乘叠加。
+- 新库文件 `hzcore.ts`（无 JSX/无 remotion 依赖）：`huaZiCharLayers`（层栈构造，ext/gloss 缺省=旧五层逐值相等）+ `beatHopWave`。复用拷贝清单更新为 `kit.tsx + hzcore.ts + cats.tsx`。

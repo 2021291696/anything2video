@@ -366,3 +366,388 @@ export const fadeAt = (N: number, from: number, dur = 16) => slideIn(N - from, d
 
 /** 全片呼吸/淡出工具：keyframes 便捷封装。 */
 export const gfKeyframes = keyframes;
+
+// ====================================================================
+// v4.0 opt-in 增补：aged 做旧罩层 / apsara 飞天转场 / 铁线描 / 飘带行波
+// 技法借鉴：huashu-art-motion 20_dunhuang（MIT, alchaincyf）——TSX 重写，非整段拷贝。
+// 纪律：全部 opt-in，默认输出不变；暖黑底 #0a0806 / 恒定月窗 / 竖排题跋 / 朱印等身份特征不动。
+// ====================================================================
+
+/** 铁线描规范（造型线，非装饰线）：等宽 2.6px 主线 #5a2414；脸/肤用更红的 #8a3a24。
+ *  与描金装饰线（变宽、金色）严格区分——铁线描是壁画的"骨"。 */
+export const TIELINE = {
+  width: 2.6,
+  color: '#5a2414',
+  faceColor: '#8a3a24',
+} as const;
+
+/** 铁线描造型线组：ds 内每条 path 按等宽规范描出（禁按段变宽）。 */
+export const Tieline: React.FC<{
+  ds: string[];
+  w: number;
+  h: number;
+  x?: number;
+  y?: number;
+  color?: string;
+  width?: number;
+  opacity?: number;
+}> = ({ds, w, h, x = 0, y = 0, color = TIELINE.color, width = TIELINE.width, opacity = 1}) => (
+  <svg width={w} height={h} style={{position: 'absolute', left: x, top: y, overflow: 'visible', opacity, pointerEvents: 'none'}}>
+    {ds.map((d, i) => (
+      <path key={i} d={d} fill="none" stroke={color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" />
+    ))}
+  </svg>
+);
+
+// ---- 飘带行波（kit 词汇）。量化纪律：横向位移 ≥200px ＋ 末端 30%（s≥0.7）上扬才读得出"飘"----
+export const RIBBON = {
+  minSpan: 200, // 横向位移下限（18–34px 是"椅子竖杆"）
+  span: 230, // 默认基线横移（源 shawl 230q）
+  waveAmp: 64, // 行波振幅（源 64q·sin）
+  waveFreq: 4.2,
+  waveSpeed: 5.5,
+  liftZone: 0.7, // 末端 30% 起扬
+  liftPx: 300, // 源起扬幅度
+  liftPulse: 0.7, // (0.7 + 0.3sin(4t)) 呼吸下限
+} as const;
+
+/** 行波横向位移（s∈[0,1] 沿带）：span·s + amp·s·sin(freq·s − speed·t)（源 shawl 配方）。 */
+export const ribbonWaveX = (s: number, t: number, span: number = RIBBON.span, amp: number = RIBBON.waveAmp): number =>
+  span * s + amp * s * Math.sin(RIBBON.waveFreq * s - RIBBON.waveSpeed * t);
+
+/** 末端上扬（y 偏移，负=向上）：s≤liftZone 恒 0；源配方 −max(0,s−0.7)·300·(0.7+0.3sin(4t))——
+ *  末端 30% 内线性起扬带呼吸，s=1 处 36–90px。 */
+export const ribbonLiftY = (s: number, t = 0, liftPx: number = RIBBON.liftPx): number => {
+  if (s <= RIBBON.liftZone) return 0;
+  return -(s - RIBBON.liftZone) * liftPx * (RIBBON.liftPulse + (1 - RIBBON.liftPulse) * Math.sin(t * 4));
+};
+
+/** 变宽飘带多边形：点列两侧按 widthAt(q) 法向偏移成闭合 path 字符串（重写 K.ribbon）。 */
+export const ribbonPathD = (pts: Array<[number, number]>, widthAt: (q: number) => number): string => {
+  const n = pts.length;
+  const L: string[] = [];
+  const R: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const a = pts[Math.max(0, i - 1)];
+    const b = pts[Math.min(n - 1, i + 1)];
+    let dx = b[0] - a[0];
+    let dy = b[1] - a[1];
+    const d = Math.hypot(dx, dy) || 1;
+    dx /= d;
+    dy /= d;
+    const hw = widthAt(i / (n - 1)) / 2;
+    L.push(`${(pts[i][0] - dy * hw).toFixed(1)},${(pts[i][1] + dx * hw).toFixed(1)}`);
+    R.push(`${(pts[i][0] + dy * hw).toFixed(1)},${(pts[i][1] - dx * hw).toFixed(1)}`);
+  }
+  return `M${L.join(' L')} L${R.slice().reverse().join(' L')} Z`;
+};
+
+/** 飘带行波组件：石绿飘带 + 白虚线描花 + 红点（源 shawl 语法：宽 w(0.75+0.25sin(9q−5t))(1−0.25q)）。
+ *  span 默认 230 ≥ RIBBON.minSpan（"飘"的底线）。 */
+export const RibbonWave: React.FC<{
+  x: number;
+  y: number;
+  t: number;
+  length?: number; // 带的纵向延伸 px
+  span?: number;
+  amp?: number;
+  liftPx?: number;
+  width?: number;
+  color?: string;
+  lineColor?: string;
+  dashFlower?: boolean;
+  dots?: boolean;
+  n?: number;
+}> = ({x, y, t, length = 400, span, amp, liftPx, width = 32, color = '#6ab08e', lineColor = TIELINE.color, dashFlower = true, dots = true, n = 26}) => {
+  const pts: Array<[number, number]> = [];
+  for (let i = 0; i <= n; i++) {
+    const q = i / n;
+    pts.push([x + ribbonWaveX(q, t, span, amp), y + q * length + ribbonLiftY(q, t, liftPx)]);
+  }
+  const d = ribbonPathD(pts, q => width * (0.75 + 0.25 * Math.sin(q * 9 - t * 5)) * (1 - q * 0.25));
+  const line = pts.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+  return (
+    <svg width={2} height={2} style={{position: 'absolute', left: 0, top: 0, width: 1280, height: 720, overflow: 'visible', pointerEvents: 'none'}}>
+      <path d={d} fill={color} stroke={lineColor} strokeWidth={2.2} strokeLinejoin="round" />
+      {dashFlower ? <polyline points={line} fill="none" stroke="#ecdfc4" strokeWidth={2} strokeDasharray="3 9" /> : null}
+      {dots
+        ? pts.map((p, i) =>
+            i % 9 === 4 ? <circle key={i} cx={p[0]} cy={p[1]} r={3.2} fill="#a5452f" /> : null,
+          )
+        : null}
+    </svg>
+  );
+};
+
+// ---- aged 做旧罩层（opt-in，默认关）。参数照抄 huashu scenes/20_dunhuang.js 剥落配方 ----
+export type ProtectRect = {x: number; y: number; w: number; h: number};
+
+export const AGED = {
+  threshold: 0.3, // n > 0.30 露白灰地仗
+  edgeBand: 0.02, // 0.28–0.30 剥落边缘暗线
+  plaster: '#d8c6a2', // 白灰地仗
+  edge: 'rgba(70,45,30,0.59)', // 源 rgb(70,45,30,150)
+  crack: 'rgba(50,25,15,0.35)',
+  crackN: 500,
+  fade: 0.3, // saturation 混合 α.3 褪色
+  smoke: 'rgba(40,20,10,0.35)',
+  smokeH: 253, // 源 380px@1080p → 720p 等比
+  cell: 6,
+} as const;
+
+/** 剥落三态判定（量化纪律）：v>0.30 露地仗，0.28–0.30 边缘暗线，其余完好。 */
+export const flakeState = (v: number): 'intact' | 'edge' | 'exposed' =>
+  v > AGED.threshold ? 'exposed' : v >= AGED.threshold - AGED.edgeBand ? 'edge' : 'intact';
+
+// seeded value noise / fbm（禁 Math.random；整数 hash 全确定性）
+const ih2 = (seed: number, xi: number, yi: number): number => {
+  let h = Math.imul(seed | 0, 0x27d4eb2d) ^ Math.imul(xi | 0, 0x165667b1) ^ Math.imul(yi | 0, 0x9e3779b1);
+  h = Math.imul(h ^ (h >>> 15), 0x85ebca6b);
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
+  h ^= h >>> 16;
+  return (h >>> 0) / 4294967296;
+};
+const smq = (t: number) => t * t * (3 - 2 * t);
+const vnoise2 = (seed: number, x: number, y: number): number => {
+  const xi = Math.floor(x);
+  const yi = Math.floor(y);
+  const fx = smq(x - xi);
+  const fy = smq(y - yi);
+  const a = ih2(seed, xi, yi);
+  const b = ih2(seed, xi + 1, yi);
+  const c = ih2(seed, xi, yi + 1);
+  const d = ih2(seed, xi + 1, yi + 1);
+  return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
+};
+const fbm2 = (seed: number, x: number, y: number, oct: number): number => {
+  let v = 0;
+  let amp = 0.5;
+  let f = 1;
+  for (let o = 0; o < oct; o++) {
+    v += amp * vnoise2(seed + o * 101, x * f, y * f);
+    amp *= 0.5;
+    f *= 2;
+  }
+  return v;
+};
+
+/** 剥落场（源配方：fbm(x·0.0032+11, y·0.0032+4, 5 倍频) + 0.12·noise(x·0.03, y·0.03)）。
+ *  ⚠ 噪声频率 0.006 = 满屏芝麻斑（像污渍），禁用——见 RECON-huashu 20_dunhuang。 */
+export const flakeField = (x: number, y: number, seed = 91): number =>
+  fbm2(seed, x * 0.0032 + 11, y * 0.0032 + 4, 5) + 0.12 * vnoise2(seed + 7, x * 0.03, y * 0.03);
+
+/** 做旧罩层（opt-in `aged` 模式，enabled 默认 false）：褪色(saturation α.3)＋顶部烟熏＋剥落斑＋龟裂(500 条)。
+ *  保护区纪律：protect 矩形（人物/主角区域）内全部做旧层排除——做旧只上背景。
+ *  静态层（useMemo 一次算好，与源 P.cached 一致，不随帧动）。 */
+export const AgedMode: React.FC<{
+  enabled?: boolean;
+  seed?: number;
+  w?: number;
+  h?: number;
+  protect?: ProtectRect[];
+  cell?: number;
+  crackN?: number;
+  smokeH?: number;
+}> = ({enabled = false, seed = 91, w = 1280, h = 720, protect = [], cell = AGED.cell, crackN = AGED.crackN, smokeH = AGED.smokeH}) => {
+  const layers = React.useMemo(() => {
+    if (!enabled) return null;
+    const inProtect = (px: number, py: number) =>
+      protect.some(r => px >= r.x && px < r.x + r.w && py >= r.y && py < r.y + r.h);
+    // 逐格采样剥落场，同行同态格 RLE 合并成矩形
+    type Run = {x: number; y: number; w: number; h: number; kind: 'exposed' | 'edge' | 'chalk'; a: number};
+    const runs: Run[] = [];
+    const nc = Math.ceil(w / cell);
+    const nr = Math.ceil(h / cell);
+    for (let r = 0; r < nr; r++) {
+      let runKind: 'exposed' | 'edge' | 'chalk' | null = null;
+      let runA = 0;
+      let runStart = 0;
+      const flushRun = (endC: number) => {
+        if (runKind) runs.push({x: runStart * cell, y: r * cell, w: (endC - runStart) * cell, h: cell, kind: runKind, a: runA});
+      };
+      for (let c = 0; c < nc; c++) {
+        const px = c * cell + cell / 2;
+        const py = r * cell + cell / 2;
+        let k: 'exposed' | 'edge' | 'chalk' | null = null;
+        let a = 0;
+        if (!inProtect(px, py)) {
+          const st = flakeState(flakeField(px, py, seed));
+          if (st === 'exposed') {
+            k = 'exposed';
+            a = 1;
+          } else if (st === 'edge') {
+            k = 'edge';
+            a = 1;
+          } else {
+            // 颜料粉化发白（源：m=fbm(x·0.02, y·0.02+7, 3)，alpha=clamp(m·0.5+0.1)·80）
+            const m = fbm2(seed + 55, px * 0.02, py * 0.02 + 7, 3);
+            const alpha = clamp01(m * 0.5 + 0.1) * (80 / 255);
+            if (alpha >= 0.12) {
+              k = 'chalk';
+              a = Math.round(alpha * 12) / 12; // 量化便于同行合并
+            }
+          }
+        }
+        if (k !== runKind || (k === 'chalk' && a !== runA)) {
+          flushRun(c);
+          runKind = k;
+          runA = a;
+          runStart = c;
+        }
+      }
+      flushRun(nc);
+    }
+    // 龟裂：seeded 随机游走（源：500 条，步长 5+12r、转角 ±0.7rad）
+    const rng = mulberry32(seed + 3);
+    const crackD: string[] = [];
+    for (let k = 0; k < crackN; k++) {
+      let x = rng() * w;
+      let y = rng() * h;
+      let a = rng() * 6.28;
+      if (inProtect(x, y)) continue; // 保护区不上裂
+      let d = `M${x.toFixed(1)},${y.toFixed(1)}`;
+      const steps = Math.floor(5 + rng() * 8);
+      for (let s = 0; s < steps; s++) {
+        a += (rng() - 0.5) * 1.4;
+        x += Math.cos(a) * (5 + rng() * 12);
+        y += Math.sin(a) * (5 + rng() * 12);
+        d += ` L${x.toFixed(1)},${y.toFixed(1)}`;
+      }
+      crackD.push(d);
+    }
+    return {runs, crackD};
+  }, [enabled, seed, w, h, cell, crackN, smokeH, protect]);
+  if (!enabled || !layers) return null;
+  const maskId = `gf-aged-${seed}`;
+  const smokeId = `gf-smoke-${seed}`;
+  return (
+    <svg width={w} height={h} style={{position: 'absolute', inset: 0, pointerEvents: 'none'}}>
+      <defs>
+        <mask id={maskId}>
+          <rect x={0} y={0} width={w} height={h} fill="#fff" />
+          {protect.map((r, i) => (
+            <rect key={i} x={r.x} y={r.y} width={r.w} height={r.h} fill="#000" />
+          ))}
+        </mask>
+        <linearGradient id={smokeId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={AGED.smoke} />
+          <stop offset="100%" stopColor="rgba(40,20,10,0)" />
+        </linearGradient>
+      </defs>
+      <g mask={`url(#${maskId})`}>
+        {/* 褪色：saturation 混合 α.3 */}
+        <rect x={0} y={0} width={w} height={h} fill="#808080" opacity={AGED.fade} style={{mixBlendMode: 'saturation'}} />
+        {/* 顶部烟熏 */}
+        <rect x={0} y={0} width={w} height={smokeH} fill={`url(#${smokeId})`} />
+        {/* 剥落斑：露地仗 / 边缘暗线 / 粉化发白 */}
+        {layers.runs.map((rn, i) => (
+          <rect
+            key={i}
+            x={rn.x}
+            y={rn.y}
+            width={rn.w}
+            height={rn.h}
+            fill={rn.kind === 'exposed' ? AGED.plaster : rn.kind === 'edge' ? AGED.edge : '#fff5e1'}
+            opacity={rn.kind === 'chalk' ? rn.a : 1}
+          />
+        ))}
+        {/* 龟裂 */}
+        <path d={layers.crackD.join(' ')} fill="none" stroke={AGED.crack} strokeWidth={1} />
+      </g>
+    </svg>
+  );
+};
+
+// ---- apsara 飞天转场（opt-in，与现收卷转场并存可配）。参数照抄 huashu transitions.js:455-472 ----
+export const APSARA = {
+  frontFrom: 260, // 前沿 x 起点：W+260
+  frontTo: -300, // 前沿 x 终点
+  waveAmp: 110, // +110·sin(y·0.006 + p·5)
+  waveFreq: 0.006,
+  wavePhase: 5,
+  flakeN: 70,
+  step: 20, // 前沿采样步长 px
+  ribbons: [
+    ['#6ab08e', 0, 44],
+    ['#a5452f', 70, 38],
+    ['#5a86b0', 140, 32],
+  ] as Array<[string, number, number]>,
+} as const;
+
+const easeInOutCos = (p: number) => 0.5 - 0.5 * Math.cos(Math.PI * clamp01(p));
+
+/** 转场前沿（设计坐标）：从右往左扫的正弦波前。lerp(W+260, −300, e) + 110·sin(y·0.006+p·5)。 */
+export const apsaraFront = (y: number, p: number, w = 1280): number => {
+  const e = easeInOutCos(p);
+  const base = (w + APSARA.frontFrom) * (1 - e) + APSARA.frontTo * e;
+  return base + APSARA.waveAmp * Math.sin(y * APSARA.waveFreq + p * APSARA.wavePhase);
+};
+
+/** 飞天转场（opt-in）：飘带从右往左扫，前沿右侧为新画；旧画碎片沿前沿剥落（TSX 版以矿物色块
+ *  近似源的像素采样）；三条石绿/土红/石青飘带沿前沿翻卷＋白虚线描花。outgoing/incoming 为整帧内容。 */
+export const ApsaraTransition: React.FC<{
+  p: number; // 0..1
+  outgoing: React.ReactNode; // 旧画
+  incoming: React.ReactNode; // 新画
+  seed?: number;
+  w?: number;
+  h?: number;
+  flakeN?: number;
+  flakeColors?: string[];
+}> = ({p, outgoing, incoming, seed = 33, w = 1280, h = 720, flakeN = APSARA.flakeN, flakeColors = ['#a5452f', '#6ab08e', '#5a86b0']}) => {
+  const e = easeInOutCos(p);
+  const k = w / 1920; // 源 1080p 几何等比
+  // 前沿多边形（前沿右侧 = 新画区）：逐 20px 采样，右侧封边
+  const pts: string[] = [];
+  for (let y = -10; y <= h + 10; y += APSARA.step) {
+    pts.push(`${apsaraFront(y, p, w).toFixed(1)},${y}`);
+  }
+  pts.push(`${w + 10},${h + 10}`, `${w + 10},-10`);
+  // 剥落碎片（seeded；源 70 片：y0 / 尺寸 / 横漂 / 初相角 / 相位）
+  const flakes = React.useMemo(() => {
+    const r = mulberry32(seed);
+    return Array.from({length: flakeN}, () => [r() * h, 20 + r() * 34, 10 + r() * 26, r() * 6.28, r()] as [number, number, number, number, number]);
+  }, [seed, flakeN, h]);
+  return (
+    <div style={{position: 'absolute', inset: 0, width: w, height: h, overflow: 'hidden'}}>
+      {outgoing}
+      <div style={{position: 'absolute', inset: 0, clipPath: `polygon(${pts.join(',')})`}}>{incoming}</div>
+      <svg width={w} height={h} style={{position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'visible'}}>
+        {flakes.map((fl, i) => {
+          const front = apsaraFront(fl[0], p, w);
+          const born = clamp01(1 - (front + 40) / (w + 300));
+          const age = e - born * 0.9;
+          if (age < 0) return null;
+          const x = front - fl[2] + age * 120 * k;
+          const y = fl[0] + age * age * 900 * k;
+          if (y > h + 40) return null;
+          return (
+            <g
+              key={i}
+              transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${(((fl[3] + age * 9) * 180) / Math.PI).toFixed(1)}) scale(1 ${Math.cos(age * 12 + fl[4] * 6).toFixed(3)})`}
+            >
+              <rect x={-fl[1] / 2} y={-fl[1] * 0.35} width={fl[1]} height={fl[1] * 0.7} fill={flakeColors[i % flakeColors.length]} opacity={0.9} />
+            </g>
+          );
+        })}
+        {APSARA.ribbons.map(([col, off, rw], rib) => {
+          const n = Math.ceil((h + 120) / 18);
+          const rp: Array<[number, number]> = [];
+          for (let i = 0; i <= n; i++) {
+            const y = -60 + i * 18;
+            rp.push([apsaraFront(y, p, w) + off + 46 * Math.sin(y * 0.011 - p * 14 + rib * 1.7), y]);
+          }
+          const d = ribbonPathD(rp, q => rw * (0.6 + 0.4 * Math.sin(q * 14 + p * 10 + rib)));
+          const line = rp.map(q => `${q[0].toFixed(1)},${q[1].toFixed(1)}`).join(' ');
+          return (
+            <g key={rib}>
+              <path d={d} fill={col} stroke="#5a2414" strokeWidth={2.4} strokeLinejoin="round" />
+              <polyline points={line} fill="none" stroke="#ecdfc4" strokeWidth={2} strokeDasharray="4 10" />
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+};
+
