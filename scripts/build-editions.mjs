@@ -64,7 +64,7 @@ const versionOf = source => {
   return value;
 };
 
-export function collectCoreFiles(source) {
+export function collectCoreFiles(source, {includeSamples = true} = {}) {
   const root = canonical(source);
   const files = [];
   function walk(relative) {
@@ -82,7 +82,7 @@ export function collectCoreFiles(source) {
     if (!exists(path.join(root, ...relative.split('/')))) throw new Error(`Missing shared package input: ${relative}`);
     walk(relative);
   }
-  if (exists(path.join(root, 'samples'))) walk('samples');
+  if (includeSamples && exists(path.join(root, 'samples'))) walk('samples');
   return files.sort();
 }
 
@@ -108,9 +108,9 @@ function requireKnownDestination(destination, host) {
   verifyEdition(destination);
 }
 
-function packageInputs(source) {
+function packageInputs(source, {includeSamples = true} = {}) {
   const version = versionOf(source);
-  const files = collectCoreFiles(source);
+  const files = collectCoreFiles(source, {includeSamples});
   const coreHashes = Object.fromEntries(files.map(relative => [relative, sha256(path.join(source, ...relative.split('/')))]));
   const entries = Object.fromEntries(HOSTS.map(host => [host, validateEntry(source, host, version)]));
   const coreText = fs.readFileSync(path.join(source, 'SKILL.md'), 'utf8');
@@ -186,11 +186,44 @@ export function buildEditions(output, {source = SOURCE_ROOT, overwrite = false} 
   return targets.map(target => target.path);
 }
 
+// One host-agnostic package: shared core + all six host entrypoints + the generic SKILL.md,
+// without edition.json — so install.mjs treats the unpacked folder as a source and builds the
+// chosen host edition on the spot. Samples stay out: they are preview media, not runtime input.
+export function buildGeneric(output, {source = SOURCE_ROOT, overwrite = false} = {}) {
+  const destination = assertDisjoint(source, output);
+  if (exists(destination) && !fs.statSync(destination).isDirectory()) throw new Error('Output must be a directory');
+  if (!overwrite && exists(destination) && fs.readdirSync(destination).length) throw new Error('Output is not empty; use --overwrite');
+  const inputs = packageInputs(source, {includeSamples: false});
+  if (overwrite && exists(destination)) fs.rmSync(destination, {recursive: true});
+  fs.mkdirSync(destination, {recursive: true});
+  const extras = [...HOSTS.map(host => `hosts/${host}.md`), 'SKILL.md', 'README.md', 'LICENSE'];
+  const files = [...inputs.files, ...extras];
+  for (const relative of files) {
+    const from = path.join(source, ...relative.split('/'));
+    if (!exists(from)) throw new Error(`Missing generic package input: ${relative}`);
+    const to = path.join(destination, ...relative.split('/'));
+    fs.mkdirSync(path.dirname(to), {recursive: true});
+    fs.copyFileSync(from, to);
+  }
+  // A full packageInputs pass over the copy is the exact condition install.mjs relies on:
+  // inventory present, generic SKILL.md declares the version, every host entrypoint validates.
+  const repacked = packageInputs(destination, {includeSamples: false});
+  if (repacked.version !== inputs.version) throw new Error('Generic package version mismatch');
+  const declared = Object.keys(inputs.coreHashes);
+  if (declared.length !== Object.keys(repacked.coreHashes).length) throw new Error('Generic package inventory mismatch');
+  for (const relative of declared) {
+    if (repacked.coreHashes[relative] !== inputs.coreHashes[relative]) throw new Error(`Generic package hash mismatch: ${relative}`);
+  }
+  return destination;
+}
+
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
   const overwrite = args.includes('--overwrite');
-  const positional = args.filter(arg => arg !== '--overwrite');
-  if (positional.length > 1 || positional.some(arg => arg.startsWith('--'))) throw new Error('Usage: node scripts/build-editions.mjs [output-directory] [--overwrite]');
+  const generic = args.includes('--generic');
+  const positional = args.filter(arg => arg !== '--overwrite' && arg !== '--generic');
+  if (positional.length > 1 || positional.some(arg => arg.startsWith('--'))) throw new Error('Usage: node scripts/build-editions.mjs [output-directory] [--generic] [--overwrite]');
   const output = positional[0] ?? path.join(path.dirname(SOURCE_ROOT), 'anything2video-editions');
-  for (const target of buildEditions(output, {overwrite})) console.log(`Built verified edition at ${target}`);
+  if (generic) console.log(`Built verified generic package at ${buildGeneric(output, {overwrite})}`);
+  else for (const target of buildEditions(output, {overwrite})) console.log(`Built verified edition at ${target}`);
 }
