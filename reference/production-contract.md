@@ -6,7 +6,7 @@
 
 Skill 是制作流程，不是模型权重。宿主至少需读写文件、运行 Node/uv/ffmpeg、安装依赖并查看图像；子代理、云端语音、图像模型是可选能力。先实测，不根据产品名字猜。ZCode workflow 的 `agent()`/`log()` 注入接口仅在该接口实际存在时使用，普通 CLI 无须伪造它。
 
-用户指定“自行决策”“不计成本”“发布到某仓库”已提供对应授权。内部稿件与样片审定记录即可；不要重复等待用户确认。发布社交平台仍需相应授权。费用许可仅指本任务，不复制密钥到工程或 GitHub。
+用户指定“自行决策”“不计成本”“发布到某仓库”已提供对应授权，样式、音乐、打样等内部审定记录即可，不重复等待。**稿件不在此列（v4.1.0 文案确认门，用户拍板 2026-10-08）**：文案默认两段式过实际用户——方向候选探讨选定 + 全文定稿确认，规则见「文案确认门」节；仅用户明示的稿件级授权（“文案你定”“稿子不用我看”）可豁免并落盘记录，泛化授权（不计成本/自行决策）不自动豁免，intake 同轮一句话问清是否含稿件。发布社交平台仍需相应授权。费用许可仅指本任务，不复制密钥到工程或 GitHub。
 
 工作目录、图像通道、音乐与风格是持久决策：根目录未知先询问并保存绝对路径到 `~/.anything2video/workdir`；明确给过路径则沿用。图像通道在**首次使用时与根目录同轮询问一次**：是否提供生图 API key（MiniMax 或任意 OpenAI 兼容生图接口）。询问时如实说明：用途是 AI 材质/世界底生图（主要 epic 配方），**只影响约 5%–10% 的画面效果，不填不影响渲染、配音、音乐与交付主链路**。用户愿意提供时，把 `A2V_IMAGE_API_BASE / A2V_IMAGE_API_KEY / A2V_IMAGE_MODEL` 写入用户级环境变量（MiniMax 另设 `A2V_IMAGE_PROVIDER=minimax`），密钥只从环境变量读取，不写入任何文件、不回显；决定本身（provider 名或 `none`）记入 `~/.anything2video/image-channel`，此后沿用不再重复询问。用户拒绝就记 `none` 按无通道路线走（分镜禁排依赖生成的 AI 镜头）；之后想启用，设好环境变量并把该文件改成 provider 名即可。音乐默认按 bgm-bakeoff.md 试听圈选，用户明说无音乐或授权自行选曲时记录决定；泛泛预算许可不自动替代选曲许可。需要音乐时在分镜与建组前定曲。风格拿不准先放映随包 `samples/` 的真实片段；用户指定风格或已授权主控定方向时记录依据，不重复询问。
 
@@ -14,7 +14,7 @@ Skill 是制作流程，不是模型权重。宿主至少需读写文件、运�
 
 工程位于 skill 外。初始化器拒绝非空目标，不执行 git add 或 commit。`project.json` 字段：schemaVersion、status（draft/production）、slug、width、height、fps、totalFrames、composition（默认 Video）、recipe。默认横屏 1280×720；原生竖屏 1080×1920。故意无声时额外声明 `audio: {mode: "silent"}`，有旁白作品不能用此字段掩盖丢失音轨。
 
-初始化支持 `<slug>` 单参：数据根优先 `A2V_DATA_ROOT`，再读持久化文件；未知或相对根直接拒绝，不退回当前目录。也支持 `<工程绝对路径> <slug>`。工程顶层 renders/stills/fin_frames/qc 与依赖、音频缓存为保留产物位置，不放导入源码；源码与素材应放入被记录的项目位置。`src/build`、自定义 components 及普通 build/out/dist 目录仍是输入。
+初始化支持 `<slug>` 单参：数据根优先 `A2V_DATA_ROOT`，再读持久化文件；未知或相对根直接拒绝，不退回当前目录。也支持 `<工程绝对路径> <slug>`。工程顶层 renders/stills/fin_frames/qc/delivery/versions 与依赖、音频缓存为保留产物位置（delivery/ 为 finalize_delivery 原子发布产物、versions/ 为 jury 修复轮版本留存，两者均在源快照排除清单内），不放导入源码；源码与素材应放入被记录的项目位置。`src/build`、自定义 components 及普通 build/out/dist 目录仍是输入。
 
 所有渲染模式都检查完整分镜、文件、素材哈希和 TypeScript。未完成全片时使用独立 draft 样片工程，准确声明该样片范围；正式工程保留完整计划和未完成项。初始化默认 draft，不是最终片。status 改为 production 后须重渲全片，状态变化也会改变源码哈希。
 
@@ -38,6 +38,18 @@ Skill 是制作流程，不是模型权重。宿主至少需读写文件、运�
 字幕、指示线与对象应说明同一个因果关系。镜头合同必须包含 purpose 和 action，禁止以“文字入场”代替全部镜头设计。默认不要求每 45 帧乱动：有意静止与持续环境镜头可以成立，需记录具体理由。
 
 分镜定稿时产出 `research/beat-sheet.json` 节拍表（每拍：t、事件、画面动作、声音落点）——创作侧意图正本，音画同读（2026-10-06 轴 B）。**事件锚到「词/拍」，不锚裸秒**（huashu-art-motion 片段契约经验，MIT）：cue 写「哪个词、第几次出现、提前/推后多少」，渲染前再由脚本按词级时间戳换算成帧——秒数是从词表抄的二手数，抄一次错一次；词是导演真正的意图（某个数字念到时标注弹出）。口播改稿后按裸秒写的 cue 全部错位、按词锚的 cue 自动重排，换算脚本对「词不存在/时窗越界」拒收而不是悄悄错位。落点真值按通道分立：程序编曲（`scripts/bgm_generate.py`）以 beat sheet 为合同；曲库曲以实测 beat_grid 为真值，beat sheet 不得越权指挥外部曲目，卡点校验对两者偏差显式对账。按秒节拍合同：钩子必须在 0.5s 内出现（禁 0.3s 以上空场/黑场开场）；hero moment 落位全片 60–75%；结尾定帧保持 0.8–1.2s 带微动效。对标参考片时用 `scripts/reference_breakdown.py` 量出它的转场节奏与段落结构（`reference/reference-breakdown.md`），beat sheet 的落位写明对标依据。分镜与 beat sheet 的时间码互相引用，改一处同步另一处。
+
+## 文案确认门（v4.1.0）
+
+稿件是唯一默认必须过实际用户的创作决策，两段式，机器门在 check_state 阶梯的 `approved` 态（`scripted` 与 `voiced` 之间）。
+
+- **方向候选**：调研后出 2–3 个候选，各带角度名、一句话卖点、叙事结构（钩子→展开→高潮→结尾）、开头 2–3 句试写、预计时长与节奏、与所选卡的适配理由；在对话中呈现，用户可选、可混、可否，迭代到锁定为止。候选与选定记入 `research/script-direction.md`。不许只给一个“假选择”。
+- **全文定稿**：按选定方向出全文，一句一行、`|` 切字幕块，在对话中逐段呈现；修订轮数不限，直到用户明确确认。确认前 `script/narration.txt` 不落盘（过程稿进 `research/`，不得提前制造 scripted 证据）。
+- **证据 `script/approval.json`**（schemaVersion=1）：用户确认后写入 `{direction:{chosen,candidatesShown,confirmedAt}, text:{narrationSha256,confirmedAt,userQuote,source}, exempt?}`。`userQuote` 记用户确认原话——这是诚实证据链的一环，伪造引用与伪造审片记录同级红线。`narrationSha256` 对当前 `script/narration.txt` 内容做对账：改稿即门复位，重新确认后更新证据。
+- **自带文案**：`source="user_provided"`，免方向候选，仍须复述全文并提示风险点（事实口径/时长/腔调）请用户确认。
+- **豁免**：仅用户明示的稿件级授权可写 `exempt:{reason,grantedAt}`，本次制作不再等确认；泛化授权（“不计成本”“自行决策”）不自动豁免，intake 同轮一句话问清。豁免同样落盘，审计可见。
+- **无旁白片**：画面文字（字幕、标题卡、金句）视为文案走同一道门，写进 `script/narration.txt`。
+- **续作**：跨会话续作时证据在且哈希对上不重复问；证据缺失或哈希不符按门拦下，补确认而不是补声明。
 
 ## 竖屏
 

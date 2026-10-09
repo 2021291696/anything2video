@@ -36,7 +36,7 @@ export function snapshotSources(root) {
   const base = fs.realpathSync(root);
   const hashes = {};
   const caches = /^(?:node_modules|\.venv|\.git|__pycache__|\.cache)$/;
-  const rootOutputs = /^(?:\.mimosa|\.zcode|\.render-bundle(?:-.*)?|renders|stills|fin_frames|qc)$/;
+  const rootOutputs = /^(?:\.mimosa|\.zcode|\.render-bundle(?:-.*)?|renders|stills|fin_frames|qc|delivery|versions)$/;
   const ignored = relative => {
     const parts = relative.split(path.sep);
     if (parts.some(name => caches.test(name)) || /\.(?:pyc|log)$/.test(relative)) return true;

@@ -39,3 +39,6 @@ docs/audio-boundaries-v3-report.md
 docs/editions-resume-coordination.md
 docs/forward-v3-report.md
 tests/fullflow/
+
+# 外部曲（版权未核实的用户指定曲，仅本机不分发）
+assets/audio/bgm/*.wav

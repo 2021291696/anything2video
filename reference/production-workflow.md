@@ -12,19 +12,23 @@
 
 写 research/creative-brief.md：受众、一个学习目标、看完能做的操作、平台、画幅、语言、时长范围、可信事实、贯穿示例、主角和首尾关系。事实表保留 URL/用户材料/本地可复测证据和访问日期。
 
+**语料路由（2026-10-09《命》判例固化）**：文化/历史/文学/诗词/神话/宗教/成语/科普事实/美食/地理等题材，先查 `reference/corpus-sources.md` 语料源注册表——**两阶段取用**：方向候选前做分钟级「清单摸底」（grep 文件清单确认有什么可引，候选基于真材料出）；方向选定后做「全文提取+引文逐条 grep 核对」喂定稿。引文以库内原文为准，版本异文按库本引用并在事实表登记；大仓取文件走 blob:none 克隆+blob SHA cat-file（勿用 sparse-checkout）。软件教程/产品等现代题材不触发本表，走常规 WebSearch/官方站降级路线。
+
 参考片记录实际查看的时间段、可借的方法和证据等级；不以帖子标题或视觉猜测证明制作模型。参考资料缺失时可继续，但明确未对标原片。读 directing-playbook.md，把稿件转换为原因、动作和结果。
 
 风格拿不准先放映 samples/ 的真实片段，再用同内容的两种小样比清晰度和质感；已有风格复用 SPEC 并做样张回归。已指定或授权主控决定则记录选择理由。风格决定后固定共享图元和接口，避免每组重新设计。
 
-## 3. 稿件与真实时间轴
+## 3. 稿件两段式确认与真实时间轴
 
-教学稿包含前提、步骤、结果和失败修复。每句旁白一行，用 `|` 切字幕；不能只念屏幕标题。先定稿、生成或导入清洁配音，再从真实音频建立句子时间轴。
+**文案确认门（v4.1.0，契约「文案确认门」节为权威）**：调研后先出 2–3 个方向候选（角度/叙事结构/钩子试写/时长节奏），在对话中探讨到用户选定；再按选定方向出全文逐段定稿，用户明确确认后才落盘 `script/narration.txt` 与 `script/approval.json`（`narrationSha256` 对账，改稿门复位）。确认前过程稿只进 `research/`。自带文案走复述+风险点确认；豁免仅限用户明示的稿件级授权。
+
+教学稿包含前提、步骤、结果和失败修复。每句旁白一行，用 `|` 切字幕；不能只念屏幕标题。确认定稿后生成或导入清洁配音，再从真实音频建立句子时间轴。
 
 工程内运行 `uv run python scripts/tts_build.py`；TTS 不可用则导入已授权音频，不能假设凭宿主名就有语音通道。无旁白影片用 `chapter_timeline.py`，从 project.json 的 fps 建章表，保留 material 等元数据。音乐可无；需要音乐先按 bgm-bakeoff.md 试听定曲，再进分镜与建组。明确无音乐或已有选曲授权时记录决定。核对许可，清晰拍点可辅助动作，不能反过来压缩理解时间。
 
 `audio_narration.wav` 是正本，`audio.wav` 是混音派生物。运行 `uv run python scripts/mix_audio.py`，风格音效仅显式选择。钉帧音效在混音后第三步 `uv run python scripts/mix_sfx.py`（cues 表 + `audio/sfx/sfx-mix.json` 台账；重跑混音后必须重跑本步，工具防双混）。检查头尾、中段对位、削波、响度、音色和背景遮挡，首句 onset probe 只证明首句。
 
-音频脚本以 project.json 的 slug/fps 为准，config slug 不一致先同步真实资产引用；已有正本只在授权更新时用 tts_build.py --force。TTS 会更新 totalFrames；重建音频后分镜、字幕、覆盖层和实际 Composition 同步核对，再运行 TypeScript 和真实渲染。
+音频脚本以 project.json 的 slug/fps 为准，config slug 不一致先同步真实资产引用；已有正本只在授权更新时用 tts_build.py --force。正本更新等于改稿：文案确认门按哈希对账自动复位，须重新确认并更新 `script/approval.json`，再重建音频。TTS 会更新 totalFrames；重建音频后分镜、字幕、覆盖层和实际 Composition 同步核对，再运行 TypeScript 和真实渲染。
 
 ## 4. 分镜与多点打样
 

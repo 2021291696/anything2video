@@ -191,3 +191,9 @@
 | `tonight-hiphop.mp3` | Tonight | Michael Ramir C. | Hip Hop | ~103 | https://assets.mixkit.co/music/841/841.mp3 |
 
 BPM 为 librosa 实测（beat grid 最小二乘拟合法，见 references/music-beat-sync.md）。
+
+## bgm/ 外部曲（用户指定·版权未核实·仅本机不分发，已 gitignore）
+
+| 文件名 | 来源 | 时长 | sha256（前16） | 许可状态 |
+|---|---|---|---|---|
+| `singal.wav` | **用户自加曲**（2026-10-09 用户命名「singal」）：提取自抖音 @MondayofAX 视频内背景音乐，曲目原名未识别 | 29.95s 循环净轨 | `37d238f1fe4c787b` | **未核实**——首用于《命》正片（2026-10-09 交付）；站内发布走抖音曲库识别，商用/跨平台前必须确权 |
